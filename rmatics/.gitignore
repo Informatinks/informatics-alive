@@ -1,0 +1,8 @@
+*.save
+*.pyc
+__pycache__
+view/__pycache__
+model/__pycache__
+_trial_temp
+settings.cfg
+
