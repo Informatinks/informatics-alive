@@ -32,7 +32,6 @@
 #     worker_group.join()
 
 import click
-from flask.cli import FlaskGroup
 from gevent.pool import Group
 
 from rmatics.wsgi import application

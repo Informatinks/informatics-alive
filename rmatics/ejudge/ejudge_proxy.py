@@ -1,26 +1,19 @@
 import codecs
-import json
 import requests
 import re
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email.mime.text import MIMEText
-from email.utils import COMMASPACE, formatdate
-from email import encoders
 import json
 
 DEFAULT_ERROR_STR = 'Ошибка отправки задачи'
 
 STATUS_REPR = {
-  0 : 'Задача отправлена на проверку', # NEW_SRV_ERR_NO_ERROR
-120 : 'Отправка пустого файла',        # NEW_SRV_ERR_FILE_EMPTY
-105 : 'Отправка бинарного файла',      # NEW_SRV_ERR_BINARY_FILE
- 82 : 'Эта посылка является копией предыдущей',# NEW_SRV_ERR_DUPLICATE_SUBMIT
+  0 : 'Задача отправлена на проверку',  # NEW_SRV_ERR_NO_ERROR
+120 : 'Отправка пустого файла',         # NEW_SRV_ERR_FILE_EMPTY
+105 : 'Отправка бинарного файла',       # NEW_SRV_ERR_BINARY_FILE
+ 82 : 'Эта посылка является копией предыдущей',  # NEW_SRV_ERR_DUPLICATE_SUBMIT
  37 : 'Этот язык не может быть использован для этой задачи. Обратитесь к администраторам.',
- 83 : 'Задача уже решена',             # NEW_SRV_ERR_PROB_ALREADY_SOLVED
- 78 : 'Отправляемый файл превышает допустимый размер (64K) или превышена квота на число посылок (обратитесь к админимтратору)', # NEW_SRV_ERR_RUN_QUOTA_EXCEEDED
-113 : 'Отправляемый файл пустой', # SUBMIT_EMPTY 
+ 83 : 'Задача уже решена',         # NEW_SRV_ERR_PROB_ALREADY_SOLVED
+ 78 : 'Отправляемый файл превышает допустимый размер (64K) или превышена квота на число посылок (обратитесь к админимтратору)',  # NEW_SRV_ERR_RUN_QUOTA_EXCEEDED
+113 : 'Отправляемый файл пустой',  # SUBMIT_EMPTY
 1000: 'Отправляемый файл превышает допустимый размер. Требуется отправить исходный код или текстовый файл',
 }
 

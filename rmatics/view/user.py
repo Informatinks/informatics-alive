@@ -3,23 +3,15 @@ from flask import (
     request,
     Blueprint,
 )
-from sqlalchemy.orm.exc import (
-    MultipleResultsFound,
-    NoResultFound,
-)
 
 from rmatics.model import db
-from rmatics.model.ejudge_run import EjudgeRun
 from rmatics.model.user import User
-# from rmatics.model.user_oauth_provider import UserOAuthProvider
 from rmatics.utils.exceptions import (
     UserOAuthIdAlreadyUsed,
     UserNotFound,
 )
 from rmatics.utils.validate import validate_schema
 from rmatics.view import require_roles
-# from rmatics.utils.oauth import get_oauth_id
-# from rmatics.view.utils import *
 
 
 user = Blueprint('user', __name__, url_prefix='/user')

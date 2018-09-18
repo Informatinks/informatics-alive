@@ -139,10 +139,12 @@ DEFAULTSECT = "DEFAULT"
 
 MAX_INTERPOLATION_DEPTH = 10
 
+
 class SectionList(UserList):
     def __init(self, name = ''):
         self.name = name
         UserList.__init__(self)
+
 
 # exception classes
 class Error(Exception):
@@ -1144,9 +1146,7 @@ class RawConfigParser(MutableMapping):
                                        self._sections.items())
         idx = 0
         for section, l in all_sections:
-#             print(l)
-             for options in l:
-#                print(sec)
+            for options in l:
                 for name, val in options.items():
                     if isinstance(val, list):
                         val = '\n'.join(val).rstrip()
@@ -1221,7 +1221,6 @@ class ConfigParser(RawConfigParser):
         """Set an option.  Extends RawConfigParser.set by validating type and
         interpolation syntax on the value."""
         self._validate_value_types(option=option, value=value)
-        #print super(ConfigParser)
         RawConfigParser.set(self, section, idx, option, value)
 
     def add_section(self, section):
@@ -1329,7 +1328,6 @@ class _ChainMap(DictMixin):
     def __iter__(self):
         raise "NotImpl"
 
-    
     def __getitem__(self, key):
         for mapping in self._maps:
             try:

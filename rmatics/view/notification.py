@@ -4,7 +4,6 @@ from flask import (
     request,
     Blueprint,
 )
-from flask_socketio import emit
 
 from rmatics.model import db
 from rmatics.model.ejudge_run import EjudgeRun

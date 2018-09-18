@@ -1,4 +1,3 @@
-import logging
 from flask import (
     current_app,
     g,
@@ -6,26 +5,15 @@ from flask import (
     request,
     Blueprint,
 )
-from sqlalchemy import and_
 
-from rmatics.ejudge.ejudge_proxy import submit
-from rmatics.ejudge.serve_internal import EjudgeContestCfg
 from rmatics.ejudge.submit_queue import (
     get_last_get_id,
     queue_submit,
 )
-from rmatics.model.user import SimpleUser
-from rmatics.model.problem import (
-    EjudgeProblem,
-    Problem,
-)
-from rmatics.model.pynformatics_run import PynformaticsRun
-from rmatics.model.ejudge_run import EjudgeRun
+
 from rmatics.model.standings import ProblemStandings
 # from rmatics.view.utils import *
 from rmatics.utils.exceptions import (
-    EjudgeError,
-    Forbidden,
     ProblemNotFound,
 )
 from rmatics.utils.validate import (

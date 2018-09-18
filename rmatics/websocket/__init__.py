@@ -1,13 +1,8 @@
 from flask import (
     g,
-    json,
-    request,
 )
 from flask_socketio import (
-    emit,
     join_room,
-    rooms,
-    send,
     SocketIO,
 )
 

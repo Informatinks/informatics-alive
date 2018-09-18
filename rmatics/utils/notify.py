@@ -2,7 +2,6 @@ import pickle
 import uuid
 
 from rmatics.model import redis
-import sqlalchemy
 
 
 def client_channel(client_uuid):

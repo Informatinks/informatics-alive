@@ -4,7 +4,7 @@ from flask import (
     request,
     Blueprint,
 )
-from sqlalchemy import and_
+from sqlalchemy import and_, true
 
 from rmatics.model import db
 from rmatics.model.group import (
@@ -25,7 +25,7 @@ def group_get(group_id):
         group = db.session.query(Group).filter(
             and_(
                 Group.id == group_id,
-                Group.visible == True
+                Group.visible == true()
             )
         ).one()
     except Exception:
@@ -41,7 +41,7 @@ def group_search():
         .filter(
             and_(
                 Group.name.contains(name),
-                Group.visible == True
+                Group.visible == true()
             )
         ) \
         .order_by(Group.id) \

@@ -3,6 +3,7 @@ from rmatics.utils.functions import attrs_to_dict
 
 from rmatics.model.course_module import CourseModuleInstance
 
+
 class CourseSection(db.Model):
     __table_args__ = {'schema': 'moodle'}
     __tablename__ = 'mdl_course_sections'
@@ -16,9 +17,12 @@ class CourseSection(db.Model):
 
     course = db.relationship('Course', backref=db.backref('sections', lazy='dynamic', order_by='CourseSection.section'))
 
+    def __init__(self):
+        self._sequence = None
+
     @property
     def sequence(self):
-        if not hasattr(self, '_sequence'):
+        if not getattr(self, '_sequence'):
             try:
                 self._sequence = list(map(int, self.sequence_text.split(',')))
             except Exception:

@@ -4,9 +4,6 @@ from flask import (
     Blueprint,
 )
 
-from rmatics.model import db
-
-
 bootstrap = Blueprint('bootstrap', __name__, url_prefix='/bootstrap')
 
 

@@ -1,6 +1,4 @@
 import os
-import xml.dom.minidom
-import xml
 import gzip
 import codecs
 
@@ -9,6 +7,7 @@ protocols_path = 'var/archive/xmlreports'
 audit_path = 'var/archive/audit'
 sources_path = 'var/archive/runs'
 output_path = 'var/archive/output'
+
 
 def read_file_unknown_encoding(file_name, size=255):
     try:
@@ -19,6 +18,7 @@ def read_file_unknown_encoding(file_name, size=255):
         f = codecs.open(file_name, 'r', encoding='koi8-r')
         res = f.read(size)
     return res
+
 
 def get_protocol_from_file(filename):
     if os.path.isfile(filename):
@@ -41,6 +41,7 @@ def get_protocol_from_file(filename):
     except IOError as e:
         return str(e)
 
+
 def lazy(func):
     """
     A decorator function designed to wrap attributes that need to be
@@ -59,6 +60,7 @@ def lazy(func):
         setattr(self, name, value)
         return value
     return cached
+
 
 def get_protocol_from_file(filename):
     if os.path.isfile(filename):
@@ -96,6 +98,7 @@ def get_string_status(s):
         "SK" : "Пропущено"
     }[s]
 
+
 def get_lang_ext_by_id(lang_id):
     langs = {
         1: ".pas",
@@ -116,10 +119,10 @@ def get_lang_ext_by_id(lang_id):
     }
     return langs.get(lang_id, str())
 
+
 def get_lag_exts():
     return [".pas", ".c", ".cpp", ".dpr", ".py", ".pl", ".java",
             ".cs", ".rb", ".php", ".py", ".hs", ".pas", ".bas", ".1c"]
-
 
 
 def get_lang_name_by_id(lang_id):
@@ -158,22 +161,22 @@ def get_status_by_id(status_id):
         7: "Partial",
         8: "AC",
         9: "Ignored",
-        10:"Disqualified",
-        11:"Pending",
-        12:"ML",
-        13:"Security error",
-        14:"Style Violation",
-        15:"Wall Time Limit Exceeded",
-        16:"Pending Review",
-        17:"Rejected",
-        18:"Skipped",
-        96:"Running...",
-        98:"Compiling..."
+        10: "Disqualified",
+        11: "Pending",
+        12: "ML",
+        13: "Security error",
+        14: "Style Violation",
+        15: "Wall Time Limit Exceeded",
+        16: "Pending Review",
+        17: "Rejected",
+        18: "Skipped",
+        96: "Running...",
+        98: "Compiling..."
     }[status_id]
 
 
 def submit_path(tp, contest_id, submit_id):
-    #path to archive file with path to archive directory = tp, look up audit_path etc constants
+    # path to archive file with path to archive directory = tp, look up audit_path etc constants
     return os.path.join(
         contest_path,
         '0' * (6 - len(str(contest_id))) + str(contest_id),

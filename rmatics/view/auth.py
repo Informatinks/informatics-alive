@@ -10,13 +10,10 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from rmatics.model import db
 from rmatics.model.user import User
-# from rmatics.model.user_oauth_provider import UserOAuthProvider
 from rmatics.utils.exceptions import (
-    # AuthOAuthUserNotFound,
     AuthWrongUsernameOrPassword,
 )
 from rmatics.utils.functions import check_password
-# from rmatics.utils.oauth import get_oauth_id
 from rmatics.utils.validate import validate_schema
 from rmatics.view import (
     require_auth,
@@ -73,16 +70,16 @@ def auth_logout():
 #     provider = request.get_json().get('provider')
 #     code = request.get_json().get('code')
 #     oauth_id = get_oauth_id(provider, code)
-
+#
 #     user_oauth_provider = db.session.query(UserOAuthProvider) \
 #         .filter_by(provider=provider) \
 #         .filter_by(oauth_id=oauth_id) \
 #         .first()
-
+#
 #     if not user_oauth_provider:
 #         raise AuthOAuthUserNotFound
-
+#
 #     session['user_id'] = user_oauth_provider.user_id
 #     load_user()
-
+#
 #     return jsonify(g.user.serialize())

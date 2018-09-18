@@ -18,7 +18,7 @@ class VersionError(object):
 class EjudgeArchiveReader:
     """class implements reading ejudge archive format"""
 
-    EJUDGE_ARCHIVE_HEADER_FMT = "8sI4s" #layout of ejudge archive header struct
+    EJUDGE_ARCHIVE_HEADER_FMT = "8sI4s"  # layout of ejudge archive header struct
     EJUDGE_ARCHIVE_ENTRY_HEADER_FMT = "3iI"
     VERSION = 1
 
@@ -48,7 +48,7 @@ class EjudgeArchiveReader:
                 file.read(struct.calcsize(EjudgeArchiveReader.EJUDGE_ARCHIVE_HEADER_FMT))
                 )
             ))
-        #in the structure 4 + 4 + 4 + 4 bytes. There are not alignment bytes. After the structure lie name of the file.
+        # in the structure 4 + 4 + 4 + 4 bytes. There are not alignment bytes. After the structure lie name of the file.
         read_entry_header["name"] = strip_cstring(file.read(
             read_entry_header["header_size"] - struct.calcsize(EjudgeArchiveReader.EJUDGE_ARCHIVE_ENTRY_HEADER_FMT)).decode('ascii'))
         return read_entry_header
@@ -66,22 +66,22 @@ class EjudgeArchiveReader:
             raise ValueError("file is not ejudge archive")
 
         self.file.seek(0, 2)
-        self.arch_size  =  self.file.tell() #getting archive size
+        self.arch_size = self.file.tell()  # getting archive size
 
         self.file.seek(0)
         self.archive_header = self.read_header(self.file)
 
-        if (self.archive_header["version"] != self.VERSION):
+        if self.archive_header["version"] != self.VERSION:
             raise VersionError("Ejudge Archive version is {0}, current supported version is {1}".format(self.archive_header["version"], self.VERSION))
 
-        self.entry_headers_list = list() #list of entry_headers with sequence like in file
-        self.files_positions = dict() #filename -> position in ejudge archive
+        self.entry_headers_list = list()  # list of entry_headers with sequence like in file
+        self.files_positions = dict()  # filename -> position in ejudge archive
 
         while self.file.tell() < self.arch_size:
             self.entry_headers_list.append(self.read_entry_header(self.file))
             self.files_positions[self.entry_headers_list[-1]["name"]] = (self.file.tell(), len(self.entry_headers_list) - 1)
-            self.file.seek(self.entry_headers_list[-1]["size"], 1) #skip archive data
-            self.file.seek((self.file.tell() + 15) & ~15) #alignment
+            self.file.seek(self.entry_headers_list[-1]["size"], 1)  # skip archive data
+            self.file.seek((self.file.tell() + 15) & ~15)  # alignment
 
     def namelist(self):
         """return set-like object of strings which contains names of files in archive"""

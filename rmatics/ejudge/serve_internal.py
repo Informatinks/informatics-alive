@@ -1,15 +1,15 @@
 from . import configparser
 import os
-import shutil
 from collections import OrderedDict
      
 __all__ = ["EjudgeContestCfg", "all_contests", "HOME_JUDGES", "SPECIAL_CONTEST"]     
      
 HOME_JUDGES = '/home/judges/'
-SPECIAL_CONTEST = [14, 1651] #contests with special configs     
-     
+SPECIAL_CONTEST = [14, 1651]  # contests with special configs
+
+
 def all_contests():
-    ''' Generates all contest_id as strings'''
+    """ Generates all contest_id as strings """
     xmllist = os.listdir(os.path.join(HOME_JUDGES, 'data/contests/'))
     for filename in xmllist:
         if filename.endswith('.xml'):
@@ -19,7 +19,8 @@ def all_contests():
                 yield contest_id     
             except ValueError:
                 pass
-     
+
+
 def normalizeMemoryLimit(memotyLimit):
     if memotyLimit[-1:] == "G":
         return int(memotyLimit[:-1]) * 1024 * 1024 * 1024
@@ -29,7 +30,8 @@ def normalizeMemoryLimit(memotyLimit):
         return int(memotyLimit[:-1]) * 1024
     else:
         return int(memotyLimit)
-     
+
+
 class EjudgeProblemCfg:
         def __init__(self, d, id, contest):
             self.dict = d
@@ -119,10 +121,10 @@ class EjudgeProblemCfg:
                 if self.abstract != None and "corr_pat" in contest.abstract[self.abstract]:
                     self.corr_pat = contest.abstract[self.abstract]["corr_pat"][0].strip("\"") 
 
-                    
         def getInfo(self):
             return {"long_name" : self.long_name, "id" : self.id, "short_name" : self.short_name, "timelimit" : self.time_limit, "abstract" : self.abstract}
-            
+
+
 class EjudgeContestCfg:
     
     HOME_JUDGES = '/home/judges/'
@@ -173,7 +175,7 @@ class EjudgeContestCfg:
         return "\n".join(result)
             
     def initProblem(self):
-        lastId = 0;
+        lastId = 0
         self.abstract = OrderedDict()
         self.problems = OrderedDict()
         for e in self.config['problem']:
@@ -185,7 +187,6 @@ class EjudgeContestCfg:
                 self.problems[int(curId)] = EjudgeProblemCfg(e, curId, self)
             else:
                 self.abstract[e['short_name'][0].strip("\"")] = e
-        
 
     def getProblemsCount(self):
         return len(self.problems)

@@ -10,8 +10,8 @@ def attrs_to_dict(obj, *attrs):
 
 
 def random_password(length):
-    SYMBOLS = 'poiuytrewqlkjhgfdsmnbvcxzQWERTYUIOPASDFGHJKLZXCVBNM1234567890'
-    return ''.join([random.choice(SYMBOLS) for i in range(length)])
+    symbols = 'poiuytrewqlkjhgfdsmnbvcxzQWERTYUIOPASDFGHJKLZXCVBNM1234567890'
+    return ''.join([random.choice(symbols) for _ in range(length)])
 
 
 def hash_password(password):
