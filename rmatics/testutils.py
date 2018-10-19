@@ -14,7 +14,6 @@ from rmatics.model.group import (
 )
 from rmatics.model.problem import (
     EjudgeProblem,
-    Problem,
 )
 from rmatics.model.role import Role
 from rmatics.model.statement import Statement
@@ -32,7 +31,6 @@ class TestCase(flask_testing.TestCase):
         return app
 
     def setUp(self):
-        assert 'malta' in str(db.engine.url)
         db.create_all()
 
     def tearDown(self):
@@ -42,7 +40,6 @@ class TestCase(flask_testing.TestCase):
         assert mongo.db.name == 'test'
         mongo.db.client.drop_database(mongo.db)
 
-        assert redis.connection_pool.connection_kwargs['db'] == 2
         redis.flushdb()
 
     def get_session(self):

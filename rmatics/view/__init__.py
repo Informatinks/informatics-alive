@@ -32,7 +32,7 @@ def handle_api_exception(api_exception):
 
 def load_user():
     user_id = session.get('user_id')
-    user = db.session.query(SimpleUser).filter_by(id=user_id).first()
+    user = db.session.query(SimpleUser).filter_by(id=user_id).one_or_none()
     g.user = user
 
 
@@ -44,7 +44,7 @@ def load_problem(problem_id, silent=True):
 
 
 def load_statement(statement_id, silent=True):
-    statement = db.session.query(Statement).filter_by(id=statement_id).first()
+    statement = db.session.query(Statement).filter_by(id=statement_id).one_or_none()
     g.statement = statement
     if not silent and not statement:
         raise StatementNotFound

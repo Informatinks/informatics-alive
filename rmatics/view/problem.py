@@ -23,7 +23,7 @@ from rmatics.utils.validate import (
 from rmatics.view import (
     load_problem,
     load_statement,
-)
+    require_auth)
 
 
 problem = Blueprint('problem', __name__, url_prefix='/problem')
@@ -36,6 +36,7 @@ def load_problem_or_404(problem_id):
 
 
 @problem.route('/<int:problem_id>/submit_v2', methods=['POST'])
+@require_auth
 @validate_form({
     'lang_id': int,
     'statement_id': lambda statement_id: statement_id is None or int(statement_id)
@@ -67,6 +68,38 @@ def problem_submit_v2(problem_id):
     })
 
 
+@problem.route('/trusted/<int:problem_id>/submit_v2', methods=['POST'])
+@validate_form({
+    'lang_id': int,
+    'statement_id': lambda statement_id: statement_id is None or int(statement_id),
+    'user_id': int,
+})
+def trusted_problem_submit_v2(problem_id):
+    load_problem(problem_id)
+    language_id = int(request.form['lang_id'])
+    file = request.files['file']
+    ejudge_url = current_app.config['EJUDGE_NEW_CLIENT_URL']
+    statement_id = request.form.get('statement_id')
+    if statement_id:
+        statement_id = int(statement_id)
+
+    user_id = int(request.form['user_id'])
+
+    submit = queue_submit(
+        user_id=user_id,
+        problem_id=problem_id,
+        file=file,
+        language_id=language_id,
+        ejudge_url=ejudge_url,
+        statement_id=statement_id,
+    )
+
+    return jsonify({
+        'last_get_id': get_last_get_id(),
+        'submit': submit.serialize()
+    })
+
+
 @problem.route('/<int:problem_id>')
 def problem_get(problem_id):
     load_problem_or_404(problem_id)
@@ -75,7 +108,7 @@ def problem_get(problem_id):
 
 @problem.route('/<int:problem_id>/runs')
 @validate_args({
-    'statement_id': lambda statement_id: statement_id == None or int(statement_id)
+    'statement_id': lambda statement_id: statement_id is None or int(statement_id)
 })
 def problem_runs(problem_id):
     load_problem_or_404(problem_id)
