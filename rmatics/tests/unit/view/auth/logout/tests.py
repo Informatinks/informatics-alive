@@ -10,7 +10,7 @@ from hamcrest import (
 from rmatics.model import db
 from rmatics.model.user import User
 from rmatics.testutils import TestCase
-from rmatics.utils.exceptions import Unauthorized
+from werkzeug.exceptions import Unauthorized
 from rmatics.view.auth import auth_logout
 
 

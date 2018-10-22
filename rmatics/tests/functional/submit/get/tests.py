@@ -77,8 +77,7 @@ class TestAPI__submit_get(TestCase):
         assert_that(response.status_code, equal_to(401))
         assert_that(
             response.json,
-            equal_to({
+            has_entries({
                 'code': 401,
-                'message': 'Unauthorized',
             })
         )

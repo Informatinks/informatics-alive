@@ -35,8 +35,7 @@ class TestAPI__auth_logout(TestCase):
         return self.client.post('/auth/logout')
 
     def check_request(self,
-                      status_code=200,
-                      message=None,
+                      status_code=200
                       ):
         response = self.send_request()
 
@@ -45,7 +44,6 @@ class TestAPI__auth_logout(TestCase):
                 response.json,
                 has_entries({
                     'code': status_code,
-                    'message': message,
                 })
             )
             return
@@ -70,12 +68,10 @@ class TestAPI__auth_logout(TestCase):
     def test_logged_out(self):
         self.check_request(
             status_code=401,
-            message='Unauthorized',
         )
 
     def test_bad_login(self):
         self.set_session({'user_id': 'bad user_id'})
         self.check_request(
             status_code=401,
-            message='Unauthorized',
         )

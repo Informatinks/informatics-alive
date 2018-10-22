@@ -88,13 +88,6 @@ class TestAPI__statement_set_settings(TestCase):
             statement_id=self.statement.id,
         )
         assert_that(response.status_code, equal_to(401))
-        assert_that(
-            response.json,
-            has_entries({
-                'code': 401,
-                'message': 'Unauthorized',
-            })
-        )
 
     def test_forbidden(self):
         response = self.send_request(
@@ -102,10 +95,4 @@ class TestAPI__statement_set_settings(TestCase):
             user=self.user,
         )
         assert_that(response.status_code, equal_to(403))
-        assert_that(
-            response.json,
-            has_entries({
-                'code': 403,
-                'message': 'Forbidden',
-            })
-        )
+

@@ -1,7 +1,7 @@
 from hamcrest import (
     assert_that,
     equal_to,
-)
+    has_entries)
 
 from rmatics.model import db
 from rmatics.model.group_invite import GroupInvite
@@ -57,8 +57,7 @@ class TestAPI__group_invite_get(TestCase):
         assert_that(response.status_code, equal_to(401))
         assert_that(
             response.json,
-            equal_to({
+            has_entries({
                 'code': 401,
-                'message': 'Unauthorized',
             })
         )

@@ -13,8 +13,8 @@ from rmatics.model.ejudge_run import EjudgeRun
 from rmatics.model.problem import EjudgeProblem
 from rmatics.model.user import SimpleUser
 from rmatics.testutils import TestCase
+from werkzeug.exceptions import InternalServerError
 from rmatics.utils.exceptions import (
-    InternalServerError,
     RunAuthorOnly,
     RunNotFound,
 )

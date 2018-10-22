@@ -11,8 +11,8 @@ from sqlalchemy import and_
 from rmatics.model import db
 from rmatics.model.ejudge_run import EjudgeRun
 from rmatics.model.statement import Statement
+from werkzeug.exceptions import InternalServerError
 from rmatics.utils.exceptions import (
-    InternalServerError,
     RunAuthorOnly,
     RunNotFound,
 )

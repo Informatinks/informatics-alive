@@ -15,18 +15,25 @@ from rmatics.model.role import (
 )
 from rmatics.model.statement import Statement
 from rmatics.model.user import SimpleUser
+from werkzeug.exceptions import Forbidden, Unauthorized
 from rmatics.utils.exceptions import (
     CourseNotFound,
-    Forbidden,
-    Unauthorized,
     StatementNotFound,
     ProblemNotFound,
 )
 
 
+DEFAULT_MESSAGE = (
+    'Oops! An error happened. We are already '
+    'trying to resolve the problem!'
+)
+
+
 def handle_api_exception(api_exception):
-    response = jsonify(api_exception.serialize())
-    response.status_code = api_exception.code
+    code = getattr(api_exception, 'code', 500)
+    message = getattr(api_exception, 'description', DEFAULT_MESSAGE)
+    response = jsonify(code=code, message=message)
+    response.status_code = code
     return response
 
 

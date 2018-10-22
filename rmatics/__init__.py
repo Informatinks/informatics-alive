@@ -76,8 +76,8 @@ def create_app(config=None):
             handle_api_exception,
             load_user,
         )
-        from rmatics.utils.exceptions import BaseApiException
-        app.register_error_handler(BaseApiException, handle_api_exception)
+        from werkzeug.exceptions import HTTPException
+        app.register_error_handler(HTTPException, handle_api_exception)
         app.before_request(load_user)
 
         from rmatics.view.auth import auth

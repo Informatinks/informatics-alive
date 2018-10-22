@@ -107,10 +107,4 @@ class TestAPI__group_join_by_invite(TestCase):
     def test_auth_required(self):
         response = self.client.post(f'/group/join/{self.group_invite.url}')
         assert_that(response.status_code, equal_to(401))
-        assert_that(
-            response.json,
-            equal_to({
-                'code': 401,
-                'message': 'Unauthorized'
-            })
-        )
+

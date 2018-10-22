@@ -86,7 +86,6 @@ class TestAPI__user_reset_password(TestCase):
             response.json,
             has_entries({
                 'code': 403,
-                'message': 'Forbidden',
             })
         )
 
@@ -99,6 +98,5 @@ class TestAPI__user_reset_password(TestCase):
             response.json,
             has_entries({
                 'code': 401,
-                'message': 'Unauthorized',
             })
         )
