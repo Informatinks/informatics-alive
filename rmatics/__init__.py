@@ -2,8 +2,6 @@ from gevent import monkey
 monkey.patch_all()
 
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import engine_from_config
 
 
 def create_app(config=None):
@@ -110,3 +108,8 @@ def create_app(config=None):
     url_encoder.init_app(app)
 
     return app
+
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run(debug=False)

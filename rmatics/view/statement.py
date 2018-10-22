@@ -99,7 +99,7 @@ def statement_get_by_module():
     if not course_module:
         raise StatementNotFound
 
-    load_statement(course_module.instance)
+    load_statement(course_module.instance.id)
     if not g.statement:
         raise StatementNotFound
 
