@@ -54,6 +54,8 @@ class Submit:
         self.language_id = language_id
         self.ejudge_url = ejudge_url
         self.statement_id = statement_id
+        self.ejudge_user = current_app.config.get('EJUDGE_USER')
+        self.ejudge_password = current_app.config.get('EJUDGE_PASSWORD')
 
     @property
     def user(self):
@@ -85,8 +87,8 @@ class Submit:
                 contest_id=self.problem.ejudge_contest_id,
                 prob_id=self.problem.problem_id,
                 lang_id=self.language_id,
-                login=self.user.login,
-                password=self.user.password,
+                login=self.ejudge_user,
+                password=self.ejudge_password,
                 filename=self.file.filename,
                 url=self.ejudge_url,
                 user_id=self.user.id
@@ -115,7 +117,7 @@ class Submit:
             ejudge_run_id=run_id,
             ejudge_contest_id=self.problem.ejudge_contest_id,
             ejudge_language_id=self.language_id,
-            ejudge_status=98, # compiling
+            ejudge_status=98,  # compiling
         )
         db.session.add(run)
         db.session.commit()
