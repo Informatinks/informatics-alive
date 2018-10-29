@@ -1,3 +1,5 @@
+import datetime
+
 from flask import (
     current_app,
     g,
@@ -10,6 +12,8 @@ from rmatics.ejudge.submit_queue import (
     get_last_get_id,
     queue_submit,
 )
+from rmatics.model import db
+from rmatics.model.run import Run
 
 from rmatics.model.standings import ProblemStandings
 # from rmatics.view.utils import *
@@ -53,14 +57,25 @@ def problem_submit_v2(problem_id):
     # if language_id not in context.get_allowed_languages():
     #     raise Forbidden(f'Language id "{language_id}" is not allowed')
 
-    submit = queue_submit(
+    run = Run(
         user_id=g.user.id,
+        problem=g.problem,
         problem_id=problem_id,
-        file=file,
-        language_id=language_id,
-        ejudge_url=ejudge_url,
         statement_id=statement_id,
+        create_time=datetime.datetime.now(),
+        ejudge_contest_id=g.problem.ejudge_contest_id,
+        ejudge_language_id=language_id,
+        ejudge_status=98,  # compiling
     )
+
+    db.session.add(run)
+    db.session.flush()
+
+    # TODO: different encodings + exception handling
+    text = file.read()
+    run.update_source(text)
+
+    submit = queue_submit(run.id, g.user.id, ejudge_url)
 
     return jsonify({
         'last_get_id': get_last_get_id(),
@@ -85,14 +100,25 @@ def trusted_problem_submit_v2(problem_id):
 
     user_id = int(request.form['user_id'])
 
-    submit = queue_submit(
+    run = Run(
         user_id=user_id,
+        problem=g.problem,
         problem_id=problem_id,
-        file=file,
-        language_id=language_id,
-        ejudge_url=ejudge_url,
         statement_id=statement_id,
+        create_time=datetime.datetime.now(),
+        ejudge_contest_id=g.problem.ejudge_contest_id,
+        ejudge_language_id=language_id,
+        ejudge_status=98,  # compiling
     )
+
+    db.session.add(run)
+    db.session.flush()
+    db.session.refresh(run)
+
+    text = file.read()
+    run.update_source(text)
+
+    submit = queue_submit(run.id, user_id, ejudge_url)
 
     return jsonify({
         'last_get_id': get_last_get_id(),

@@ -50,24 +50,13 @@ class SubmitQueue(RedisQueue):
             }
         )
 
-    def submit(self,
-               user_id,
-               problem_id,
-               file,
-               language_id,
-               ejudge_url,
-               statement_id=None,
-               ):
+    def submit(self, run_id, user_id, ejudge_url):
         def _submit(pipe):
             submit = Submit(
                 id=pipe.incr(last_put_id_key(self.key)),
                 user_id=user_id,
-                problem_id=problem_id,
-                create_time=datetime.datetime.now(),
-                file=file,
-                language_id=language_id,
-                ejudge_url=ejudge_url,
-                statement_id=statement_id,
+                run_id=run_id,
+                ejudge_url=ejudge_url
             )
             self.put(submit.encode(), pipe=pipe)
             pipe.hset(

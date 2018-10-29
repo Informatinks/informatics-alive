@@ -1,3 +1,5 @@
+from typing import Optional
+
 from flask import g
 
 from rmatics.model import (
@@ -57,26 +59,20 @@ class Run(db.Model):
 
     ejudge_run = db.relationship('EjudgeRun', backref='run')
 
-    def update_source(self, text=None):
-        if not text:
-            text = self.ejudge_run.get_sources()
+    def update_source(self, blob: bytes):
         mongo.db.source.insert_one({
             'run_id': self.id,
-            'text': text.encode('utf-8'),
+            'blob': blob,
         })
-        return text
+        return blob
 
     @property
-    def source(self):
+    def source(self) -> Optional[bytes]:
         data = mongo.db.source.find_one({'run_id': self.id})
         if not data:
-            text = self.update_source()
-        else:
-            text = data.get('text', None)
-
-        if text:
-            text = text.decode('utf-8')
-        return text
+            return None
+        blob = data.get('blob', None)
+        return blob
 
     @property
     def status(self):

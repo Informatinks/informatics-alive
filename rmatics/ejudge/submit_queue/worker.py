@@ -1,5 +1,6 @@
 from flask import current_app
 from gevent import Greenlet, sleep
+from rmatics.model import db
 
 
 class SubmitWorker(Greenlet):
@@ -14,6 +15,11 @@ class SubmitWorker(Greenlet):
             submit.send()
         except Exception:
             current_app.logger.exception('Submit worker caught exception and skipped submit without notifying user')
+
+        finally:
+            # handle_submit вызывается внутри контекста;
+            # rollback помогает избегать ошибок с незакрытыми транзакциями
+            db.session.rollback()
 
     def _run(self):
         with self._ctx:
