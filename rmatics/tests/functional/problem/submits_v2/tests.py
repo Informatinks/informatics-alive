@@ -39,10 +39,6 @@ class TestAPI__problem_submits_v2(TestCase):
                 'last_get_id': 0,
                 'submit': {
                     'id': 1,
-                    'user_id': self.users[0].id,
-                    'problem_id': self.problems[0].id,
-                    'source': 'print("Русский текст")',
-                    'language_id': 27,
                 }
             })
         )

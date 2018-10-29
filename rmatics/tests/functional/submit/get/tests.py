@@ -43,7 +43,6 @@ class TestAPI__submit_get(TestCase):
         )
         assert_that(response.status_code, equal_to(200))
 
-
         response = self.send_request(user_id=self.users[0].id)
         assert_that(response.status_code, equal_to(200))
         assert_that(response.json, has_entries({'last_get_id': 0, 'submits': has_entries({})}))
@@ -52,17 +51,9 @@ class TestAPI__submit_get(TestCase):
             has_entries({
                 '1': {
                     'id': 1,
-                    'user_id': self.users[0].id,
-                    'problem_id': self.problems[0].id,
-                    'source': 'some code',
-                    'language_id': 27,
                 },
                 '2': {
                     'id': 2,
-                    'user_id': self.users[0].id,
-                    'problem_id': self.problems[1].id,
-                    'source': 'perl submit',
-                    'language_id': 24,
                 }
             })
         )

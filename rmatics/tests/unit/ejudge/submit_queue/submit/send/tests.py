@@ -1,13 +1,12 @@
 import datetime
+
 import mock
 import sys
 from hamcrest import (
     assert_that,
     anything,
-    contains_inanyorder,
     calling,
     equal_to,
-    has_entries,
     is_not,
     raises,
 )
@@ -50,15 +49,29 @@ class TestEjudge__submit_queue_submit_send(TestCase):
         self.file_mock.read.return_value = b'source'
 
     def test_simple(self):
+        run = Run(
+            user_id=self.users[0].id,
+            problem_id=self.problems[0].id,
+            statement_id=self.statements[0].id,
+            create_time=datetime.datetime(2018, 3, 30, 16, 59, 0),
+            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_language_id=27,
+            ejudge_status=98,  # compiling
+        )
+        db.session.add(run)
+        db.session.flush()
+        db.session.refresh(run)
+
+        file = self.file_mock
+
+        text = file.read()
+        run.update_source(text)
+
         submit = Submit(
             id=1,
             user_id=self.users[0].id,
-            problem_id=self.problems[0].id,
-            create_time=datetime.datetime(2018, 3, 30, 16, 59, 0),
-            file=self.file_mock,
-            language_id=27,
+            run_id=run.id,
             ejudge_url='ejudge_url',
-            statement_id=self.statements[0].id,
         )
 
         ejudge_submit_mock.return_value = {
@@ -68,14 +81,16 @@ class TestEjudge__submit_queue_submit_send(TestCase):
 
         submit.send()
 
+        from flask import current_app
+
         ejudge_submit_mock.assert_called_once_with(
-            run_file=self.file_mock,
+            run_file=b'source',
             contest_id=1,
             prob_id=1,
             lang_id=27,
-            login='our_ej_login',
-            password='our_ej_password',
-            filename='filename',
+            login=current_app.config['EJUDGE_USER'],
+            password=current_app.config['EJUDGE_PASSWORD'],
+            filename='common_filename',
             url='ejudge_url',
             user_id=1,
         )
@@ -85,7 +100,6 @@ class TestEjudge__submit_queue_submit_send(TestCase):
         assert_that(run.ejudge_contest_id, equal_to(self.problems[0].ejudge_contest_id))
         assert_that(run.user.id, equal_to(self.users[0].id))
         assert_that(run.problem.id, equal_to(self.problems[0].id))
-        assert_that(run.create_time, equal_to(submit.create_time))
 
         notify_user_mock.assert_called_once_with(
             1,
@@ -100,7 +114,6 @@ class TestEjudge__submit_queue_submit_send(TestCase):
                     'problem_id': 1,
                     'statement_id': 1,
                     'score': None,
-                    'source': 'source',
                     'status': 98,
                     'user': {
                         'id': 1,
@@ -115,15 +128,29 @@ class TestEjudge__submit_queue_submit_send(TestCase):
 
     def test_handles_submit_exception(self):
         # В случае, если функция submit бросила исключение
+        run = Run(
+            user_id=self.users[0].id,
+            problem_id=self.problems[0].id,
+            statement_id=self.statements[0].id,
+            create_time=datetime.datetime(2018, 3, 30, 16, 59, 0),
+            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_language_id=27,
+            ejudge_status=98,  # compiling
+        )
+        db.session.add(run)
+        db.session.flush()
+        db.session.refresh(run)
+
+        file = self.file_mock
+
+        text = file.read()
+        run.update_source(text)
+
         submit = Submit(
             id=1,
             user_id=self.users[0].id,
-            problem_id=self.problems[0].id,
-            create_time=datetime.datetime(2018, 3, 30, 17, 10, 11),
-            file=self.file_mock,
-            language_id=27,
+            run_id=run.id,
             ejudge_url='ejudge_url',
-            statement_id=self.statements[0].id,
         )
 
         ejudge_submit_mock.side_effect = lambda *args, **kwargs: 1 / 0
@@ -147,15 +174,30 @@ class TestEjudge__submit_queue_submit_send(TestCase):
 
     def test_handles_submit_error(self):
         # В случае, если ejudge вернул не 0 код
+
+        run = Run(
+            user_id=self.users[0].id,
+            problem_id=self.problems[0].id,
+            statement_id=self.statements[0].id,
+            create_time=datetime.datetime(2018, 3, 30, 17, 10, 11),
+            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_language_id=27,
+            ejudge_status=98,  # compiling
+        )
+        db.session.add(run)
+        db.session.flush()
+        db.session.refresh(run)
+
+        file = self.file_mock
+
+        text = file.read()
+        run.update_source(text)
+
         submit = Submit(
             id=1,
             user_id=self.users[0].id,
-            problem_id=self.problems[0].id,
-            create_time=datetime.datetime(2018, 3, 30, 17, 10, 11),
-            file=self.file_mock,
-            language_id=27,
+            run_id=run.id,
             ejudge_url='ejudge_url',
-            statement_id=self.statements[0].id
         )
 
         ejudge_submit_mock.return_value = {
