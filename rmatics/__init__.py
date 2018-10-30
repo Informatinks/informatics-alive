@@ -1,6 +1,3 @@
-from gevent import monkey
-monkey.patch_all()
-
 from flask import Flask
 
 
@@ -12,14 +9,6 @@ def create_app(config=None):
     if config:
         app.config.update(config)
     app.url_map.strict_slashes = False
-
-    # SocketIO
-    from rmatics.websocket import socket
-    socket.init_app(
-        app,
-        # async_mode='gevent_uwsgi',
-        message_queue=app.config.get('REDIS_URL'),
-    )
 
     # Model
     from rmatics.model import db

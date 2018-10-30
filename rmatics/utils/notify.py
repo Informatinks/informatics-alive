@@ -2,6 +2,7 @@ import pickle
 import uuid
 
 from rmatics.model import redis
+from rmatics.utils.decorators import deprecated, do_not_execute
 
 
 def client_channel(client_uuid):
@@ -21,6 +22,8 @@ class Client:
         if user_id:
             self.pubsub.subscribe(user_channel(user_id))
 
+    @deprecated()
+    @do_not_execute(return_value=object())
     def get_message(self):
         message = None
         while True:
@@ -47,11 +50,15 @@ def format_message(message=None,
     return message
 
 
+@deprecated()
+@do_not_execute(return_value=None)
 def notify_client(client_uuid, **kwargs):
     message = format_message(**kwargs)
     redis.publish(client_channel(client_uuid), pickle.dumps(message))
 
 
+@deprecated()
+@do_not_execute(return_value=None)
 def notify_user(user_id, **kwargs):
     message = format_message(**kwargs)
     redis.publish(user_channel(user_id), pickle.dumps(message))
