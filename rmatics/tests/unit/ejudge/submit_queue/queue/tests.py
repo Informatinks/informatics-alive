@@ -61,6 +61,8 @@ class TestEjudge__submit_queue_submit_queue(TestCase):
 
     def test_with_workers(self):
         queue = SubmitQueue()
+        from gevent import monkey
+        monkey.patch_all()
         worker = SubmitWorker(queue)
         worker.start()
 
