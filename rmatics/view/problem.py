@@ -105,7 +105,6 @@ def trusted_problem_submit_v2(problem_id):
         problem=g.problem,
         problem_id=problem_id,
         statement_id=statement_id,
-        create_time=datetime.datetime.now(),
         ejudge_contest_id=g.problem.ejudge_contest_id,
         ejudge_language_id=language_id,
         ejudge_status=98,  # compiling
@@ -114,6 +113,7 @@ def trusted_problem_submit_v2(problem_id):
     db.session.add(run)
     db.session.flush()
     db.session.refresh(run)
+    db.session.commit()
 
     text = file.read()
     run.update_source(text)
