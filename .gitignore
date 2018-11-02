@@ -1,2 +1,4 @@
 .idea
 venv
+.ycm_extra_conf.py
+rmatics/settings.cfg
