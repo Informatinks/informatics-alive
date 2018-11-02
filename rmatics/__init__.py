@@ -75,7 +75,7 @@ def create_app(config=None):
         from rmatics.view.group import group
         from rmatics.view.group_invite import group_invite
         from rmatics.view.notification import notification
-        from rmatics.view.problem import problem
+        from rmatics.view.problem import problem_blueprint
         from rmatics.view.protocol import protocol
         from rmatics.view.statement import statement
         from rmatics.view.submit import submit
@@ -86,7 +86,7 @@ def create_app(config=None):
         app.register_blueprint(group)
         app.register_blueprint(group_invite)
         app.register_blueprint(notification)
-        app.register_blueprint(problem)
+        app.register_blueprint(problem_blueprint)
         app.register_blueprint(protocol)
         app.register_blueprint(statement)
         app.register_blueprint(submit)

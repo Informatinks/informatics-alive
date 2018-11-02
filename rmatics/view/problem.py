@@ -7,16 +7,21 @@ from flask import (
     request,
     Blueprint,
 )
-
+from sqlalchemy import func
+from werkzeug.exceptions import BadRequest
+from flask.views import MethodView
 from rmatics.ejudge.submit_queue import (
     get_last_get_id,
     queue_submit,
 )
+from webargs.flaskparser import parser
+from marshmallow import fields
 from rmatics.model import db
+from rmatics.model.problem import Problem
 from rmatics.model.run import Run
+from rmatics.model.user import SimpleUser
+from rmatics.view.serializers import RunSchema
 
-from rmatics.model.standings import ProblemStandings
-# from rmatics.view.utils import *
 from rmatics.utils.exceptions import (
     ProblemNotFound,
 )
@@ -30,7 +35,7 @@ from rmatics.view import (
     require_auth)
 
 
-problem = Blueprint('problem', __name__, url_prefix='/problem')
+problem_blueprint = Blueprint('problem', __name__, url_prefix='/problem')
 
 
 def load_problem_or_404(problem_id):
@@ -39,7 +44,7 @@ def load_problem_or_404(problem_id):
         raise ProblemNotFound
 
 
-@problem.route('/<int:problem_id>/submit_v2', methods=['POST'])
+@problem_blueprint.route('/<int:problem_id>/submit_v2', methods=['POST'])
 @require_auth
 @validate_form({
     'lang_id': int,
@@ -83,7 +88,7 @@ def problem_submit_v2(problem_id):
     })
 
 
-@problem.route('/trusted/<int:problem_id>/submit_v2', methods=['POST'])
+@problem_blueprint.route('/trusted/<int:problem_id>/submit_v2', methods=['POST'])
 @validate_form({
     'lang_id': int,
     'statement_id': lambda statement_id: statement_id is None or int(statement_id),
@@ -126,13 +131,13 @@ def trusted_problem_submit_v2(problem_id):
     })
 
 
-@problem.route('/<int:problem_id>')
+@problem_blueprint.route('/<int:problem_id>')
 def problem_get(problem_id):
     load_problem_or_404(problem_id)
     return jsonify(g.problem.serialize())
 
 
-@problem.route('/<int:problem_id>/runs')
+@problem_blueprint.route('/<int:problem_id>/runs')
 @validate_args({
     'statement_id': lambda statement_id: statement_id is None or int(statement_id)
 })
@@ -153,6 +158,103 @@ def problem_runs(problem_id):
         run.id: run.serialize()
         for run in runs.all()
     })
+
+
+get_args = {
+    'user_id': fields.Integer(),
+    'group_id': fields.Integer(),
+    'lang_id': fields.Integer(),
+    'status_id': fields.Integer(),
+    'statement_id': fields.Integer(),
+    'count': fields.Integer(default=10, missing=10),
+    'page': fields.Integer(required=True),  # TODO: required: True
+    'from_timestamp': fields.Integer(),  # Может быть -1, тогда не фильтруем
+    'to_timestamp': fields.Integer(),  # Может быть -1, тогда не фильтруем
+}
+
+
+# TODO: only teacher
+class ProblemSubmissions(MethodView):
+    """ View for getting problem submissions
+
+        Possible filters
+        ----------------
+        from_timestamp: timestamp
+        to_timestamp: timestamp
+        group_id: int
+        user_id: int
+        lang_id: int
+        status_id: int
+        statement_id: int
+
+        Returns
+        --------
+        'result': success | error
+        'data': [Run]
+        'metadata': {count: int, page_count: int}
+    """
+    def get(self, problem_id: int):
+        args = parser.parse(get_args, request)
+        user_id = args.get('user_id')
+        # group_id= args.get('group_id')  # TODO: Фильтрации по группам нет
+        lang_id = args.get('lang_id')
+        status_id = args.get('status_id')
+        statement_id = args.get('statement_id')
+        from_timestamp = args.get('from_timestamp')
+        to_timestamp = args.get('to_timestamp')
+
+        per_page_count = args.get('count')
+        per_page_count = per_page_count if per_page_count <= 100 else 100
+        page = args.get('page')
+
+        try:
+            from_timestamp = from_timestamp and from_timestamp != -1 and \
+                datetime.datetime.fromtimestamp(from_timestamp / 1_000)
+            to_timestamp = to_timestamp and to_timestamp != -1 and \
+                datetime.datetime.fromtimestamp(to_timestamp / 1_000)
+        except (OSError, OverflowError):
+            raise BadRequest('Bad timestamp data')
+
+        query = db.session.query(Run, SimpleUser, Problem, func.count()) \
+                          .join(SimpleUser, SimpleUser.id == Run.user_id) \
+                          .join(Problem, Problem.id == Run.problem_id) \
+                          .filter(Run.problem_id == problem_id).group_by(Run.id)
+        if user_id:
+            query = query.filter(Run.user_id == user_id)
+        if lang_id:
+            query = query.filter(Run.ejudge_language_id == lang_id)
+        if status_id:
+            query = query.filter(Run.ejudge_status == status_id)
+        if statement_id:
+            query = query.filter(Run.statement_id == statement_id)
+        if from_timestamp:
+            query = query.filter(Run.create_time > from_timestamp)
+        if to_timestamp:
+            query = query.filter(Run.create_time < to_timestamp)
+
+        query = query.offset((page - 1) * per_page_count).limit(per_page_count)
+
+        runs = []
+        count = 0
+        for run, user, problem, cnt in query.all():
+            run.user = user
+            run.problem = problem
+            runs.append(run)
+            count += cnt
+
+        metadata = {
+            'count': count,
+            'page_count': count // per_page_count + 1
+        }
+
+        schema = RunSchema(many=True)
+        data = schema.dump(runs)
+
+        return jsonify({'result': 'success', 'data': data.data, 'metadata': metadata})
+
+
+problem_blueprint.add_url_rule('/<int:problem_id>/submissions/', methods=('GET', ),
+                               view_func=ProblemSubmissions.as_view('problem_submissions'))
 
 
 # @view_config(route_name='problem.standings', renderer='json', request_method='GET')
