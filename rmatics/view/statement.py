@@ -127,4 +127,3 @@ def statement_standings(statement_id):
             group_id=group_id,
         )
     )
-
