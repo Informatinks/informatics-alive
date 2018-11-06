@@ -105,23 +105,20 @@ def trusted_problem_submit_v2(problem_id):
 
     user_id = int(request.form['user_id'])
 
-    run = Run(
-        user_id=user_id,
-        problem=g.problem,
-        problem_id=problem_id,
-        statement_id=statement_id,
-        ejudge_contest_id=g.problem.ejudge_contest_id,
-        ejudge_language_id=language_id,
-        ejudge_status=98,  # compiling
-    )
-
-    db.session.add(run)
-    db.session.flush()
-    db.session.refresh(run)
-    db.session.commit()
-
     text = file.read()
-    run.update_source(text)
+    try:
+        run = Run.create(
+            text,
+            user_id=user_id,
+            problem=g.problem,
+            problem_id=problem_id,
+            statement_id=statement_id,
+            ejudge_contest_id=g.problem.ejudge_contest_id,
+            ejudge_language_id=language_id,
+            ejudge_status=98,  # compiling
+        )
+    except ValueError:
+        raise BadRequest('Source file is duplicate of your previous submission')
 
     submit = queue_submit(run.id, user_id, ejudge_url)
 
