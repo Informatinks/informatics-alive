@@ -1,17 +1,13 @@
-
 import datetime
-import hashlib
 from typing import Optional
 
 from flask import g
-from sqlalchemy.exc import IntegrityError
 
 from rmatics.model import (
     db,
     mongo,
 )
 from rmatics.model.ejudge_run import EjudgeRun
-from rmatics.utils.decorators import deprecated
 from rmatics.utils.functions import attrs_to_dict
 
 
@@ -34,8 +30,6 @@ class Run(db.Model):
             ['ej_run_id', 'ej_contest_id'],
             ['ejudge.runs.run_id', 'ejudge.runs.contest_id'],
         ),
-        db.UniqueConstraint('user_id', 'source_hash', 'problem_id',
-                            name='__user__source_hash__problem__uc'),
         {'schema': 'pynformatics'},
     )
     __tablename__ = 'runs'
@@ -64,44 +58,14 @@ class Run(db.Model):
     ejudge_create_time = db.Column('ej_create_time', db.DateTime)
     ejudge_last_change_time = db.Column('ej_last_change_time', db.DateTime)
 
-    source_hash = db.Column(db.String(32))  # We are using md5 hex digest
-
     ejudge_run = db.relationship('EjudgeRun', backref='run')
 
-    @classmethod
-    def create(cls, source: bytes, **kwargs) -> 'Run':
-        run = cls(**kwargs)
-        run.source_hash = run._generate_source_hash(source)
-        db.session.add(run)
-
-        try:
-            db.session.commit()
-        except IntegrityError:
-            # Hope it was Unique constraint
-            db.session.rollback()
-            raise ValueError
-
-        db.session.refresh(run)
-        run._update_source(source)
-
-        return run
-
-    @deprecated(new_name=' `Use class method create instead` ')
     def update_source(self, blob: bytes):
-        return self._update_source(blob)
-
-    def _update_source(self, blob: bytes):
         mongo.db.source.insert_one({
             'run_id': self.id,
             'blob': blob,
         })
         return blob
-
-    @staticmethod
-    def _generate_source_hash(blob: bytes):
-        m = hashlib.md5()
-        m.update(blob)
-        return m.hexdigest
 
     @property
     def source(self) -> Optional[bytes]:
