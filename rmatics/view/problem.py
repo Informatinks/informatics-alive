@@ -174,7 +174,7 @@ get_args = {
 
 
 # TODO: only teacher
-class ProblemSubmissions(MethodView):
+class ProblemSubmissionsFilterApi(MethodView):
     """ View for getting problem submissions
 
         Possible filters
@@ -204,7 +204,6 @@ class ProblemSubmissions(MethodView):
         to_timestamp = args.get('to_timestamp')
 
         per_page_count = args.get('count')
-        per_page_count = per_page_count if per_page_count <= 100 else 100
         page = args.get('page')
 
         try:
@@ -215,10 +214,10 @@ class ProblemSubmissions(MethodView):
         except (OSError, OverflowError):
             raise BadRequest('Bad timestamp data')
 
-        query = db.session.query(Run, SimpleUser, Problem, func.count()) \
+        query = db.session.query(Run, SimpleUser, Problem) \
                           .join(SimpleUser, SimpleUser.id == Run.user_id) \
                           .join(Problem, Problem.id == Run.problem_id) \
-                          .filter(Run.problem_id == problem_id).group_by(Run.id)
+                          .filter(Run.problem_id == problem_id)
         if user_id:
             query = query.filter(Run.user_id == user_id)
         if lang_id:
@@ -232,19 +231,17 @@ class ProblemSubmissions(MethodView):
         if to_timestamp:
             query = query.filter(Run.create_time < to_timestamp)
 
-        query = query.offset((page - 1) * per_page_count).limit(per_page_count)
+        result = query.paginate(page=page, per_page=per_page_count, max_per_page=100)
 
         runs = []
-        count = 0
-        for run, user, problem, cnt in query.all():
+        for run, user, problem in result.items:
             run.user = user
             run.problem = problem
             runs.append(run)
-            count += cnt
 
         metadata = {
-            'count': count,
-            'page_count': count // per_page_count + 1
+            'count': result.total,
+            'page_count': result.pages
         }
 
         schema = RunSchema(many=True)
@@ -254,7 +251,7 @@ class ProblemSubmissions(MethodView):
 
 
 problem_blueprint.add_url_rule('/<int:problem_id>/submissions/', methods=('GET', ),
-                               view_func=ProblemSubmissions.as_view('problem_submissions'))
+                               view_func=ProblemSubmissionsFilterApi.as_view('problem_submissions'))
 
 
 # @view_config(route_name='problem.standings', renderer='json', request_method='GET')
