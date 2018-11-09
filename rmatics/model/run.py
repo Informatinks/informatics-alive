@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 from typing import Optional
 
 from flask import g
@@ -58,6 +59,8 @@ class Run(db.Model):
     ejudge_create_time = db.Column('ej_create_time', db.DateTime)
     ejudge_last_change_time = db.Column('ej_last_change_time', db.DateTime)
 
+    source_hash = db.Column(db.String(32))  # We are using md5 hex digest
+
     ejudge_run = db.relationship('EjudgeRun', backref='run')
 
     def update_source(self, blob: bytes):
@@ -74,6 +77,12 @@ class Run(db.Model):
             return None
         blob = data.get('blob', None)
         return blob
+
+    @staticmethod
+    def generate_source_hash(blob: bytes):
+        m = hashlib.md5()
+        m.update(blob)
+        return m.hexdigest
 
     @property
     def status(self):

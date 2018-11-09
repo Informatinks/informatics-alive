@@ -7,7 +7,6 @@ from flask import (
     request,
     Blueprint,
 )
-from sqlalchemy import func
 from werkzeug.exceptions import BadRequest
 from flask.views import MethodView
 from rmatics.ejudge.submit_queue import (
@@ -105,6 +104,17 @@ def trusted_problem_submit_v2(problem_id):
 
     user_id = int(request.form['user_id'])
 
+    text = file.read()
+
+    source_hash = Run.generate_source_hash(text)
+
+    duplicate = db.session.query(Run).filter(Run.user_id == user_id)\
+                                     .filter(Run.problem_id == problem_id)\
+                                     .filter(Run.source_hash == source_hash)\
+                                     .order_by(Run.create_time.desc()).first()
+    if duplicate is not None:
+        raise BadRequest('Source file is duplicate of your previous submission')
+
     run = Run(
         user_id=user_id,
         problem=g.problem,
@@ -113,6 +123,7 @@ def trusted_problem_submit_v2(problem_id):
         ejudge_contest_id=g.problem.ejudge_contest_id,
         ejudge_language_id=language_id,
         ejudge_status=98,  # compiling
+        source_hash=source_hash,
     )
 
     db.session.add(run)
@@ -120,7 +131,6 @@ def trusted_problem_submit_v2(problem_id):
     db.session.refresh(run)
     db.session.commit()
 
-    text = file.read()
     run.update_source(text)
 
     submit = queue_submit(run.id, user_id, ejudge_url)
