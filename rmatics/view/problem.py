@@ -16,6 +16,7 @@ from rmatics.ejudge.submit_queue import (
 from webargs.flaskparser import parser
 from marshmallow import fields
 from rmatics.model import db
+from rmatics.model.group import UserGroup
 from rmatics.model.problem import Problem
 from rmatics.model.run import Run
 from rmatics.model.user import SimpleUser
@@ -177,7 +178,7 @@ get_args = {
     'status_id': fields.Integer(),
     'statement_id': fields.Integer(),
     'count': fields.Integer(default=10, missing=10),
-    'page': fields.Integer(required=True),  # TODO: required: True
+    'page': fields.Integer(required=True),
     'from_timestamp': fields.Integer(),  # Может быть -1, тогда не фильтруем
     'to_timestamp': fields.Integer(),  # Может быть -1, тогда не фильтруем
 }
@@ -206,7 +207,7 @@ class ProblemSubmissionsFilterApi(MethodView):
     def get(self, problem_id: int):
         args = parser.parse(get_args, request)
         user_id = args.get('user_id')
-        # group_id= args.get('group_id')  # TODO: Фильтрации по группам нет
+        group_id = args.get('group_id')
         lang_id = args.get('lang_id')
         status_id = args.get('status_id')
         statement_id = args.get('statement_id')
@@ -221,13 +222,17 @@ class ProblemSubmissionsFilterApi(MethodView):
                 datetime.datetime.fromtimestamp(from_timestamp / 1_000)
             to_timestamp = to_timestamp and to_timestamp != -1 and \
                 datetime.datetime.fromtimestamp(to_timestamp / 1_000)
-        except (OSError, OverflowError):
+        except (OSError, OverflowError, ValueError):
             raise BadRequest('Bad timestamp data')
 
         query = db.session.query(Run, SimpleUser, Problem) \
                           .join(SimpleUser, SimpleUser.id == Run.user_id) \
                           .join(Problem, Problem.id == Run.problem_id) \
                           .filter(Run.problem_id == problem_id)
+
+        if group_id:
+            query = query.join(UserGroup, UserGroup.user_id == SimpleUser.id)\
+                         .filter(UserGroup.group_id == group_id)
         if user_id:
             query = query.filter(Run.user_id == user_id)
         if lang_id:

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from flask import url_for
 
 from rmatics.model import db
+from rmatics.model.group import Group, UserGroup
 from rmatics.model.problem import Problem
 from rmatics.model.run import Run
 from rmatics.model.user import SimpleUser
@@ -37,6 +38,13 @@ class TestAPIProblemSubmission(TestCase):
         self.run4.create_time = datetime.utcnow() - timedelta(days=1)
 
         db.session.add_all([self.run1, self.run2, self.run3, self.run4])
+
+        self.group = Group()
+        db.session.add(self.group)
+        db.session.flush()
+
+        user_group = UserGroup(user_id=self.user1.id, group_id=self.group.id)
+        db.session.add(user_group)
 
         db.session.commit()
 
@@ -137,6 +145,14 @@ class TestAPIProblemSubmission(TestCase):
         data = resp.get_json()
         self.assertEqual(data['result'], 'success')
         self.assertEqual(len(data['data']), 2)
+
+    def test_filter_by_group(self):
+        resp = self.send_request(self.problem2.id, group_id=self.group.id)
+        self.assert200(resp)
+
+        data = resp.get_json()
+        self.assertEqual(data['result'], 'success')
+        self.assertEqual(len(data['data']), 1)
 
     def test_filter_by_from_timestamp(self):
 
