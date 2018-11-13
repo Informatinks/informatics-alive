@@ -36,6 +36,7 @@ class TestAPI__group_get(TestCase):
             equal_to({
                 'code': 404,
                 'message': 'Group not found',
+                'result': 'error',
             })
         )
 
@@ -51,5 +52,6 @@ class TestAPI__group_get(TestCase):
             equal_to({
                 'code': 404,
                 'message': 'Group not found',
+                'result': 'error',
             })
         )

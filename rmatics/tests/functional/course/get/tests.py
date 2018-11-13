@@ -58,5 +58,6 @@ class TestAPI__course_get(TestCase):
             equal_to({
                 'code': 404,
                 'message': 'No course with this id',
+                'result': 'error',
             })
         )

@@ -85,5 +85,6 @@ class TestAPI__notification_update_run(TestCase):
             equal_to({
                 'code': 404,
                 'message': 'Run not found',
+                'result': 'error',
             })
         )
