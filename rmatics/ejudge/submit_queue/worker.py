@@ -8,11 +8,12 @@ class SubmitWorker(Greenlet):
         super(SubmitWorker, self).__init__()
         self.queue = queue
         self._ctx = current_app.app_context()
+        self.ejudge_url = current_app.config['EJUDGE_NEW_CLIENT_URL']
 
     def handle_submit(self):
         submit = self.queue.get()
         try:
-            submit.send()
+            submit.send(ejudge_url=self.ejudge_url)
         except Exception:
             current_app.logger.exception('Submit worker caught exception and skipped submit without notifying user')
 

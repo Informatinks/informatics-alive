@@ -44,7 +44,10 @@ class Submit:
         self.ejudge_user = current_app.config.get('EJUDGE_USER')
         self.ejudge_password = current_app.config.get('EJUDGE_PASSWORD')
 
-    def send(self):
+    def send(self, ejudge_url=None):
+
+        ejudge_url = ejudge_url or self.ejudge_url
+
         run = db.session.query(Run).get(self.run_id)
         if not run:
             log.error(f'Can\'t find run #{self.run_id}')
@@ -63,7 +66,7 @@ class Submit:
                 login=self.ejudge_user,
                 password=self.ejudge_password,
                 filename='common_filename',
-                url=self.ejudge_url,
+                url=ejudge_url,
                 user_id=user_id
             )
         except Exception:
@@ -83,6 +86,8 @@ class Submit:
             return
 
         run.ejudge_run_id = ejudge_run_id
+        run.ejudge_url = ejudge_url
+
         db.session.add(run)
         db.session.commit()
 

@@ -24,7 +24,7 @@ class TestEjudge__submit_queue_submit_worker_handle_submit(TestCase):
         self.submit_mock.send.assert_called_once()
 
     def test_failed(self):
-        self.submit_mock.send.side_effect = lambda: 1 / 0
+        self.submit_mock.send.side_effect = lambda **__: 1 / 0
 
         worker = SubmitWorker(self.queue_mock)
         worker.handle_submit()
