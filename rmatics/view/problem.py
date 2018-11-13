@@ -88,6 +88,25 @@ def problem_submit_v2(problem_id):
     })
 
 
+def check_file_restriction(file, max_size_kb: int = 64) -> bytes:
+    """ Function for checking submission restricts
+        Checks only size (KB less then max_size_kb)
+            and that is is not empty (len > 2)
+        Raises
+        --------
+        ValueError if restriction is failed
+    """
+    max_size = max_size_kb * 1024
+    file_bytes: bytes = file.read(max_size)
+    if len(file_bytes) == max_size:
+        raise ValueError('Submission should be less than 64Kb')
+    # TODO: 4 это прото так, что такое путой файл для ejudje?
+    if len(file_bytes) < 4:
+        raise ValueError('Submission shouldn\'t be empty')
+
+    return file_bytes
+
+
 @problem_blueprint.route('/trusted/<int:problem_id>/submit_v2', methods=['POST'])
 @validate_form({
     'lang_id': int,
@@ -104,9 +123,10 @@ def trusted_problem_submit_v2(problem_id):
         statement_id = int(statement_id)
 
     user_id = int(request.form['user_id'])
-
-    text = file.read()
-
+    try:
+        text = check_file_restriction(file)
+    except ValueError as e:
+        raise BadRequest(e.args[0])
     source_hash = Run.generate_source_hash(text)
 
     duplicate = db.session.query(Run).filter(Run.user_id == user_id)\

@@ -82,7 +82,7 @@ class Run(db.Model):
     def generate_source_hash(blob: bytes):
         m = hashlib.md5()
         m.update(blob)
-        return m.hexdigest
+        return m.hexdigest()
 
     @property
     def status(self):
