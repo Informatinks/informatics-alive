@@ -1,9 +1,12 @@
+from typing import Type
+
 from sqlalchemy.ext.declarative import (
     AbstractConcreteBase,
     declared_attr
 )
 
 from rmatics.model import db
+from rmatics.utils.decorators import deprecated
 from rmatics.utils.functions import attrs_to_dict
 
 
@@ -22,7 +25,7 @@ class CourseModule(db.Model):
     section = db.relationship('CourseSection', backref=db.backref('modules', lazy='dynamic'))
 
     @property
-    def instance(self):
+    def instance(self) -> Type['CourseModuleInstance']:
         if not hasattr(self, '_instance'):
             instance_class = next(
                 (
@@ -40,6 +43,7 @@ class CourseModule(db.Model):
                     .first()
         return self._instance
 
+    @deprecated(' `Do not use serialize inside model!` ')
     def serialize(self):
         serialized = attrs_to_dict(
             self,

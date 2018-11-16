@@ -1,6 +1,5 @@
-from collections import OrderedDict
-
 from rmatics.model import db
+from rmatics.utils.decorators import deprecated
 from rmatics.utils.functions import attrs_to_dict
 
 
@@ -20,6 +19,7 @@ class Course(db.Model):
     def require_password(self):
         return bool(self.password)
 
+    @deprecated('view.serializers.course.CourseSchema')
     def serialize(self):
         serialized = attrs_to_dict(
             self,

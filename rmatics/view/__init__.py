@@ -16,6 +16,8 @@ from rmatics.model.role import (
 from rmatics.model.statement import Statement
 from rmatics.model.user import SimpleUser
 from werkzeug.exceptions import Forbidden, Unauthorized
+
+from rmatics.utils.decorators import deprecated
 from rmatics.utils.exceptions import (
     CourseNotFound,
     StatementNotFound,
@@ -45,6 +47,7 @@ def load_user():
     g.user = user
 
 
+@deprecated()
 def load_problem(problem_id, silent=True):
     problem = db.session.query(EjudgeProblem).filter_by(id=problem_id).first()
     g.problem = problem

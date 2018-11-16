@@ -71,7 +71,7 @@ def create_app(config=None):
 
         from rmatics.view.auth import auth
         from rmatics.view.bootstrap import bootstrap
-        from rmatics.view.course import course
+        from rmatics.view.course import course_blueprint
         from rmatics.view.group import group
         from rmatics.view.group_invite import group_invite
         from rmatics.view.notification import notification
@@ -82,7 +82,7 @@ def create_app(config=None):
         from rmatics.view.user import user
         app.register_blueprint(auth)
         app.register_blueprint(bootstrap)
-        app.register_blueprint(course)
+        app.register_blueprint(course_blueprint)
         app.register_blueprint(group)
         app.register_blueprint(group_invite)
         app.register_blueprint(notification)

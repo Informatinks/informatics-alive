@@ -1,16 +1,37 @@
 from flask import (
     Blueprint,
-    g,
     jsonify,
 )
+from flask.views import MethodView
+from sqlalchemy import true
+from werkzeug.exceptions import NotFound
 
-from rmatics.view import load_course
+from rmatics.model import db
+from rmatics.model.course import Course
+from rmatics.model.course_section import CourseSection
+from rmatics.view.serializers.course import CourseSchema
+
+course_blueprint = Blueprint('course', __name__, url_prefix='/course')
 
 
-course = Blueprint('course', __name__, url_prefix='/course')
+class CourseApi(MethodView):
+    def get(self, course_id: int):
+
+        course = db.session.query(Course).get(course_id)
+
+        if not course:
+            raise NotFound('Course with this id is not found')
+
+        if not course.require_password():
+            course.sections.filter(CourseSection.visible == true()).all()
+            schema = CourseSchema()
+        else:
+            schema = CourseSchema(exclude=('sections',))
+
+        dumped = schema.dump(course)
+
+        return jsonify({'result': 'success', 'data': dumped.data})
 
 
-@course.route('/<int:course_id>')
-def course_get(course_id):
-    load_course(course_id, silent=False)
-    return jsonify(g.course.serialize())
+course_blueprint.add_url_rule('/<int:course_id>', methods=('GET', ),
+                              view_func=CourseApi.as_view('course'))

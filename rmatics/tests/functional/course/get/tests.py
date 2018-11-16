@@ -26,8 +26,10 @@ class TestAPI__course_get(TestCase):
     def test_simple(self):
         response = self.client.get('/course/123')
         assert_that(response.status_code, equal_to(200))
+        self.assertIn('data', response.json)
+        data = response.json['data']
         assert_that(
-            response.json,
+            data,
             equal_to({
                 'id': 123,
                 'full_name': 'course course',
@@ -41,8 +43,10 @@ class TestAPI__course_get(TestCase):
         self.course.password = 'abc'
         response = self.client.get('/course/123')
         assert_that(response.status_code, equal_to(200))
+        self.assertIn('data', response.json)
+        data = response.json['data']
         assert_that(
-            response.json,
+            data,
             has_entries({'require_password': True}),
         )
         assert_that(
@@ -57,7 +61,7 @@ class TestAPI__course_get(TestCase):
             response.json,
             equal_to({
                 'code': 404,
-                'message': 'No course with this id',
+                'message': 'Course with this id is not found',
                 'result': 'error',
             })
         )
