@@ -56,7 +56,7 @@ from flask import url_for
 from rmatics.model import db
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase
-from rmatics.view.problem import check_file_restriction
+from rmatics.view.problem import TrustedSubmitApi
 
 
 class TestCheckFileRestriction(TestCase):
@@ -66,12 +66,12 @@ class TestCheckFileRestriction(TestCase):
     def test_file_too_large(self):
         files = io.BytesIO(bytes((ascii('f') * 64 * 1024).encode('ascii')))
         with self.assertRaises(ValueError):
-            check_file_restriction(files)
+            TrustedSubmitApi.check_file_restriction(files)
 
         files = io.BytesIO(bytes((ascii('f') * 1).encode('ascii')))
 
         with self.assertRaises(ValueError):
-            check_file_restriction(files)
+            TrustedSubmitApi.check_file_restriction(files)
 
 
 class TestTrustedProblemSubmit(TestCase):
@@ -82,7 +82,7 @@ class TestTrustedProblemSubmit(TestCase):
         self.create_statements()
 
     def send_request(self, problem_id, **kwargs):
-        url = url_for('problem.trusted_problem_submit_v2', problem_id=problem_id)
+        url = url_for('problem.trusted_submit', problem_id=problem_id)
         data = {
             'lang_id': 1,
             'statement_id': self.statements[0].id,
