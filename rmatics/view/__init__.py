@@ -42,8 +42,10 @@ def handle_api_exception(api_exception):
 
 
 def load_user():
+    user = None
     user_id = session.get('user_id')
-    user = db.session.query(SimpleUser).filter_by(id=user_id).one_or_none()
+    if user_id:
+        user = db.session.query(SimpleUser).get(user_id)
     g.user = user
 
 

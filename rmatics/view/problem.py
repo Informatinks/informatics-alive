@@ -44,48 +44,87 @@ def load_problem_or_404(problem_id):
         raise ProblemNotFound
 
 
-@problem_blueprint.route('/<int:problem_id>/submit_v2', methods=['POST'])
-@require_auth
-@validate_form({
-    'lang_id': int,
-    'statement_id': lambda statement_id: statement_id is None or int(statement_id)
-})
-def problem_submit_v2(problem_id):
-    load_problem(problem_id)
-    language_id = int(request.form['lang_id'])
-    file = request.files['file']
-    ejudge_url = current_app.config['EJUDGE_NEW_CLIENT_URL']
-    statement_id = request.form.get('statement_id')
-    if statement_id:
-        statement_id = int(statement_id)
+class SubmitApi(MethodView):
+    post_args = {
+        'lang_id': fields.Integer(required=True),
+        'statement_id': fields.Integer(),
+    }
 
-    # if language_id not in context.get_allowed_languages():
-    #     raise Forbidden(f'Language id "{language_id}" is not allowed')
+    @staticmethod
+    def check_file_restriction(file, max_size_kb: int = 64) -> bytes:
+        """ Function for checking submission restricts
+            Checks only size (KB less then max_size_kb)
+                and that is is not empty (len > 2)
+            Raises
+            --------
+            ValueError if restriction is failed
+        """
+        max_size = max_size_kb * 1024
+        file_bytes: bytes = file.read(max_size)
+        if len(file_bytes) == max_size:
+            raise ValueError('Submission should be less than 64Kb')
+        # TODO: 4 это прото так, что такое путой файл для ejudje?
+        if len(file_bytes) < 4:
+            raise ValueError('Submission shouldn\'t be empty')
 
-    run = Run(
-        user_id=g.user.id,
-        problem=g.problem,
-        problem_id=problem_id,
-        statement_id=statement_id,
-        create_time=datetime.datetime.now(),
-        ejudge_contest_id=g.problem.ejudge_contest_id,
-        ejudge_language_id=language_id,
-        ejudge_status=98,  # compiling
-    )
+        return file_bytes
 
-    db.session.add(run)
-    db.session.flush()
+    @require_auth
+    def post(self, problem_id: int):
+        args = parser.parse(self.post_args)
 
-    # TODO: different encodings + exception handling
-    text = file.read()
-    run.update_source(text)
+        language_id = args['lang_id']
+        statement_id = args.get('statement_id')
+        user_id = g.user.id
+        file = parser.parse_files(request, 'file', 'file')
 
-    submit = queue_submit(run.id, g.user.id, ejudge_url)
+        problem = db.session.query(EjudgeProblem).get(problem_id)
+        if not problem:
+            raise NotFound('Problem with this id is not found')
 
-    return jsonify({
-        'last_get_id': get_last_get_id(),
-        'submit': submit.serialize()
-    })
+        try:
+            text = self.check_file_restriction(file)
+        except ValueError as e:
+            raise BadRequest(e.args[0])
+        source_hash = Run.generate_source_hash(text)
+
+        duplicate = db.session.query(Run).filter(Run.user_id == user_id) \
+            .filter(Run.problem_id == problem_id) \
+            .filter(Run.source_hash == source_hash) \
+            .order_by(Run.create_time.desc()).first()
+        if duplicate is not None:
+            raise BadRequest('Source file is duplicate of your previous submission')
+
+        # TODO: разобраться, есть ли там constraint на statement_id
+        run = Run(
+            user_id=user_id,
+            problem=problem,
+            problem_id=problem_id,
+            statement_id=statement_id,
+            ejudge_contest_id=problem.ejudge_contest_id,
+            ejudge_language_id=language_id,
+            ejudge_status=98,  # compiling
+            source_hash=source_hash,
+        )
+
+        db.session.add(run)
+        db.session.flush()
+        db.session.refresh(run)
+        db.session.commit()
+
+        run.update_source(text)
+
+        ejudge_url = current_app.config['EJUDGE_NEW_CLIENT_URL']
+        submit = queue_submit(run.id, user_id, ejudge_url)
+
+        return jsonify({
+            'last_get_id': get_last_get_id(),
+            'submit': submit.serialize()
+        })
+
+
+problem_blueprint.add_url_rule('/<int:problem_id>/submit_v2', methods=('POST', ),
+                               view_func=SubmitApi.as_view('submit'))
 
 
 class TrustedSubmitApi(MethodView):
