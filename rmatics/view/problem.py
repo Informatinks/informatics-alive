@@ -7,7 +7,7 @@ from flask import (
     request,
     Blueprint,
 )
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, NotFound
 from flask.views import MethodView
 from rmatics.ejudge.submit_queue import (
     get_last_get_id,
@@ -17,7 +17,7 @@ from webargs.flaskparser import parser
 from marshmallow import fields
 from rmatics.model import db
 from rmatics.model.group import UserGroup
-from rmatics.model.problem import Problem
+from rmatics.model.problem import Problem, EjudgeProblem
 from rmatics.model.run import Run
 from rmatics.model.user import SimpleUser
 from rmatics.view.serializers import RunSchema
@@ -33,7 +33,7 @@ from rmatics.view import (
     load_problem,
     load_statement,
     require_auth)
-
+from rmatics.view.serializers.problem import ProblemSchema
 
 problem_blueprint = Blueprint('problem', __name__, url_prefix='/problem')
 
@@ -162,10 +162,23 @@ def trusted_problem_submit_v2(problem_id):
     })
 
 
-@problem_blueprint.route('/<int:problem_id>')
-def problem_get(problem_id):
-    load_problem_or_404(problem_id)
-    return jsonify(g.problem.serialize())
+class ProblemApi(MethodView):
+    def get(self, problem_id: int):
+        problem = db.session.query(EjudgeProblem).get(problem_id)
+        if not problem:
+            raise NotFound('Problem with this id is not found')
+
+        if not problem.sample_tests:
+            schema = ProblemSchema(exclude=['sample_tests_json'])
+        else:
+            schema = ProblemSchema()
+
+        data = schema.dump(problem)
+        return jsonify({'result': 'success', 'data': data.data})
+
+
+problem_blueprint.add_url_rule('/<int:problem_id>', methods=('GET', ),
+                               view_func=ProblemApi.as_view('problem'))
 
 
 @problem_blueprint.route('/<int:problem_id>/runs')

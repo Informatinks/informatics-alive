@@ -6,6 +6,7 @@ from zipfile import ZipFile
 
 from rmatics.ejudge.serve_internal import EjudgeContestCfg
 from rmatics.model import db
+from rmatics.utils.decorators import deprecated
 from rmatics.utils.json_type import JsonType
 from rmatics.utils.run import read_file_unknown_encoding
 
@@ -89,6 +90,7 @@ class EjudgeProblem(Problem):
 
         return db.session.query(EjudgeProblem).filter_by(id=problem_id).one()
 
+    @deprecated('view.serializers.ProblemSchema')
     def serialize(self):
         if self.sample_tests:
             self.generateSamplesJson(force_update=True)
