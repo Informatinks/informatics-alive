@@ -69,17 +69,17 @@ def create_app(config=None):
         app.register_error_handler(HTTPException, handle_api_exception)
         app.before_request(load_user)
 
-        from rmatics.view.auth import auth
+        from rmatics.view.user.auth import auth
         from rmatics.view.bootstrap import bootstrap
         from rmatics.view.course import course_blueprint
-        from rmatics.view.group import group
-        from rmatics.view.group_invite import group_invite
-        from rmatics.view.notification import notification
-        from rmatics.view.problem import problem_blueprint
+        from rmatics.view.user.group import group
+        from rmatics.view.user.group_invite import group_invite
+        from rmatics.view.user.notification import notification
+        from rmatics.view.problem.problem import problem_blueprint
         from rmatics.view.protocol import protocol
-        from rmatics.view.statement import statement
-        from rmatics.view.submit import submit
-        from rmatics.view.user import user
+        from rmatics.view.course.statement import statement
+        from rmatics.view.problem.submit import submit
+        from rmatics.view.user.user import user
         app.register_blueprint(auth)
         app.register_blueprint(bootstrap)
         app.register_blueprint(course_blueprint)

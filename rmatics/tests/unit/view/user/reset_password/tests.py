@@ -14,7 +14,7 @@ from rmatics.model.user import User
 from rmatics.model.role import RoleAssignment
 from rmatics.testutils import TestCase
 from rmatics.utils.exceptions import UserNotFound
-from rmatics.view.user import user_reset_password
+from rmatics.view.user.user import user_reset_password
 
 
 class TestView__user_reset_password(TestCase):
@@ -39,7 +39,7 @@ class TestView__user_reset_password(TestCase):
 
     def test_simple(self):
         new_password = 'some password'
-        with mock.patch('rmatics.view.user.User.reset_password', mock.Mock()) as mock_reset_password:
+        with mock.patch('rmatics.view.user.user.User.reset_password', mock.Mock()) as mock_reset_password:
             mock_reset_password.return_value = new_password
             with self.app.test_request_context(data=json.dumps({'id': self.user.id})):
                 g.user = self.users[0]

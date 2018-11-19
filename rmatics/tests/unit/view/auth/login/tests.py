@@ -17,7 +17,7 @@ from rmatics.model import db
 from rmatics.model.user import User
 from rmatics.testutils import TestCase
 from rmatics.utils.exceptions import AuthWrongUsernameOrPassword
-from rmatics.view.auth import auth_login
+from rmatics.view.user.auth import auth_login
 
 
 class TestView__auth_login(TestCase):
@@ -52,7 +52,7 @@ class TestView__auth_login(TestCase):
 
 
     def test_simple(self):
-        with mock.patch('rmatics.view.auth.check_password', mock.Mock(return_value=True)) as mock_check_password:
+        with mock.patch('rmatics.view.user.auth.check_password', mock.Mock(return_value=True)) as mock_check_password:
             result = self.call_view(
                 data={
                     'username': self.username,
@@ -70,7 +70,7 @@ class TestView__auth_login(TestCase):
         mock_check_password.assert_called_once_with(self.password, self.password_md5)
 
     def test_no_user(self):
-        with mock.patch('rmatics.view.auth.check_password', mock.Mock(return_value=True)):
+        with mock.patch('rmatics.view.user.auth.check_password', mock.Mock(return_value=True)):
             assert_that(
                 calling(self.call_view).with_args(
                     data={
@@ -83,7 +83,7 @@ class TestView__auth_login(TestCase):
             )
 
     def test_wrong_password(self):
-        with mock.patch('rmatics.view.auth.check_password', mock.Mock(return_value=False)):
+        with mock.patch('rmatics.view.user.auth.check_password', mock.Mock(return_value=False)):
             assert_that(
                 calling(self.call_view).with_args(
                     data={

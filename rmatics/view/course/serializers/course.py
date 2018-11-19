@@ -1,10 +1,9 @@
 from marshmallow import fields, Schema
-from sqlalchemy import true
 
 from rmatics.model.course import Course
 from rmatics.model.course_module import CourseModule
 from rmatics.model.course_section import CourseSection
-from rmatics.view.serializers.course.section_modules import cls_schema_mapper
+from rmatics.view.course.serializers.section_modules import cls_schema_mapper
 
 
 class CourseSchema(Schema):

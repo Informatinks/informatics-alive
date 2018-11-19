@@ -12,7 +12,7 @@ from rmatics.model.ejudge_run import EjudgeRun
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase
 from rmatics.utils.exceptions import RunNotFound
-from rmatics.view.notification import notification_update_run
+from rmatics.view.user.notification import notification_update_run
 
 
 class TestView__notification_update_run(TestCase):
@@ -48,9 +48,9 @@ class TestView__notification_update_run(TestCase):
     def test_simple(self):
         sync_mock = mock.Mock(return_value=self.run)
         notify_user_mock = mock.Mock()
-        with mock.patch('rmatics.view.notification.Run.sync', sync_mock), \
-                mock.patch('rmatics.view.notification.notify_user', notify_user_mock), \
-                mock.patch('rmatics.view.notification.Run.source', mock.Mock()):
+        with mock.patch('rmatics.view.user.notification.Run.sync', sync_mock), \
+                mock.patch('rmatics.view.user.notification.notify_user', notify_user_mock), \
+                mock.patch('rmatics.view.user.notification.Run.source', mock.Mock()):
             self.call_view(contest_id=self.ej_run.contest_id, run_id=self.ej_run.run_id)
 
         sync_mock.assert_called_once_with(

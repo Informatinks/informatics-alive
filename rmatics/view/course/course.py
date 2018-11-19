@@ -9,7 +9,7 @@ from werkzeug.exceptions import NotFound
 from rmatics.model import db
 from rmatics.model.course import Course
 from rmatics.model.course_section import CourseSection
-from rmatics.view.serializers.course import CourseSchema
+from rmatics.view.course.serializers.course import CourseSchema
 
 course_blueprint = Blueprint('course', __name__, url_prefix='/course')
 

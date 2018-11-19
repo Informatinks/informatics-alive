@@ -1,0 +1,1 @@
+from rmatics.view.course.course import course_blueprint

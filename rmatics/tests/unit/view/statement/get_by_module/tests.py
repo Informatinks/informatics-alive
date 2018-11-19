@@ -1,4 +1,3 @@
-import mock
 from hamcrest import (
     assert_that,
     has_entries,
@@ -8,7 +7,7 @@ from rmatics.model import db
 from rmatics.model.course_module import CourseModule
 from rmatics.model.statement import Statement
 from rmatics.testutils import TestCase
-from rmatics.view.statement import statement_get_by_module
+from rmatics.view.course.statement import statement_get_by_module
 
 
 class TestView__statement_get_by_module(TestCase):

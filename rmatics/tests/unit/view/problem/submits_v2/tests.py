@@ -56,7 +56,7 @@ from flask import url_for
 from rmatics.model import db
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase
-from rmatics.view.problem import SubmitApi
+from rmatics.view.problem.problem import SubmitApi
 
 
 class TestCheckFileRestriction(TestCase):
@@ -92,8 +92,8 @@ class TestTrustedProblemSubmit(TestCase):
         response = self.client.post(url, data=data, content_type='multipart/form-data')
         return response
 
-    @patch('rmatics.view.problem.Run.update_source')
-    @patch('rmatics.view.problem.queue_submit')
+    @patch('rmatics.view.problem.problem.Run.update_source')
+    @patch('rmatics.view.problem.problem.queue_submit')
     def test_simple(self, mock_submit, mock_update):
         submit = MagicMock()
         submit.serialize.return_value = {'hhh': 'mmm'}
@@ -109,8 +109,8 @@ class TestTrustedProblemSubmit(TestCase):
         submit.serialize.assert_called_once()
         mock_update.assert_called_once()
 
-    @patch('rmatics.view.problem.Run.update_source')
-    @patch('rmatics.view.problem.queue_submit')
+    @patch('rmatics.view.problem.problem.Run.update_source')
+    @patch('rmatics.view.problem.problem.queue_submit')
     def test_duplicate(self, mock_submit, mock_update):
         submit = MagicMock()
         submit.serialize.return_value = {'hhh': 'mmm'}
@@ -163,8 +163,8 @@ class TestProblemSubmit(TestCase):
         response = self.client.post(url, data=data, content_type='multipart/form-data')
         return response
 
-    @patch('rmatics.view.problem.Run.update_source')
-    @patch('rmatics.view.problem.queue_submit')
+    @patch('rmatics.view.problem.problem.Run.update_source')
+    @patch('rmatics.view.problem.problem.queue_submit')
     def test_simple(self, mock_submit, mock_update):
         submit = MagicMock()
         submit.serialize.return_value = {'hhh': 'mmm'}
@@ -181,8 +181,8 @@ class TestProblemSubmit(TestCase):
         submit.serialize.assert_called_once()
         mock_update.assert_called_once()
 
-    @patch('rmatics.view.problem.Run.update_source')
-    @patch('rmatics.view.problem.queue_submit')
+    @patch('rmatics.view.problem.problem.Run.update_source')
+    @patch('rmatics.view.problem.problem.queue_submit')
     def test_duplicate(self, mock_submit, mock_update):
         submit = MagicMock()
         submit.serialize.return_value = {'hhh': 'mmm'}

@@ -8,7 +8,7 @@ from hamcrest import (
 from rmatics.model import db
 from rmatics.model.group import Group
 from rmatics.testutils import TestCase
-from rmatics.view.group import group_search
+from rmatics.view.user.group import group_search
 
 
 class TestView__group_search(TestCase):

@@ -6,11 +6,10 @@ from hamcrest import (
     raises,
 )
 
-from rmatics.model import db
 from rmatics.model.group import Group
 from rmatics.testutils import TestCase
 from rmatics.utils.exceptions import GroupNotFound
-from rmatics.view.group import group_get
+from rmatics.view.user.group import group_get
 
 
 class TestView__group_get(TestCase):

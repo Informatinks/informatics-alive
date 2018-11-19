@@ -1,8 +1,6 @@
-import mock
 from flask import g
 from hamcrest import (
     assert_that,
-    has_entries,
     calling,
     raises,
 )
@@ -11,7 +9,7 @@ from rmatics.model import db
 from rmatics.model.user import User
 from rmatics.testutils import TestCase
 from werkzeug.exceptions import Unauthorized
-from rmatics.view.auth import auth_logout
+from rmatics.view.user.auth import auth_logout
 
 
 class TestView__auth_logout(TestCase):

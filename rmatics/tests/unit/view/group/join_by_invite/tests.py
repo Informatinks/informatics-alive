@@ -2,16 +2,12 @@ import mock
 from flask import g
 from hamcrest import (
     assert_that,
-    calling,
     equal_to,
-    raises,
 )
 
-from rmatics.model import db
 from rmatics.model.group import UserGroup
 from rmatics.testutils import TestCase
-from rmatics.utils.exceptions import BadRequest
-from rmatics.view.group import group_join_by_invite
+from rmatics.view.user.group import group_join_by_invite
 
 
 class TestView__group_join_by_invite(TestCase):
@@ -26,8 +22,8 @@ class TestView__group_join_by_invite(TestCase):
         # self.context_mock.user = self.users[0]
 
     def call_view(self, group_invite, user_group=None):
-        with mock.patch('rmatics.view.group.GroupInvite.get_by_url', mock.Mock()) as get_by_url_mock, \
-                mock.patch('rmatics.view.group.UserGroup.create_if_not_exists', mock.Mock()) as create_if_not_exists_mock:
+        with mock.patch('rmatics.view.user.group.GroupInvite.get_by_url', mock.Mock()) as get_by_url_mock, \
+                mock.patch('rmatics.view.user.group.UserGroup.create_if_not_exists', mock.Mock()) as create_if_not_exists_mock:
             get_by_url_mock.return_value = group_invite
             create_if_not_exists_mock.return_value = user_group
             with self.app.test_request_context():

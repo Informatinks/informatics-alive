@@ -6,12 +6,9 @@ from hamcrest import (
 )
 
 from rmatics.model import db
-from rmatics.model.problem import EjudgeProblem, Problem
 from rmatics.model.run import Run
-from rmatics.model.statement import Statement
-from rmatics.model.user import SimpleUser
 from rmatics.testutils import TestCase
-from rmatics.view.problem import problem_runs
+from rmatics.view.problem.problem import problem_runs
 
 
 class TestView__problem_runs(TestCase):

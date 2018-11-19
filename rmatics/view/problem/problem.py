@@ -20,20 +20,19 @@ from rmatics.model.group import UserGroup
 from rmatics.model.problem import Problem, EjudgeProblem
 from rmatics.model.run import Run
 from rmatics.model.user import SimpleUser
-from rmatics.view.serializers import RunSchema
+from rmatics.view.problem.serializers.run import RunSchema
 
 from rmatics.utils.exceptions import (
     ProblemNotFound,
 )
 from rmatics.utils.validate import (
     validate_args,
-    validate_form,
 )
 from rmatics.view import (
     load_problem,
     load_statement,
     require_auth)
-from rmatics.view.serializers.problem import ProblemSchema
+from rmatics.view.problem.serializers.problem import ProblemSchema
 
 problem_blueprint = Blueprint('problem', __name__, url_prefix='/problem')
 
