@@ -75,7 +75,7 @@ def create_app(config=None):
         from rmatics.view.user.group import group
         from rmatics.view.user.group_invite import group_invite
         from rmatics.view.user.notification import notification
-        from rmatics.view.problem.problem import problem_blueprint
+        from rmatics.view.problem.route import problem_blueprint
         from rmatics.view.protocol import protocol
         from rmatics.view.course.statement import statement
         from rmatics.view.problem.submit import submit

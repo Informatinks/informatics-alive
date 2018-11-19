@@ -5,7 +5,6 @@ from flask import (
     g,
     jsonify,
     request,
-    Blueprint,
 )
 from werkzeug.exceptions import BadRequest, NotFound
 from flask.views import MethodView
@@ -33,8 +32,6 @@ from rmatics.view import (
     load_statement,
     require_auth)
 from rmatics.view.problem.serializers.problem import ProblemSchema
-
-problem_blueprint = Blueprint('problem', __name__, url_prefix='/problem')
 
 
 def load_problem_or_404(problem_id):
@@ -122,10 +119,6 @@ class SubmitApi(MethodView):
         })
 
 
-problem_blueprint.add_url_rule('/<int:problem_id>/submit_v2', methods=('POST', ),
-                               view_func=SubmitApi.as_view('submit'))
-
-
 class TrustedSubmitApi(MethodView):
     post_args = {
         'lang_id': fields.Integer(required=True),
@@ -205,10 +198,6 @@ class TrustedSubmitApi(MethodView):
         })
 
 
-problem_blueprint.add_url_rule('/trusted/<int:problem_id>/submit_v2', methods=('POST', ),
-                               view_func=TrustedSubmitApi.as_view('trusted_submit'))
-
-
 class ProblemApi(MethodView):
     def get(self, problem_id: int):
         problem = db.session.query(EjudgeProblem).get(problem_id)
@@ -223,11 +212,7 @@ class ProblemApi(MethodView):
         data = schema.dump(problem)
         return jsonify({'result': 'success', 'data': data.data})
 
-problem_blueprint.add_url_rule('/<int:problem_id>', methods=('GET', ),
-                               view_func=ProblemApi.as_view('problem'))
 
-
-@problem_blueprint.route('/<int:problem_id>/runs')
 @validate_args({
     'statement_id': lambda statement_id: statement_id is None or int(statement_id)
 })
@@ -342,10 +327,6 @@ class ProblemSubmissionsFilterApi(MethodView):
         data = schema.dump(runs)
 
         return jsonify({'result': 'success', 'data': data.data, 'metadata': metadata})
-
-
-problem_blueprint.add_url_rule('/<int:problem_id>/submissions/', methods=('GET', ),
-                               view_func=ProblemSubmissionsFilterApi.as_view('problem_submissions'))
 
 
 # @view_config(route_name='problem.standings', renderer='json', request_method='GET')

@@ -54,6 +54,7 @@ from unittest.mock import patch, MagicMock
 from flask import url_for
 
 from rmatics.model import db
+from rmatics.model.role import RoleAssignment
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase
 from rmatics.view.problem.problem import SubmitApi
@@ -212,3 +213,62 @@ class TestProblemSubmit(TestCase):
         resp = self.send_request(self.problems[0].id, **data)
 
         self.assert400(resp)
+
+
+class TestGetSubmissionSource(TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.create_roles()
+
+        self.create_users()
+        self.create_statements()
+        self.create_problems()
+
+        blob = b'skdjvndfkjnvfk'
+
+        source_hash = Run.generate_source_hash(blob)
+
+        self.run = Run(
+            user_id=self.users[0].id,
+            problem=self.problems[0],
+            problem_id=self.problems[0].id,
+            statement_id=self.statements[0].id,
+            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_language_id=1,
+            ejudge_status=98,  # compiling
+            source_hash=source_hash,
+        )
+        db.session.add(self.run)
+        db.session.commit()
+
+        self.run.update_source(blob)
+
+    def send_request(self, run_id):
+        url = url_for('problem.run_source', run_id=run_id)
+        response = self.client.get(url)
+        return response
+
+    def test_simple(self):
+        self.set_session({'user_id': self.users[0].id})
+
+        resp = self.send_request(run_id=self.run.id)
+        self.assert200(resp)
+
+    def test_wrong_permissions(self):
+        self.set_session({'user_id': self.users[1].id})
+
+        resp = self.send_request(run_id=self.run.id)
+        self.assert403(resp)
+
+    def test_super_permissions(self):
+
+        role_assignment = RoleAssignment(user_id=self.users[1].id, role=self.admin_role)
+
+        db.session.add(role_assignment)
+        db.session.commit()
+
+        self.set_session({'user_id': self.users[1].id})
+
+        resp = self.send_request(run_id=self.run.id)
+        self.assert200(resp)
