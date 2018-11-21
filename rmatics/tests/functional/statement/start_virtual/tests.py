@@ -7,7 +7,7 @@ from hamcrest import (
     has_entries,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.course import Course
 from rmatics.model.statement import Statement
 from rmatics.model.user import User

@@ -8,7 +8,7 @@ from hamcrest import (
     has_items,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.user import User
 from rmatics.testutils import TestCase
 from rmatics.utils.functions import attrs_to_dict

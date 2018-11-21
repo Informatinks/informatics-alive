@@ -5,7 +5,7 @@ from sqlalchemy.dialects.mysql import DOUBLE
 from zipfile import ZipFile
 
 from rmatics.ejudge.serve_internal import EjudgeContestCfg
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.utils.decorators import deprecated
 from rmatics.utils.json_type import JsonType
 from rmatics.utils.run import read_file_unknown_encoding

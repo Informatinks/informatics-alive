@@ -1,7 +1,7 @@
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm.collections import attribute_mapped_collection
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.utils.functions import attrs_to_dict
 
 

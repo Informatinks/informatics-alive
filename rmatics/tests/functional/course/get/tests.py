@@ -6,7 +6,7 @@ from hamcrest import (
     is_not,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.course import Course
 from rmatics.testutils import TestCase
 

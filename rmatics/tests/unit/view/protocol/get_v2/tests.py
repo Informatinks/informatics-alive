@@ -8,7 +8,7 @@ from hamcrest import (
     raises,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.ejudge_run import EjudgeRun
 from rmatics.model.problem import EjudgeProblem
 from rmatics.model.user import SimpleUser

@@ -1,6 +1,6 @@
 import datetime
 
-from rmatics.model import db
+from rmatics.model.base import db
 
 
 class Stars(db.Model):

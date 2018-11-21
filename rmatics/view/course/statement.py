@@ -9,7 +9,7 @@ from sqlalchemy import and_
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import IntegrityError
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.course_module import CourseModule
 from rmatics.model.standings import StatementStandings
 from rmatics.model.statement import StatementProblem
@@ -22,7 +22,7 @@ from rmatics.utils.exceptions import StatementNotFound
 from rmatics.utils.validate import validate_args
 
 
-statement = Blueprint('statement', __name__, url_prefix='/statement')
+statement_blueprint = Blueprint('statement', __name__, url_prefix='/statement')
 
 
 def load_statement_or_404(statement_id):
@@ -31,13 +31,14 @@ def load_statement_or_404(statement_id):
         raise StatementNotFound
 
 
-@statement.route('/<int:statement_id>')
+@statement_blueprint.route('/<int:statement_id>')
 def statement_get(statement_id):
+    # Join load course
     load_statement_or_404(statement_id)
     return jsonify(g.statement.serialize())
 
 
-@statement.route('/<int:statement_id>/set_settings', methods=['POST'])
+@statement_blueprint.route('/<int:statement_id>/set_settings', methods=['POST'])
 @require_roles('admin')
 def statement_set_settings(statement_id):
     load_statement_or_404(statement_id)
@@ -45,7 +46,7 @@ def statement_set_settings(statement_id):
     return jsonify(g.statement.serialize())
 
 
-@statement.route('/<int:statement_id>/start_virtual', methods=['POST'])
+@statement_blueprint.route('/<int:statement_id>/start_virtual', methods=['POST'])
 @require_auth
 def statement_start_virtual(statement_id):
     load_statement_or_404(statement_id)
@@ -57,7 +58,7 @@ def statement_start_virtual(statement_id):
     return jsonify(participant.serialize())
 
 
-@statement.route('/<int:statement_id>/finish_virtual', methods=['POST'])
+@statement_blueprint.route('/<int:statement_id>/finish_virtual', methods=['POST'])
 @require_auth
 def statement_finish_virtual(statement_id):
     load_statement_or_404(statement_id)
@@ -65,7 +66,7 @@ def statement_finish_virtual(statement_id):
     return jsonify(participant.serialize())
 
 
-@statement.route('/<int:statement_id>/start', methods=['POST'])
+@statement_blueprint.route('/<int:statement_id>/start', methods=['POST'])
 @require_auth
 def statement_start(statement_id):
     load_statement_or_404(statement_id)
@@ -77,7 +78,7 @@ def statement_start(statement_id):
     return jsonify(participant.serialize())
 
 
-@statement.route('/<int:statement_id>/finish', methods=['POST'])
+@statement_blueprint.route('/<int:statement_id>/finish', methods=['POST'])
 @require_auth
 def statement_finish(statement_id):
     load_statement_or_404(statement_id)
@@ -85,7 +86,7 @@ def statement_finish(statement_id):
     return jsonify(participant.serialize())
 
 
-@statement.route('/')
+@statement_blueprint.route('/')
 @validate_args({
     'course_module_id': int,
 })
@@ -110,7 +111,7 @@ def statement_get_by_module():
     return jsonify(g.statement.serialize())
 
 
-@statement.route('/<int:statement_id>/standings')
+@statement_blueprint.route('/<int:statement_id>/standings')
 @validate_args({
     'group_id': lambda group_id: group_id is None or int(group_id)
 })

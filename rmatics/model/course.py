@@ -1,4 +1,4 @@
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.utils.decorators import deprecated
 from rmatics.utils.functions import attrs_to_dict
 

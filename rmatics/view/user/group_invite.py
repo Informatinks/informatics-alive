@@ -4,7 +4,7 @@ from flask import (
     Blueprint,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.group_invite import GroupInvite
 from rmatics.view import require_auth
 

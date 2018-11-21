@@ -5,7 +5,7 @@ import gzip
 import zipfile
 from flask import g
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.pynformatics_run import PynformaticsRun
 from rmatics.utils.ejudge_archive import EjudgeArchiveReader
 from rmatics.utils.functions import attrs_to_dict

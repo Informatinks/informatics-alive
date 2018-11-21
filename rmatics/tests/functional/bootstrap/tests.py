@@ -5,7 +5,7 @@ from hamcrest import (
     has_entries,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.user import SimpleUser
 from rmatics.model.participant import Participant
 from rmatics.testutils import TestCase

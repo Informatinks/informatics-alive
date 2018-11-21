@@ -7,7 +7,7 @@ from hamcrest import (
     has_key,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.pynformatics_run import PynformaticsRun
 from rmatics.model.ejudge_run import EjudgeRun
 from rmatics.model.user import SimpleUser

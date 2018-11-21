@@ -53,7 +53,7 @@ from unittest.mock import patch, MagicMock
 
 from flask import url_for
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.role import RoleAssignment
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase

@@ -7,7 +7,7 @@ from sqlalchemy.orm.exc import (
     NoResultFound,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.participant import Participant
 from rmatics.model.statement import StatementUser
 from rmatics.utils.functions import (

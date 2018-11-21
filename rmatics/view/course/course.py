@@ -6,7 +6,7 @@ from flask.views import MethodView
 from sqlalchemy import true
 from werkzeug.exceptions import NotFound
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.course import Course
 from rmatics.model.course_section import CourseSection
 from rmatics.view.course.serializers.course import CourseSchema

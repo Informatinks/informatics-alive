@@ -9,7 +9,7 @@ from hamcrest import (
 from rmatics.ejudge.submit_queue.queue import SubmitQueue
 from rmatics.ejudge.submit_queue.submit import Submit
 from rmatics.ejudge.submit_queue.worker import SubmitWorker
-from rmatics.model import redis
+from rmatics.model.base import redis
 from rmatics.testutils import TestCase
 
 

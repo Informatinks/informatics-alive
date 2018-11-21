@@ -3,7 +3,7 @@ from hamcrest import (
     equal_to,
     has_entries)
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.group_invite import GroupInvite
 from rmatics.testutils import TestCase
 

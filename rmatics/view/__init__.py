@@ -6,7 +6,7 @@ from flask import (
 from functools import wraps
 from sqlalchemy import exists, join
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.course import Course
 from rmatics.model.problem import EjudgeProblem
 from rmatics.model.role import (

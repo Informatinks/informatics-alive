@@ -6,7 +6,7 @@ from flask import (
 )
 from sqlalchemy import and_, true
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.group import (
     Group,
     UserGroup,

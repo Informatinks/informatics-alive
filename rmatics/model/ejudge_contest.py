@@ -1,6 +1,6 @@
-import datetime 
+import datetime
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.utils.moodle import get_contest_str_id
 
 class EjudgeContest(db.Model):

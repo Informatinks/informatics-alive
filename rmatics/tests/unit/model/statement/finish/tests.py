@@ -1,7 +1,7 @@
 import time
 import mock
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.statement import Statement
 from rmatics.model.user import User
 from rmatics.testutils import TestCase

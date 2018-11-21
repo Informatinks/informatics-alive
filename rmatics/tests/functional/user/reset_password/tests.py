@@ -6,8 +6,7 @@ from hamcrest import (
     anything,
 )
 
-
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.user import User
 from rmatics.model.role import (
     Role,

@@ -3,7 +3,7 @@ from hamcrest import (
     equal_to,
 )
 
-from rmatics.model import redis
+from rmatics.model.base import redis
 from rmatics.testutils import TestCase
 from rmatics.utils.redis.queue import RedisQueue
 

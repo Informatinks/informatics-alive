@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from flask import url_for
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.group import Group, UserGroup
 from rmatics.model.problem import Problem
 from rmatics.model.run import Run

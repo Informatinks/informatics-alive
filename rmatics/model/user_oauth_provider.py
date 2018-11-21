@@ -1,4 +1,4 @@
-from rmatics.model import db
+from rmatics.model.base import db
 
 
 class UserOAuthProvider(db.Model):

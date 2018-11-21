@@ -4,7 +4,7 @@ from sqlalchemy.types import (
     String,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 
 
 class Action(db.Model):

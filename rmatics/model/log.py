@@ -1,6 +1,6 @@
 from sqlalchemy.sql import func
 
-from rmatics.model import db
+from rmatics.model.base import db
 
 
 class Log(db.Model):

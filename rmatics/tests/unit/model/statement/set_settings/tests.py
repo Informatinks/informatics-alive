@@ -7,7 +7,7 @@ from hamcrest import (
     raises,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.statement import Statement
 from rmatics.testutils import TestCase
 from rmatics.utils.exceptions import StatementSettingsValidationError

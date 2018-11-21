@@ -14,7 +14,7 @@ from rmatics.ejudge.submit_queue import (
 )
 from webargs.flaskparser import parser
 from marshmallow import fields
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.group import UserGroup
 from rmatics.model.problem import Problem, EjudgeProblem
 from rmatics.model.run import Run

@@ -4,7 +4,7 @@ from flask import send_file, g
 from flask.views import MethodView
 from werkzeug.exceptions import NotFound
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.run import Run
 from rmatics.view import require_auth, require_roles
 

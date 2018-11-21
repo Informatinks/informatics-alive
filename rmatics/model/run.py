@@ -4,10 +4,7 @@ from typing import Optional
 
 from flask import g
 
-from rmatics.model import (
-    db,
-    mongo,
-)
+from rmatics.model.base import db, mongo
 from rmatics.model.ejudge_run import EjudgeRun
 from rmatics.utils.functions import attrs_to_dict
 

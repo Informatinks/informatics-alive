@@ -5,7 +5,7 @@ from hamcrest import (
     raises,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.user import User
 from rmatics.testutils import TestCase
 from werkzeug.exceptions import Unauthorized

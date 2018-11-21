@@ -1,6 +1,6 @@
 from sqlalchemy import and_
 
-from rmatics.model import db
+from rmatics.model.base import db
 
 
 class Hint(db.Model):

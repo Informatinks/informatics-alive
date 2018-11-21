@@ -4,7 +4,7 @@ from hamcrest import (
     equal_to,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.group import Group
 from rmatics.testutils import TestCase
 

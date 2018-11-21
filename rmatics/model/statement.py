@@ -6,7 +6,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.course_module import CourseModuleInstance
 from rmatics.model.participant import Participant
 from rmatics.utils.constants import LANG_NAME_BY_ID

@@ -4,7 +4,7 @@ from hamcrest import (
     has_entries,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.ejudge_run import EjudgeRun
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase

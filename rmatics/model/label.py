@@ -1,4 +1,4 @@
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.course_module import CourseModuleInstance
 from rmatics.utils.functions import attrs_to_dict
 

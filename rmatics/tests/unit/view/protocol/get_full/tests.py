@@ -5,7 +5,7 @@ from hamcrest import (
     has_entries,
 )
 
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.ejudge_run import EjudgeRun
 from rmatics.model.role import RoleAssignment
 from rmatics.testutils import TestCase
