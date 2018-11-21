@@ -48,15 +48,19 @@ class TestView__notification_update_run(TestCase):
     def test_simple(self):
         sync_mock = mock.Mock(return_value=self.run)
         notify_user_mock = mock.Mock()
+        centrifugo_mock = mock.Mock()
+        centrifugo_mock.send_problem_run_updates = mock.Mock()
         with mock.patch('rmatics.view.user.notification.Run.sync', sync_mock), \
                 mock.patch('rmatics.view.user.notification.notify_user', notify_user_mock), \
-                mock.patch('rmatics.view.user.notification.Run.source', mock.Mock()):
+                mock.patch('rmatics.view.user.notification.Run.source', mock.Mock()),\
+                mock.patch('rmatics.view.user.notification.centrifugo_client', centrifugo_mock):
             self.call_view(contest_id=self.ej_run.contest_id, run_id=self.ej_run.run_id)
 
         sync_mock.assert_called_once_with(
             ejudge_run_id=self.ej_run.run_id,
             ejudge_contest_id=self.ej_run.contest_id,
         )
+        centrifugo_mock.send_problem_run_updates.assert_called_once()
         assert_that(
             notify_user_mock.call_args[0][0],
             equal_to(self.users[0].id)

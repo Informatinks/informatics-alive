@@ -12,6 +12,8 @@ from rmatics.utils.exceptions import RunNotFound
 from rmatics.utils.validate import validate_args
 from rmatics.websocket import notify_user
 from rmatics.websocket.events import RUNS_FETCH
+from rmatics.view.centrifugo import centrifugo_client
+
 
 notification = Blueprint('notification', __name__, url_prefix='/notification')
 
@@ -75,6 +77,8 @@ def notification_update_run():
     db.session.refresh(run)
 
     g.user = run.user
+    problem_id = run.problem_id
+    centrifugo_client.send_problem_run_updates(problem_id, run)
     notify_user(
         run.user_id,
         RUNS_FETCH,

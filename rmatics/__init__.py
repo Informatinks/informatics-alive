@@ -42,6 +42,11 @@ def create_app(config=None):
     from rmatics.model.base import redis
     redis.init_app(app)
 
+    # Centrifugo
+    cent_url = app.config.get('CENTRIFUGO_URL')
+    cent_api_key = app.config.get('CENTRIFUGO_API_KEY')
+    centrifugo_client.init_app(cent_url, cent_api_key)
+
     # View
     from rmatics.view import (
         handle_api_exception,
