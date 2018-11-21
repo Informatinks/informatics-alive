@@ -1,7 +1,27 @@
 from flask import Flask
+from logging.config import dictConfig
+
+from rmatics.view.centrifugo import centrifugo_client
 
 
 def create_app(config=None):
+
+    dictConfig({
+        'version': 1,
+        'formatters': {'default': {
+            'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+        }},
+        'handlers': {'stdout': {
+            'class': 'logging.StreamHandler',
+            'stream': 'ext://flask.logging.wsgi_errors_stream',
+            'formatter': 'default'
+        }},
+        'root': {
+            'level': 'INFO',
+            'handlers': ['stdout']
+        }
+    })
+
     app = Flask(__name__)
 
     app.config.from_pyfile('settings.cfg', silent=True)
