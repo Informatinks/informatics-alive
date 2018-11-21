@@ -5,7 +5,7 @@ from redis import WatchError
 
 from .submit import Submit
 from .worker import SubmitWorker
-from rmatics.model import redis
+from rmatics.model.base import redis
 from rmatics.utils.redis.queue import RedisQueue
 from rmatics.websocket import notify_all
 from rmatics.websocket.events import QUEUE_STATUS

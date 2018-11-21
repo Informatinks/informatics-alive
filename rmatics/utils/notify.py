@@ -1,7 +1,7 @@
 import pickle
 import uuid
 
-from rmatics.model import redis
+from rmatics.model.base import redis
 from rmatics.utils.decorators import deprecated, do_not_execute
 
 

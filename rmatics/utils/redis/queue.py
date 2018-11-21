@@ -1,6 +1,6 @@
 import pickle
 
-from rmatics.model import redis
+from rmatics.model.base import redis
 
 
 class RedisQueue:

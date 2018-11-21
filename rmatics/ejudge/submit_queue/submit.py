@@ -4,7 +4,7 @@ from flask import current_app, g
 from werkzeug.datastructures import FileStorage
 
 from rmatics.ejudge.ejudge_proxy import submit
-from rmatics.model import db
+from rmatics.model.base import db
 from rmatics.model.run import Run
 from rmatics.model.user import SimpleUser
 from rmatics.model.problem import EjudgeProblem

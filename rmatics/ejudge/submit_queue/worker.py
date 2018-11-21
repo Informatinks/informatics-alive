@@ -1,6 +1,6 @@
 from flask import current_app
 from gevent import Greenlet, sleep
-from rmatics.model import db
+from rmatics.model.base import db
 
 
 class SubmitWorker(Greenlet):
