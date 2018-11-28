@@ -88,7 +88,7 @@ class SubmitApi(MethodView):
             .filter(Run.problem_id == problem_id) \
             .filter(Run.source_hash == source_hash) \
             .order_by(Run.create_time.desc()).first()
-        if duplicate is not None:
+        if duplicate is not None and duplicate.source_hash == source_hash:
             raise BadRequest('Source file is duplicate of your previous submission')
 
         # TODO: разобраться, есть ли там constraint на statement_id
@@ -104,9 +104,9 @@ class SubmitApi(MethodView):
         )
 
         db.session.add(run)
-        db.session.flush()
-        db.session.refresh(run)
         db.session.commit()
+
+        db.session.refresh(run)
 
         run.update_source(text)
 
@@ -139,7 +139,7 @@ class TrustedSubmitApi(MethodView):
         file_bytes: bytes = file.read(max_size)
         if len(file_bytes) == max_size:
             raise ValueError('Submission should be less than 64Kb')
-        # TODO: 4 это прото так, что такое путой файл для ejudje?
+        # TODO: 4 это прото так, что такое путой файл для ejudge?
         if len(file_bytes) < 4:
             raise ValueError('Submission shouldn\'t be empty')
 
@@ -165,9 +165,8 @@ class TrustedSubmitApi(MethodView):
 
         duplicate = db.session.query(Run).filter(Run.user_id == user_id) \
             .filter(Run.problem_id == problem_id) \
-            .filter(Run.source_hash == source_hash) \
             .order_by(Run.create_time.desc()).first()
-        if duplicate is not None:
+        if duplicate is not None and duplicate.source_hash == source_hash:
             raise BadRequest('Source file is duplicate of your previous submission')
 
         # TODO: разобраться, есть ли там constraint на statement_id
@@ -183,9 +182,8 @@ class TrustedSubmitApi(MethodView):
         )
 
         db.session.add(run)
-        db.session.flush()
-        db.session.refresh(run)
         db.session.commit()
+        db.session.refresh(run)
 
         run.update_source(text)
 

@@ -176,7 +176,6 @@ class TestProblemSubmit(TestCase):
             file=(file, 'test.123', )
         )
         resp = self.send_request(self.problems[0].id, **data)
-        print(resp.data)
 
         self.assert200(resp)
         submit.serialize.assert_called_once()
