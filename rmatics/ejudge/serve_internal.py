@@ -119,7 +119,10 @@ class EjudgeProblemCfg:
                 self.corr_pat = d["corr_pat"][0].strip("\"")
             else:
                 if self.abstract != None and "corr_pat" in contest.abstract[self.abstract]:
-                    self.corr_pat = contest.abstract[self.abstract]["corr_pat"][0].strip("\"") 
+                    self.corr_pat = contest.abstract[self.abstract]["corr_pat"][0].strip("\"")
+
+            check_cmd = d.get('check_cmd', None)
+            self.check_cmd = check_cmd and check_cmd[0].strip('"')
 
         def getInfo(self):
             return {"long_name" : self.long_name, "id" : self.id, "short_name" : self.short_name, "timelimit" : self.time_limit, "abstract" : self.abstract}
@@ -128,7 +131,7 @@ class EjudgeProblemCfg:
 class EjudgeContestCfg:
     
     HOME_JUDGES = '/home/judges/'
-    
+
     @staticmethod
     def get_contest_path(number):
         return HOME_JUDGES + '0'*(6-len(str(number))) + str(number) + '/'
