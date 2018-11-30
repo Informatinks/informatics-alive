@@ -83,7 +83,11 @@ def try_to_move_checkers(contest_dir, checker_to_problem_mapper: dict) -> bool:
         return False
     problems_dir = os.path.join(contest_dir, 'problems')
 
-    for checker_name in os.listdir(checkers_dir):
+    files_in_checker_dir = os.listdir(checkers_dir)
+
+    moved_files = []
+
+    for checker_name in files_in_checker_dir:
         if checker_name.startswith('.'):
             continue
 
@@ -98,14 +102,30 @@ def try_to_move_checkers(contest_dir, checker_to_problem_mapper: dict) -> bool:
 
         src = os.path.join(checkers_dir, checker_name)
 
-        dest = os.path.join(problems_dir, problem_name, 'check')
+        problem_name_path = os.path.join(problems_dir, problem_name)
+
+        dest = os.path.join(problem_name_path, 'check')
 
         shutil.move(src, dest)
+
+        moved_files.append(checker_name)
+
+        checker_sources = list(filter(lambda name: name != checker_name and name.startswith(checker_name),
+                                      files_in_checker_dir))
+
+        for source in checker_sources:
+            src = os.path.join(checkers_dir, source)
+            shutil.move(src, problem_name_path)
+            moved_files.append(source)
+
+    unmoved_files = set(moved_files) ^ set(files_in_checker_dir)
+    if unmoved_files:
+        print(f'files unmoved: {unmoved_files}')
 
 
 def add_advanced_layout_option(conf_path: str):
 
-    with open(conf_path, 'r') as fp:
+    with open(conf_path, 'r', encoding='utf-8') as fp:
         lines: list = fp.readlines()
 
     idx = 0
@@ -117,10 +137,10 @@ def add_advanced_layout_option(conf_path: str):
         idx -= 1
 
     lines.insert(idx, 'advanced_layout')
-    lines.insert(idx, '\n')
-    lines.insert(idx, '\n')
+    lines.insert(idx + 1, '\n')
+    lines.insert(idx + 1, '\n')
 
-    with open(conf_path, 'w') as fp:
+    with open(conf_path, 'w', encoding='utf-8') as fp:
         fp.writelines(lines)
 
 
