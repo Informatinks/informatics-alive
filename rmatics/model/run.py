@@ -72,7 +72,12 @@ class Run(db.Model):
     def source(self) -> Optional[bytes]:
         data = mongo.db.source.find_one({'run_id': self.id})
         if not data:
-            return None
+            text = self.ejudge_run.get_sources()
+            if not text:
+                return None
+            blob = text.decode('utf-8')
+            self.update_source(blob)
+            return blob
         blob = data.get('blob', None)
         return blob
 

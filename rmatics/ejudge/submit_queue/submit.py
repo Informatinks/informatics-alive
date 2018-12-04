@@ -3,6 +3,7 @@ import logging
 from flask import current_app, g
 from werkzeug.datastructures import FileStorage
 
+from rmatics import centrifugo_client
 from rmatics.ejudge.ejudge_proxy import submit
 from rmatics.model.base import db
 from rmatics.model.run import Run
@@ -56,6 +57,13 @@ class Submit:
         problem = run.problem
         ejudge_language_id = run.ejudge_language_id
         user_id = run.user_id
+
+        # `Run` now not inside the queue so we should change status
+        run.status = 98  # Compiling
+        db.session.add(run)
+        db.session.commit()
+
+        centrifugo_client.send_problem_run_updates(run.problem_id, run)
 
         try:
             ejudge_response = submit(

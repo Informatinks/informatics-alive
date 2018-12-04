@@ -99,7 +99,7 @@ class SubmitApi(MethodView):
             statement_id=statement_id,
             ejudge_contest_id=problem.ejudge_contest_id,
             ejudge_language_id=language_id,
-            ejudge_status=98,  # compiling
+            ejudge_status=377,  # In queue
             source_hash=source_hash,
         )
 
@@ -177,7 +177,7 @@ class TrustedSubmitApi(MethodView):
             statement_id=statement_id,
             ejudge_contest_id=problem.ejudge_contest_id,
             ejudge_language_id=language_id,
-            ejudge_status=98,  # compiling
+            ejudge_status=377,  # In queue
             source_hash=source_hash,
         )
 
