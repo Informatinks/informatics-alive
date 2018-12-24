@@ -52,6 +52,21 @@ class SourceApi(MethodView):
                          attachment_filename='submission.txt')
 
 
+class ProtocolApi(MethodView):
+    def get(self, run_id: int):
+
+        run = db.session.query(Run).get(run_id)
+        if run is None:
+            raise NotFound('Current run_id is not found')
+
+        protocol = run.protocol
+        if protocol is None:
+            raise NotFound('Protocol for current run_id not found')
+
+        return send_file(io.BytesIO(protocol),
+                         attachment_filename='submission.txt')
+
+
 class UpdateEjudgeRun(MethodView):
     def post(self):
         data = request.get_json(force=True)

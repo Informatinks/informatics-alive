@@ -75,6 +75,14 @@ class Run(db.Model):
         blob = data.get('blob', None)
         return blob
 
+    @property
+    def protocol(self) -> Optional[bytes]:
+        data = mongo.db.protocol.find_one({'protocol_id': self.id})
+        if not data:
+            return None
+        blob = data.get('blob', None)
+        return blob
+
     @staticmethod
     def generate_source_hash(blob: bytes) -> str:
         m = hashlib.md5()

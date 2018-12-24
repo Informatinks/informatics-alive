@@ -342,3 +342,46 @@ class TestUpdateSubmissionFromEjudge(TestCase):
         resp = self.send_request(**request_data)
 
         self.assert400(resp)
+
+
+class TestGetRunProtocol(TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.create_roles()
+        self.create_users()
+        self.create_problems()
+
+        blob = b'skdjvndfkjnvfk'
+
+        source_hash = Run.generate_source_hash(blob)
+
+        self.run = Run(
+            user_id=self.users[0].id,
+            problem=self.problems[0],
+            problem_id=self.problems[0].id,
+            statement_id=None,
+            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_language_id=1,
+            ejudge_status=98,  # compiling
+            source_hash=source_hash,
+            ejudge_run_id=1
+        )
+        db.session.add(self.run)
+        db.session.commit()
+
+    def send_request(self):
+        url = url_for('problem.run_protocol', run_id=self.run.id)
+        resp = self.client.get(url)
+        return resp
+
+    def test_not_found(self):
+        resp = self.send_request()
+        self.assert404(resp)
+
+    def test_simple(self):
+        report = b'blob'
+        mongo.db.protocol.insert_one({'protocol_id': self.run.id,
+                                      'blob': report})
+        resp = self.send_request()
+        self.assert200(resp)
