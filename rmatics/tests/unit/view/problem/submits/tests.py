@@ -1,59 +1,13 @@
-# import mock
-# from hamcrest import (
-#     assert_that,
-#     calling,
-#     raises,
-# )
-
-# from pynformatics.testutils import TestCase
-# from pynformatics.utils.context import Context
-# from pynformatics.utils.exceptions import Forbidden
-# from pynformatics.view.problem import problem_submits_v2
-
-
-# class TestView__problem_submits_v2(TestCase):
-#     def setUp(self):
-#         super(TestView__problem_submits_v2, self).setUp()
-
-#         self.ejudge_submit_patcher = mock.patch('pynformatics.view.problem.submit', mock.Mock())
-#         self.ejudge_submit_patcher.start()
-
-#         self.check_auth_patcher = mock.patch.object(Context, 'check_auth', mock.Mock())
-#         self.check_auth_patcher.start()
-
-#         self.request.registry.settings['ejudge.new_client_url'] = ''
-#         self.request.POST = {'file': mock.Mock()}
-
-#         self.get_languages_patcher = mock.patch.object(Context, 'get_allowed_languages')
-#         self.get_languages_mock = self.get_languages_patcher.start()
-
-#     def tearDown(self):
-#         super(TestView__problem_submits_v2, self).tearDown()
-#         self.ejudge_submit_patcher.stop()
-#         self.check_auth_patcher.stop()
-#         self.get_languages_patcher.stop()
-
-#     def test_not_allowed_language(self):
-#         """
-#         Tries to submit problem with not allowed language id. Must raise 403 Forbidden
-#         """
-#         allowed_languages = ['1', '2']
-#         lang_id = '3'
-#         self.get_languages_mock.return_value = allowed_languages
-#         self.request.params = {'lang_id': lang_id, 'file': mock.Mock()}
-
-#         assert_that(
-#             calling(problem_submits_v2).with_args(self.request),
-#             raises(Forbidden),
-#         )
+import datetime
 import io
+import json
 from io import BytesIO
 
 from unittest.mock import patch, MagicMock
 
 from flask import url_for
 
-from rmatics.model.base import db
+from rmatics.model.base import db, mongo
 from rmatics.model.role import RoleAssignment
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase
@@ -271,3 +225,120 @@ class TestGetSubmissionSource(TestCase):
 
         resp = self.send_request(run_id=self.run.id)
         self.assert200(resp)
+
+
+class TestUpdateSubmissionFromEjudge(TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.create_roles()
+        self.create_users()
+        self.create_problems()
+
+        blob = b'skdjvndfkjnvfk'
+
+        source_hash = Run.generate_source_hash(blob)
+
+        self.run = Run(
+            user_id=self.users[0].id,
+            problem=self.problems[0],
+            problem_id=self.problems[0].id,
+            statement_id=None,
+            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_language_id=1,
+            ejudge_status=98,  # compiling
+            source_hash=source_hash,
+            ejudge_run_id=1
+        )
+        db.session.add(self.run)
+        db.session.commit()
+
+    def send_request(self, **data):
+        data = json.dumps(data)
+        url = url_for('problem.update_from_ejudge')
+        resp = self.client.post(url, data=data)
+        return resp
+
+    def test_simple(self):
+        run_data = {
+            'run_uuid': 'uuid',
+            'score': 15,
+            'status': 37,
+            'lang_id': 2,
+            'test_num': 123,
+            'create_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'last_change_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        }
+
+        request_data = {
+            'run_id': self.run.ejudge_run_id,
+            'contest_id': self.run.ejudge_contest_id,
+            **run_data,
+        }
+
+        resp = self.send_request(**request_data)
+
+        self.assert200(resp)
+
+        db.session.refresh(self.run)
+
+        # Не проверяем поля с датой
+        run_data.pop('create_time')
+        run_data.pop('last_change_time')
+
+        for k, v in run_data.items():
+            run_attr = getattr(self.run, f'ejudge_{k}')
+            self.assertEqual(run_attr, v)
+
+    def test_update_mongo(self):
+        run_data = {
+            'run_uuid': 'uuid',
+            'score': 15,
+            'status': 37,
+            'lang_id': 2,
+            'test_num': 123,
+            'create_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'last_change_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        }
+
+        report_uuid = 'my_report_uuid'
+
+        mongo.db.report.insert_one({'report_id': report_uuid})
+
+        request_data = {
+            'run_id': self.run.ejudge_run_id,
+            'contest_id': self.run.ejudge_contest_id,
+            'mongo_report_uuid': report_uuid,
+            **run_data,
+        }
+
+        resp = self.send_request(**request_data)
+
+        self.assert200(resp)
+
+        data = mongo.db.report.find_one({'report_id': self.run.id})
+        self.assertIsNotNone(data)
+
+    def test_bad_mongo_uuid(self):
+        run_data = {
+            'run_uuid': 'uuid',
+            'score': 15,
+            'status': 37,
+            'lang_id': 2,
+            'test_num': 123,
+            'create_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'last_change_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        }
+
+        report_uuid = 'my_wrong_report_uuid'
+
+        request_data = {
+            'run_id': self.run.ejudge_run_id,
+            'contest_id': self.run.ejudge_contest_id,
+            'mongo_report_uuid': report_uuid,
+            **run_data,
+        }
+
+        resp = self.send_request(**request_data)
+
+        self.assert400(resp)
