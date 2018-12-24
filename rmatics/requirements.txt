@@ -26,3 +26,4 @@ Werkzeug==0.14.1
 pymysql
 webargs
 cent
+teamcity-messages
