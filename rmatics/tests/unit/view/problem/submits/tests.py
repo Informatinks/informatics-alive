@@ -301,14 +301,14 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             'last_change_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         }
 
-        report_uuid = 'my_report_uuid'
+        protocol_uuid = 'my_protocol_uuid'
 
-        mongo.db.report.insert_one({'report_id': report_uuid})
+        mongo.db.protocol.insert_one({'protocol_id': protocol_uuid})
 
         request_data = {
             'run_id': self.run.ejudge_run_id,
             'contest_id': self.run.ejudge_contest_id,
-            'mongo_report_uuid': report_uuid,
+            'mongo_protocol_uuid': protocol_uuid,
             **run_data,
         }
 
@@ -316,7 +316,7 @@ class TestUpdateSubmissionFromEjudge(TestCase):
 
         self.assert200(resp)
 
-        data = mongo.db.report.find_one({'report_id': self.run.id})
+        data = mongo.db.protocol.find_one({'protocol_id': self.run.id})
         self.assertIsNotNone(data)
 
     def test_bad_mongo_uuid(self):
@@ -330,12 +330,12 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             'last_change_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         }
 
-        report_uuid = 'my_wrong_report_uuid'
+        protocol_uuid = 'my_wrong_protocol_uuid'
 
         request_data = {
             'run_id': self.run.ejudge_run_id,
             'contest_id': self.run.ejudge_contest_id,
-            'mongo_report_uuid': report_uuid,
+            'mongo_protocol_uuid': protocol_uuid,
             **run_data,
         }
 
