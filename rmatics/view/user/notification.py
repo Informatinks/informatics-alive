@@ -58,9 +58,12 @@ notification = Blueprint('notification', __name__, url_prefix='/notification')
     'run_id': int,
 })
 def notification_update_run():
+    # TODO: Переписать эту функцию:
+    # TODO: Как минимум, убрать два идентичных запроса в БД (см. Run.sync)
     contest_id = int(request.args['contest_id'])
     run_id = int(request.args['run_id'])
 
+    # Это вообще какая-то дичь
     try:
         run = db.session.query(EjudgeRun) \
             .filter_by(contest_id=contest_id) \

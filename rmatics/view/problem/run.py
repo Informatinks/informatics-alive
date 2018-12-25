@@ -52,12 +52,27 @@ class SourceApi(MethodView):
                          attachment_filename='submission.txt')
 
 
+class ProtocolApi(MethodView):
+    def get(self, run_id: int):
+
+        run = db.session.query(Run).get(run_id)
+        if run is None:
+            raise NotFound('Current run_id is not found')
+
+        protocol = run.protocol
+        if protocol is None:
+            raise NotFound('Protocol for current run_id not found')
+
+        return send_file(io.BytesIO(protocol),
+                         attachment_filename='submission.txt')
+
+
 class UpdateEjudgeRun(MethodView):
     def post(self):
         data = request.get_json(force=True)
         ejudge_run_id = data['run_id']
         ejudge_contest_id = data['contest_id']
-        report_uuid = data.get('mongo_report_uuid')
+        protocol_uuid = data.get('mongo_protocol_uuid')
 
         run = db.session.query(Run)\
             .filter_by(ejudge_run_id=ejudge_run_id,
@@ -74,11 +89,11 @@ class UpdateEjudgeRun(MethodView):
         if errors:
             raise BadRequest(errors)
 
-        if report_uuid:
-            result = mongo.db.report.update({'report_id': report_uuid},
-                                            {'report_id': run.id})
+        if protocol_uuid:
+            result = mongo.db.protocol.update({'protocol_id': protocol_uuid},
+                                            {'protocol_id': run.id})
             if not result['updatedExisting']:
-                raise BadRequest(f'Cannot find report by uuid {report_uuid}')
+                raise BadRequest(f'Cannot find protocol by uuid {protocol_uuid}')
 
         db.session.add(run)
         db.session.commit()
