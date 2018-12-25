@@ -3,11 +3,7 @@ import unittest
 import sys
 
 from rmatics import create_app
-from rmatics.model import (
-    db,
-    mongo,
-    redis,
-)
+from rmatics.model.base import db, mongo, redis
 from rmatics.model.group import (
     Group,
     UserGroup,
@@ -31,6 +27,7 @@ class TestCase(flask_testing.TestCase):
         return app
 
     def setUp(self):
+        db.drop_all()
         db.create_all()
 
     def tearDown(self):

@@ -27,3 +27,5 @@ pymysql
 webargs
 cent
 teamcity-messages
+mock
+hamcrest
