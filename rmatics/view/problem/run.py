@@ -84,4 +84,3 @@ class UpdateEjudgeRun(MethodView):
         db.session.commit()
 
         return jsonify({}, 200)
-
