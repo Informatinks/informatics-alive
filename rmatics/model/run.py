@@ -3,9 +3,9 @@ import hashlib
 from typing import Optional
 
 from flask import g
+from flask_utils.decorators import deprecated
 
 from rmatics.model.base import db, mongo
-from rmatics.model.ejudge_run import EjudgeRun
 from rmatics.utils.functions import attrs_to_dict
 
 
@@ -24,10 +24,6 @@ EJUDGE_COLUMNS = [
 
 class Run(db.Model):
     __table_args__ = (
-        db.ForeignKeyConstraint(
-            ['ej_run_id', 'ej_contest_id'],
-            ['ejudge.runs.run_id', 'ejudge.runs.contest_id'],
-        ),
         {'schema': 'pynformatics'},
     )
     __tablename__ = 'runs'
@@ -58,8 +54,6 @@ class Run(db.Model):
     ejudge_url = db.Column(db.String(50))
 
     source_hash = db.Column(db.String(32))  # We are using md5 hex digest
-
-    ejudge_run = db.relationship('EjudgeRun', backref='run')
 
     def update_source(self, blob: bytes):
         mongo.db.source.insert_one({
@@ -96,6 +90,7 @@ class Run(db.Model):
         return self.ejudge_language_id
 
     @staticmethod
+    @deprecated
     def pick_ejudge_columns(ejudge_run):
         return {
             'ejudge_run_id': ejudge_run.run_id,
@@ -108,39 +103,6 @@ class Run(db.Model):
             'ejudge_create_time': ejudge_run.create_time,
             'ejudge_last_change_time': ejudge_run.last_change_time,
         }
-
-    @staticmethod
-    def from_ejudge_run(ejudge_run):
-        run = Run(
-            user=ejudge_run.user,
-            problem=ejudge_run.problem,
-            score=ejudge_run.score,
-            **Run.pick_ejudge_columns(ejudge_run),
-        )
-        return run
-
-    @staticmethod
-    def sync(ejudge_run_id, ejudge_contest_id):
-        ejudge_run = db.session.query(EjudgeRun).filter_by(
-            run_id=ejudge_run_id,
-            contest_id=ejudge_contest_id
-        ).first()
-        if not ejudge_run:
-            return
-
-        run = db.session.query(Run).filter_by(
-            ejudge_run_id=ejudge_run_id,
-            ejudge_contest_id=ejudge_contest_id,
-        ).first()
-        if run:
-            run.score = ejudge_run.score
-            for key, value in Run.pick_ejudge_columns(ejudge_run).items():
-                setattr(run, key, value)
-        else:
-            run = Run.from_ejudge_run(ejudge_run)
-            db.session.add(run)
-
-        return run
 
     def serialize(self, attributes=None):
         if attributes is None:
