@@ -28,4 +28,4 @@ webargs
 cent
 teamcity-messages
 mock
-hamcrest
+pyhamcrest
