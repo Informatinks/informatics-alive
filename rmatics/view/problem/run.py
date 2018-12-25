@@ -91,7 +91,7 @@ class UpdateEjudgeRun(MethodView):
 
         if protocol_uuid:
             result = mongo.db.protocol.update({'protocol_id': protocol_uuid},
-                                            {'protocol_id': run.id})
+                                              {'protocol_id': run.id})
             if not result['updatedExisting']:
                 raise BadRequest(f'Cannot find protocol by uuid {protocol_uuid}')
 
