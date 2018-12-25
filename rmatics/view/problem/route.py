@@ -2,7 +2,7 @@ from flask import Blueprint
 
 from rmatics.view.problem.problem import SubmitApi, TrustedSubmitApi, ProblemApi, ProblemSubmissionsFilterApi, \
     problem_runs
-from rmatics.view.problem.run import SourceApi, UpdateEjudgeRun
+from rmatics.view.problem.run import SourceApi, UpdateEjudgeRun, ProtocolApi
 
 problem_blueprint = Blueprint('problem', __name__, url_prefix='/problem')
 
@@ -22,6 +22,9 @@ problem_blueprint.add_url_rule('/<int:problem_id>/runs', view_func=problem_runs)
 
 problem_blueprint.add_url_rule('/run/<int:run_id>/source', methods=('GET', ),
                                view_func=SourceApi.as_view('run_source'))
+
+problem_blueprint.add_url_rule('/run/<int:run_id>/protocol', methods=('GET', ),
+                               view_func=ProtocolApi.as_view('run_protocol'))
 
 problem_blueprint.add_url_rule('/run/action/update_from_ejudge', methods=('POST', ),
                                view_func=UpdateEjudgeRun.as_view('update_from_ejudge'))
