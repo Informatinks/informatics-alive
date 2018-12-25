@@ -3,9 +3,9 @@ import hashlib
 from typing import Optional
 
 from flask import g
-from flask_utils.decorators import deprecated
 
 from rmatics.model.base import db, mongo
+from rmatics.utils.decorators import deprecated
 from rmatics.utils.functions import attrs_to_dict
 
 
