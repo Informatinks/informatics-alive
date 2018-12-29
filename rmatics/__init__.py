@@ -20,6 +20,7 @@ from rmatics.view.user.group_invite import group_invite
 from rmatics.view.user.notification import notification
 from rmatics.view.user.user import user
 from rmatics.utils import url_encoder
+from rmatics import cli
 
 
 def create_app(config=None):
@@ -72,6 +73,8 @@ def create_app(config=None):
     app.register_blueprint(submit)
     app.register_blueprint(user)
 
+    app.cli.add_command(cli.test)
+
     # Utils
     url_encoder.init_app(app)
 
@@ -81,4 +84,3 @@ def create_app(config=None):
 if __name__ == "__main__":
     app = create_app()
     app.run(debug=False)
-

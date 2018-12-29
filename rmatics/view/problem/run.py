@@ -2,13 +2,13 @@ import io
 
 from flask import send_file, g, request
 from flask.views import MethodView
-from flask_utils import jsonify
 from marshmallow import fields, Schema, post_load
 from werkzeug.exceptions import NotFound, BadRequest
 
 from rmatics.model.base import db, mongo
 from rmatics.model.run import Run
 from rmatics.view import require_auth, require_roles
+from rmatics.utils.response import jsonify
 
 
 class EjudgeRunSchema(Schema):
@@ -91,7 +91,7 @@ class UpdateEjudgeRun(MethodView):
 
         if protocol_uuid:
             result = mongo.db.protocol.update({'protocol_id': protocol_uuid},
-                                            {'protocol_id': run.id})
+                                              {'protocol_id': run.id})
             if not result['updatedExisting']:
                 raise BadRequest(f'Cannot find protocol by uuid {protocol_uuid}')
 
