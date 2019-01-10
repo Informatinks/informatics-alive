@@ -5,6 +5,7 @@ from io import BytesIO
 
 from unittest.mock import patch, MagicMock
 
+from bson import ObjectId
 from flask import url_for
 
 from rmatics.model.base import db, mongo
@@ -12,6 +13,9 @@ from rmatics.model.role import RoleAssignment
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase
 from rmatics.view.problem.problem import SubmitApi
+
+PROTOCOL_ID = ObjectId("507f1f77bcf86cd799439011")
+WRONG_PROTOCOL_ID = ObjectId("507f1f77bcf86cd799439012")
 
 
 class TestCheckFileRestriction(TestCase):
@@ -253,7 +257,7 @@ class TestUpdateSubmissionFromEjudge(TestCase):
         db.session.add(self.run)
         db.session.commit()
 
-    def send_request(self, **data):
+    def send_request_to_update_run(self, **data):
         data = json.dumps(data)
         url = url_for('problem.update_from_ejudge')
         resp = self.client.post(url, data=data)
@@ -276,7 +280,7 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             **run_data,
         }
 
-        resp = self.send_request(**request_data)
+        resp = self.send_request_to_update_run(**request_data)
 
         self.assert200(resp)
 
@@ -301,25 +305,25 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             'last_change_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         }
 
-        protocol_uuid = 'my_protocol_uuid'
+        protocol_id = PROTOCOL_ID
 
-        mongo.db.protocol.insert_one({'protocol_id': protocol_uuid})
+        mongo.db.protocol.insert_one({'_id': protocol_id})
 
         request_data = {
             'run_id': self.run.ejudge_run_id,
             'contest_id': self.run.ejudge_contest_id,
-            'mongo_protocol_uuid': protocol_uuid,
+            'mongo_protocol_id': protocol_id,
             **run_data,
         }
 
-        resp = self.send_request(**request_data)
+        resp = self.send_request_to_update_run(**request_data)
 
         self.assert200(resp)
 
-        data = mongo.db.protocol.find_one({'protocol_id': self.run.id})
+        data = mongo.db.protocol.find_one({'_id': self.run.id})
         self.assertIsNotNone(data)
 
-    def test_bad_mongo_uuid(self):
+    def test_bad_mongo_id(self):
         run_data = {
             'run_uuid': 'uuid',
             'score': 15,
@@ -330,16 +334,16 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             'last_change_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         }
 
-        protocol_uuid = 'my_wrong_protocol_uuid'
+        protocol_id = WRONG_PROTOCOL_ID
 
         request_data = {
             'run_id': self.run.ejudge_run_id,
             'contest_id': self.run.ejudge_contest_id,
-            'mongo_protocol_uuid': protocol_uuid,
+            'mongo_protocol_uuid': protocol_id,
             **run_data,
         }
 
-        resp = self.send_request(**request_data)
+        resp = self.send_request_to_update_run(**request_data)
 
         self.assert400(resp)
 
