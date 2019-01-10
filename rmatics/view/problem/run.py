@@ -56,14 +56,14 @@ class ProtocolApi(MethodView):
     def get(self, run_id: int):
 
         run = db.session.query(Run).get(run_id)
-        if run is None:
-            raise NotFound('Current run_id is not found')
+        if not run:
+            raise NotFound(f'run_id: {run_id} is not found')
 
         protocol = run.protocol
-        if protocol is None:
-            raise NotFound('Protocol for current run_id not found')
+        if not protocol:
+            raise NotFound(f'Protocol for run_id: {run_id} not found')
 
-        return send_file(io.BytesIO(protocol), attachment_filename='submission.txt')
+        return protocol
 
 
 class UpdateEjudgeRun(MethodView):
@@ -72,21 +72,15 @@ class UpdateEjudgeRun(MethodView):
         ejudge_run_id = data['run_id']
         ejudge_contest_id = data['contest_id']
         mongo_protocol_id = data['mongo_protocol_id']
-        # TODO: нужна ли валидация параметров с помощью webargs?
-        # TODO: тесты
 
-        run = (
-            db.session.query(Run)
-            .filter_by(ejudge_run_id=ejudge_run_id, ejudge_contest_id=ejudge_contest_id)
+        run = db.session.query(Run) \
+            .filter_by(ejudge_run_id=ejudge_run_id, ejudge_contest_id=ejudge_contest_id) \
             .one_or_none()
-        )
 
         if not run:
-            msg = (
-                f'Cannot find Run with '
-                f'ejudge_contest_id={ejudge_contest_id}, '
-                f'ejudge_run_id={ejudge_run_id}'
-            )
+            msg = f'Cannot find Run with  \
+                    ejudge_contest_id={ejudge_contest_id},  \
+                    ejudge_run_id={ejudge_run_id}'
 
             raise BadRequest(msg)
 
@@ -95,11 +89,11 @@ class UpdateEjudgeRun(MethodView):
         if errors:
             raise BadRequest(errors)
 
-        result = mongo.db.protocol.find_one_and_update(
-            {'_id': ObjectId(mongo_protocol_id)}, {'$set': {'run_id': run.id}}
-        )
-        if not result['updatedExisting']:
-            raise BadRequest(f'Cannot find protocol by _id {mongo_protocol_id}')
+        if mongo_protocol_id:
+            result = mongo.db.protocol.find_one_and_update({'_id': ObjectId(mongo_protocol_id)},
+                                                           {'$set': {'run_id': run.id}})
+            if not result['updatedExisting']:
+                raise BadRequest(f'Cannot find protocol by _id {mongo_protocol_id}')
 
         db.session.add(run)
         db.session.commit()
