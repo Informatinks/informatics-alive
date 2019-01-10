@@ -77,7 +77,7 @@ class Run(db.Model):
 
     @property
     def protocol(self) -> Optional[bytes]:
-        data = mongo.db.protocol.find_one({'_id': self.id})
+        data = mongo.db.protocol.find_one({'run_id': self.id})
         if not data:
             return None
         blob = data.get('blob', None)
