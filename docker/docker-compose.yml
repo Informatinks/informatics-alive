@@ -6,7 +6,7 @@ services:
     image: mariadb:5.5
 
     environment:
-      - MYSQL_DATABASE=informatics
+      # - MYSQL_DATABASE=informatics
       - MYSQL_ROOT_PASSWORD=123456
       - MYSQL_USER=testuser
       - MYSQL_PASSWORD=123456
@@ -15,12 +15,16 @@ services:
       - ./create-databases.sql:/docker-entrypoint-initdb.d/setup.sql
 
   mongo:
-    image: mongo:latest
+    # No way of using official image :-(
+    image: aashreys/mongo-auth:latest
 
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=testuser
-      - MONGO_INITDB_ROOT_PASSWORD=123456
-      - MONGO_INITDB_DATABASE=informatics
+      - AUTH=no
+      - MONGODB_ADMIN_USER=root
+      - MONGODB_ADMIN_PASS=123456
+      - MONGODB_APPLICATION_DATABASE=test
+      - MONGODB_APPLICATION_USER=testuser
+      - MONGODB_APPLICATION_PASS=123456
 
   redis:
     image: redis
