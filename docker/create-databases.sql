@@ -1,0 +1,3 @@
+CREATE DATABASE ejudge;
+CREATE DATABASE moodle;
+CREATE DATABASE pynformatics;
