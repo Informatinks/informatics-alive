@@ -266,8 +266,8 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             'status': 37,
             'lang_id': 2,
             'test_num': 123,
-            'create_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'last_change_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'create_time':  datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+            'last_change_time': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
         }
 
         request_data = {
@@ -297,8 +297,8 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             'status': 37,
             'lang_id': 2,
             'test_num': 123,
-            'create_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'last_change_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'create_time': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+            'last_change_time': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
         }
 
         protocol_uuid = 'my_protocol_uuid'
