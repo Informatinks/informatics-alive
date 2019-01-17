@@ -63,7 +63,7 @@ class ProtocolApi(MethodView):
         if not protocol:
             raise NotFound(f'Protocol for run_id: {run_id} not found')
 
-        return protocol
+        return jsonify(protocol)
 
 
 class UpdateEjudgeRun(MethodView):
@@ -81,7 +81,6 @@ class UpdateEjudgeRun(MethodView):
             msg = f'Cannot find Run with  \
                     ejudge_contest_id={ejudge_contest_id},  \
                     ejudge_run_id={ejudge_run_id}'
-
             raise BadRequest(msg)
 
         run_schema = EjudgeRunSchema(context={'instance': run})

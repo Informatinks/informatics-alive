@@ -76,12 +76,8 @@ class Run(db.Model):
         return blob
 
     @property
-    def protocol(self) -> Optional[bytes]:
-        data = mongo.db.protocol.find_one({'run_id': self.id})
-        if not data:
-            return None
-        blob = data.get('blob', None)
-        return blob
+    def protocol(self) -> Optional[dict]:
+        return mongo.db.protocol.find_one({'run_id': self.id})
 
     @staticmethod
     def generate_source_hash(blob: bytes) -> str:
