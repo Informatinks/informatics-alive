@@ -88,7 +88,7 @@ class SubmitApi(MethodView):
         duplicate = db.session.query(Run).filter(Run.user_id == user_id) \
             .filter(Run.problem_id == problem_id) \
             .filter(Run.source_hash == source_hash) \
-            .order_by(Run.create_time.desc()).first()
+            .order_by(Run.id.desc()).first()
         if duplicate is not None and duplicate.source_hash == source_hash:
             raise BadRequest('Source file is duplicate of your previous submission')
 
@@ -166,7 +166,7 @@ class TrustedSubmitApi(MethodView):
 
         duplicate = db.session.query(Run).filter(Run.user_id == user_id) \
             .filter(Run.problem_id == problem_id) \
-            .order_by(Run.create_time.desc()).first()
+            .order_by(Run.id.desc()).first()
         if duplicate is not None and duplicate.source_hash == source_hash:
             raise BadRequest('Source file is duplicate of your previous submission')
 

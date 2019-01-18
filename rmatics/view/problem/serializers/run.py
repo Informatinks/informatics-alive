@@ -21,4 +21,3 @@ class RunSchema(Schema):
     ejudge_language_id = fields.Integer()
     ejudge_test_num = fields.Integer()
     ejudge_score = fields.Integer()
-

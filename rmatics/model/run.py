@@ -37,6 +37,7 @@ class Run(db.Model):
     user = db.relationship('SimpleUser', backref='runs')
     problem = db.relationship('EjudgeProblem', backref=db.backref('runs', lazy='dynamic'))
     statement = db.relationship('Statement', backref='runs')
+    create_time = db.Column(db.DateTime(), default=datetime.datetime.utcnow)
 
     # Поля скопированные из ejudge.runs
     ejudge_run_id = db.Column('ej_run_id', db.Integer)
