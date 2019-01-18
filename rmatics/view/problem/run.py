@@ -3,6 +3,7 @@ import io
 from flask import send_file, g, request
 from flask.views import MethodView
 from marshmallow import fields, Schema, post_load
+from webargs.flaskparser import parser
 from werkzeug.exceptions import NotFound, BadRequest
 
 from rmatics.model.base import db, mongo
@@ -30,28 +31,33 @@ class EjudgeRunSchema(Schema):
 
 
 class SourceApi(MethodView):
-    # TODO: NFRMTCS-26, надо переделать авторизацию
-    # Присылать сюда что-то типа is_admin
-    # @require_auth
+
+    get_args = {
+        'is_admin': fields.Boolean(default=False, missing=False),
+        'user_id': fields.Integer(),
+    }
+
     def get(self, run_id: int):
+        args = parser.parse(self.get_args, request)
+        is_admin = args.get('is_admin')
+        user_id = args.get('user_id')
 
-        # user_id = g.user.id
+        run_q = db.session.query(Run)
+        if not is_admin:
+            run_q = run_q.filter(Run.user_id == user_id)
 
-        run = db.session.query(Run).get(run_id)
+        run = run_q.filter(Run.id == run_id).one_or_none()
 
         if run is None:
-            raise NotFound()
+            raise NotFound('Run with current id is not found')
 
-        # if run.user_id != user_id:
-        #     # TODO: Rewrite permissions
-        #     # This construction raises Forbidden if roles are not allowed
-        #     require_roles('admin', 'teacher')(lambda *_, **__: None)()
+        source = run.source or b''
+        source = source.decode('utf_8')
 
-        source = run.source
+        language_id = run.ejudge_language_id
 
         # TODO: Придумать что-то получше для бинарных submission-ов
-        return send_file(io.BytesIO(source),
-                         attachment_filename='submission.txt')
+        return jsonify({'source': source, 'language_id': language_id})
 
 
 class ProtocolApi(MethodView):

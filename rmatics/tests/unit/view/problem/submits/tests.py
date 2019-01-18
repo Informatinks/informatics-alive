@@ -197,34 +197,29 @@ class TestGetSubmissionSource(TestCase):
 
         self.run.update_source(blob)
 
-    def send_request(self, run_id):
-        url = url_for('problem.run_source', run_id=run_id)
+    def send_request(self, run_id, data=None):
+        data = data or {}
+        url = url_for('problem.run_source', run_id=run_id, **data)
         response = self.client.get(url)
         return response
 
     def test_simple(self):
-        self.set_session({'user_id': self.users[0].id})
+        data = {'user_id': self.users[0].id}
 
-        resp = self.send_request(run_id=self.run.id)
+        resp = self.send_request(run_id=self.run.id, data=data)
         self.assert200(resp)
 
     # TODO: revrite test (NFRMTCS-26)
-    # def test_wrong_permissions(self):
-    #     self.set_session({'user_id': self.users[1].id})
-    #
-    #     resp = self.send_request(run_id=self.run.id)
-    #     self.assert403(resp)
+    def test_wrong_permissions(self):
+        data = {'user_id': self.users[1].id}
+
+        resp = self.send_request(run_id=self.run.id, data=data)
+        self.assert404(resp)
 
     def test_super_permissions(self):
+        data = {'is_admin': True}
 
-        role_assignment = RoleAssignment(user_id=self.users[1].id, role=self.admin_role)
-
-        db.session.add(role_assignment)
-        db.session.commit()
-
-        self.set_session({'user_id': self.users[1].id})
-
-        resp = self.send_request(run_id=self.run.id)
+        resp = self.send_request(run_id=self.run.id, data=data)
         self.assert200(resp)
 
 
