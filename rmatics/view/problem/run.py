@@ -30,20 +30,22 @@ class EjudgeRunSchema(Schema):
 
 
 class SourceApi(MethodView):
-    @require_auth
+    # TODO: NFRMTCS-26, надо переделать авторизацию
+    # Присылать сюда что-то типа is_admin
+    # @require_auth
     def get(self, run_id: int):
 
-        user_id = g.user.id
+        # user_id = g.user.id
 
         run = db.session.query(Run).get(run_id)
 
         if run is None:
             raise NotFound()
 
-        if run.user_id != user_id:
-            # TODO: Rewrite permissions
-            # This construction raises Forbidden if roles are not allowed
-            require_roles('admin', 'teacher')(lambda *_, **__: None)()
+        # if run.user_id != user_id:
+        #     # TODO: Rewrite permissions
+        #     # This construction raises Forbidden if roles are not allowed
+        #     require_roles('admin', 'teacher')(lambda *_, **__: None)()
 
         source = run.source
 
