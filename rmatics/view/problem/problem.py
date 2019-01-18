@@ -12,6 +12,7 @@ from rmatics.ejudge.submit_queue import (
     get_last_get_id,
     queue_submit,
 )
+from sqlalchemy import desc
 from webargs.flaskparser import parser
 from marshmallow import fields
 from rmatics.model.base import db
@@ -87,7 +88,7 @@ class SubmitApi(MethodView):
         duplicate = db.session.query(Run).filter(Run.user_id == user_id) \
             .filter(Run.problem_id == problem_id) \
             .filter(Run.source_hash == source_hash) \
-            .order_by(Run.create_time.desc()).first()
+            .order_by(Run.id.desc()).first()
         if duplicate is not None and duplicate.source_hash == source_hash:
             raise BadRequest('Source file is duplicate of your previous submission')
 
@@ -165,7 +166,7 @@ class TrustedSubmitApi(MethodView):
 
         duplicate = db.session.query(Run).filter(Run.user_id == user_id) \
             .filter(Run.problem_id == problem_id) \
-            .order_by(Run.create_time.desc()).first()
+            .order_by(Run.id.desc()).first()
         if duplicate is not None and duplicate.source_hash == source_hash:
             raise BadRequest('Source file is duplicate of your previous submission')
 
@@ -290,16 +291,17 @@ class ProblemSubmissionsFilterApi(MethodView):
         query = db.session.query(Run, SimpleUser, Problem) \
                           .join(SimpleUser, SimpleUser.id == Run.user_id) \
                           .join(Problem, Problem.id == Run.problem_id) \
-                          .filter(Run.problem_id == problem_id)
+                          .filter(Run.problem_id == problem_id) \
+                          .order_by(desc(Run.id))
 
         if group_id:
             query = query.join(UserGroup, UserGroup.user_id == SimpleUser.id)\
                          .filter(UserGroup.group_id == group_id)
         if user_id:
             query = query.filter(Run.user_id == user_id)
-        if lang_id:
+        if lang_id and lang_id > 0:
             query = query.filter(Run.ejudge_language_id == lang_id)
-        if status_id:
+        if status_id and status_id > 0:
             query = query.filter(Run.ejudge_status == status_id)
         if statement_id:
             query = query.filter(Run.statement_id == statement_id)
@@ -308,7 +310,8 @@ class ProblemSubmissionsFilterApi(MethodView):
         if to_timestamp:
             query = query.filter(Run.create_time < to_timestamp)
 
-        result = query.paginate(page=page, per_page=per_page_count, max_per_page=100)
+        result = query.paginate(page=page, per_page=per_page_count,
+                                error_out=False, max_per_page=100)
 
         runs = []
         for run, user, problem in result.items:
