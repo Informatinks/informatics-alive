@@ -49,7 +49,7 @@ class Submit:
 
         ejudge_url = ejudge_url or self.ejudge_url
 
-        run = db.session.query(Run).get(self.run_id)
+        run: Run = db.session.query(Run).get(self.run_id)
         if not run:
             log.error(f'Can\'t find run #{self.run_id}')
             return
@@ -59,7 +59,7 @@ class Submit:
         user_id = run.user_id
 
         # `Run` now not inside the queue so we should change status
-        run.status = 98  # Compiling
+        run.ejudge_status = 98  # Compiling
         db.session.add(run)
         db.session.commit()
 

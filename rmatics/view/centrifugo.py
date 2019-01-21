@@ -2,6 +2,7 @@ from flask import current_app
 from cent import Client, CentException
 
 from rmatics.model.run import Run
+from rmatics.utils.decorators import do_not_execute
 
 
 class CentrifugoClient:
@@ -10,6 +11,7 @@ class CentrifugoClient:
     def init_app(self, url, api_key):
         self.client = Client(url, api_key=api_key, timeout=1, verify=False)
 
+    @do_not_execute(return_value=None, raised_exception=False)
     def send_problem_run_updates(self, problem_id: int, run: Run):
         current_app.logger.debug(f'CentrifugoClient: send update for problem {problem_id}')
         channel = f'problem.{problem_id}'
