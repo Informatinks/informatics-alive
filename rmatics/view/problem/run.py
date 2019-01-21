@@ -8,11 +8,11 @@ from werkzeug.exceptions import NotFound, BadRequest
 
 from rmatics.model.base import db, mongo
 from rmatics.model.run import Run
-from rmatics.view import require_auth, require_roles
 from rmatics.utils.response import jsonify
+from rmatics.view.problem.serializers.run import RunSchema
 
 
-class EjudgeRunSchema(Schema):
+class FromEjudgeRunSchema(Schema):
     run_uuid = fields.String()
     score = fields.Integer()
     status = fields.Integer()
@@ -28,6 +28,29 @@ class EjudgeRunSchema(Schema):
             setattr(run, f'ejudge_{k}', v)
 
         return run
+
+
+class RunAPI(MethodView):
+    def put(self, run_id: int):
+        data = request.get_json(force=True, silent=False)
+
+        run = db.session.query(Run).get(run_id)
+        if run is None:
+            raise NotFound(f'Run with id #{run_id} is not found')
+
+        excludes = ['user', 'problem', 'create_time', 'ejudge_language_id']
+        load_run_schema = RunSchema(exclude=excludes, context={'instance': run})
+        run, errors = load_run_schema.load(data)
+
+        if errors:
+            raise BadRequest(errors)
+
+        db.session.commit()
+
+        dump_run_schema = RunSchema(exclude=excludes)
+        data, errors = dump_run_schema.dump(run)
+
+        return jsonify(data)
 
 
 class SourceApi(MethodView):
@@ -75,7 +98,7 @@ class ProtocolApi(MethodView):
                          attachment_filename='submission.txt')
 
 
-class UpdateEjudgeRun(MethodView):
+class UpdateFromEjudgeRun(MethodView):
     def post(self):
         data = request.get_json(force=True)
         ejudge_run_id = data['run_id']
@@ -92,7 +115,7 @@ class UpdateEjudgeRun(MethodView):
                   f'ejudge_run_id={ejudge_run_id}'
             raise BadRequest(msg)
 
-        run_schema = EjudgeRunSchema(context={'instance': run})
+        run_schema = FromEjudgeRunSchema(context={'instance': run})
         run, errors = run_schema.load(data)
         if errors:
             raise BadRequest(errors)
