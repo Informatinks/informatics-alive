@@ -71,7 +71,7 @@ class UpdateEjudgeRun(MethodView):
         data = request.get_json(force=True)
         ejudge_run_id = data['run_id']
         ejudge_contest_id = data['contest_id']
-        mongo_protocol_id = data['mongo_protocol_id']
+        mongo_protocol_id = data.get('mongo_protocol_id', None)
 
         run = db.session.query(Run) \
             .filter_by(ejudge_run_id=ejudge_run_id, ejudge_contest_id=ejudge_contest_id) \
