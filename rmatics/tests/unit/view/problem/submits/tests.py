@@ -243,7 +243,7 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             statement_id=None,
             ejudge_contest_id=self.problems[0].ejudge_contest_id,
             ejudge_language_id=1,
-            ejudge_status=EjudgeStatuses.COMPILING.value.value,
+            ejudge_status=EjudgeStatuses.COMPILING.value,
             source_hash=source_hash,
             ejudge_run_id=1
         )
