@@ -1,5 +1,7 @@
+import json
+
 import mock
-from flask import g
+from flask import g, url_for
 from hamcrest import (
     assert_that,
     contains_inanyorder
@@ -71,3 +73,60 @@ class TestView__problem_runs(TestCase):
                 str(self.runs[1][0].id),
             )
         )
+
+
+class TestUpdateRun(TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.create_users()
+        self.create_statements()
+        self.create_problems()
+
+        blob = b'skdjvndfkjnvfk'
+
+        source_hash = Run.generate_source_hash(blob)
+
+        self.run = Run(
+            user_id=self.users[0].id,
+            problem=self.problems[0],
+            problem_id=self.problems[0].id,
+            statement_id=self.statements[0].id,
+            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_language_id=1,
+            ejudge_status=98,  # compiling
+            source_hash=source_hash,
+        )
+        db.session.add(self.run)
+        db.session.commit()
+
+    def send_request(self, run_id, data):
+        url = url_for('problem.run', run_id=run_id)
+        data = json.dumps(data)
+        resp = self.client.put(url, data=data)
+        return resp
+
+    def test_simple(self):
+        data = {
+            'ejudge_status': 100500
+        }
+
+        resp = self.send_request(self.run.id, data)
+
+        self.assert200(resp)
+
+        data = resp.json
+
+        self.assertIn('data', data)
+        data = data['data']
+
+        self.assertIn('id', data)
+        self.assertIn('ejudge_status', data)
+        self.assertIn('ejudge_test_num', data)
+        self.assertIn('ejudge_score', data)
+
+        self.assertEqual(data['ejudge_status'], 100500)
+
+        db.session.refresh(self.run)
+
+        self.assertEqual(self.run.ejudge_status, 100500)

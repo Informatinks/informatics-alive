@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, post_load
 
 
 class UserRunSchema(Schema):
@@ -21,3 +21,11 @@ class RunSchema(Schema):
     ejudge_language_id = fields.Integer()
     ejudge_test_num = fields.Integer()
     ejudge_score = fields.Integer()
+
+    @post_load
+    def load_run_update(self, data: dict):
+        run = self.context.get('instance')
+        for k, v in data.items():
+            setattr(run, k, v)
+
+        return run
