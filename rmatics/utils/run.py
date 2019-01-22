@@ -10,7 +10,7 @@ sources_path = 'var/archive/runs'
 output_path = 'var/archive/output'
 
 
-class EjudgeStatusesEnum(Enum):
+class EjudgeStatuses(Enum):
     OK = 0
     CE = 1
     RE = 2
