@@ -10,6 +10,7 @@ from rmatics.model.run import Run
 from rmatics.model.user import SimpleUser
 from rmatics.model.problem import EjudgeProblem
 from rmatics.utils.functions import attrs_to_dict
+from rmatics.utils.run import EjudgeStatusesEnum
 from rmatics.websocket import notify_user
 from rmatics.websocket.events import (
     SUBMIT_ERROR,
@@ -59,7 +60,7 @@ class Submit:
         user_id = run.user_id
 
         # `Run` now not inside the queue so we should change status
-        run.ejudge_status = 98  # Compiling
+        run.ejudge_status = EjudgeStatusesEnum.COMPILING  # Compiling
         db.session.add(run)
         db.session.commit()
 

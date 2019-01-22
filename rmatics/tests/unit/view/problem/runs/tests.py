@@ -10,6 +10,7 @@ from hamcrest import (
 from rmatics.model.base import db
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase
+from rmatics.utils.run import EjudgeStatusesEnum
 from rmatics.view.problem.problem import problem_runs
 
 
@@ -94,7 +95,7 @@ class TestUpdateRun(TestCase):
             statement_id=self.statements[0].id,
             ejudge_contest_id=self.problems[0].ejudge_contest_id,
             ejudge_language_id=1,
-            ejudge_status=98,  # compiling
+            ejudge_status=EjudgeStatusesEnum.COMPILING,
             source_hash=source_hash,
         )
         db.session.add(self.run)

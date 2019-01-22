@@ -1,12 +1,37 @@
 import os
 import gzip
 import codecs
+from enum import Enum
 
 contest_path = '/home/judges/'
 protocols_path = 'var/archive/xmlreports'
 audit_path = 'var/archive/audit'
 sources_path = 'var/archive/runs'
 output_path = 'var/archive/output'
+
+
+class EjudgeStatusesEnum(Enum):
+    OK = 0
+    CE = 1
+    RE = 2
+    TL = 3
+    PE = 4
+    WA = 5
+    CF = 6
+    PARTIAL = 7
+    AC = 8
+    IGNORED = 9
+    DISQUALIFIED = 10
+    PENDING = 11
+    ML = 12
+    SECURITY_ERROR = 13
+    STYLE_VIOLATION = 14
+    WALL_TIME_LIMIT_EXCEEDED = 15
+    PENDING_REVIEW = 16
+    REJECTED = 17
+    SKIPPED = 18
+    RUNNING = 96
+    COMPILING = 98
 
 
 def read_file_unknown_encoding(file_name, size=255):
@@ -147,32 +172,6 @@ def get_lang_name_by_id(lang_id):
         31: "1C 8.3"
     }
     return lang_names.get(lang_id, str())
-
-
-def get_status_by_id(status_id):
-    return {
-        0: "OK",
-        1: "CE",
-        2: "RE",
-        3: "TL",
-        4: "PE",
-        5: "WA",
-        6: "CF",
-        7: "Partial",
-        8: "AC",
-        9: "Ignored",
-        10: "Disqualified",
-        11: "Pending",
-        12: "ML",
-        13: "Security error",
-        14: "Style Violation",
-        15: "Wall Time Limit Exceeded",
-        16: "Pending Review",
-        17: "Rejected",
-        18: "Skipped",
-        96: "Running...",
-        98: "Compiling..."
-    }[status_id]
 
 
 def submit_path(tp, contest_id, submit_id):
