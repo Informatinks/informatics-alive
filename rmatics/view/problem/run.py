@@ -32,23 +32,27 @@ class FromEjudgeRunSchema(Schema):
 
 class RunAPI(MethodView):
     def put(self, run_id: int):
+        """ View for updating run """
         data = request.get_json(force=True, silent=False)
 
         run = db.session.query(Run).get(run_id)
         if run is None:
             raise NotFound(f'Run with id #{run_id} is not found')
 
-        excludes = ['user', 'problem', 'create_time', 'ejudge_language_id']
-        load_run_schema = RunSchema(exclude=excludes, context={'instance': run})
-        run, errors = load_run_schema.load(data)
+        only_fields = ['ejudge_status', 'ejudge_test_num', 'ejudge_score']
+        load_run_schema = RunSchema(only=only_fields, context={'instance': run})
+        _, errors = load_run_schema.load(data)
 
         if errors:
             raise BadRequest(errors)
 
-        db.session.commit()
-
+        # Avoid excess DB queries
+        excludes = ['user', 'problem']
         dump_run_schema = RunSchema(exclude=excludes)
-        data, errors = dump_run_schema.dump(run)
+        data, _ = dump_run_schema.dump(run)
+
+        db.session.add(run)
+        db.session.commit()
 
         return jsonify(data)
 
@@ -98,7 +102,7 @@ class ProtocolApi(MethodView):
                          attachment_filename='submission.txt')
 
 
-class UpdateFromEjudgeRun(MethodView):
+class UpdateRunFromEjudgeAPI(MethodView):
     def post(self):
         data = request.get_json(force=True)
         ejudge_run_id = data['run_id']

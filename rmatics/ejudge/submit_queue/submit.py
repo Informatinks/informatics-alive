@@ -10,6 +10,7 @@ from rmatics.model.run import Run
 from rmatics.model.user import SimpleUser
 from rmatics.model.problem import EjudgeProblem
 from rmatics.utils.functions import attrs_to_dict
+from rmatics.utils.run import EjudgeStatuses
 from rmatics.websocket import notify_user
 from rmatics.websocket.events import (
     SUBMIT_ERROR,
@@ -49,7 +50,7 @@ class Submit:
 
         ejudge_url = ejudge_url or self.ejudge_url
 
-        run = db.session.query(Run).get(self.run_id)
+        run: Run = db.session.query(Run).get(self.run_id)
         if not run:
             log.error(f'Can\'t find run #{self.run_id}')
             return
@@ -59,7 +60,7 @@ class Submit:
         user_id = run.user_id
 
         # `Run` now not inside the queue so we should change status
-        run.status = 98  # Compiling
+        run.ejudge_status = EjudgeStatuses.COMPILING.value  # Compiling
         db.session.add(run)
         db.session.commit()
 
