@@ -41,15 +41,18 @@ class RunAPI(MethodView):
 
         only_fields = ['ejudge_status', 'ejudge_test_num', 'ejudge_score']
         load_run_schema = RunSchema(only=only_fields, context={'instance': run})
-        run, errors = load_run_schema.load(data)
+        _, errors = load_run_schema.load(data)
 
         if errors:
             raise BadRequest(errors)
 
-        db.session.commit()
+        # Avoid excess DB queries
+        excludes = ['user', 'problem']
+        dump_run_schema = RunSchema(exclude=excludes)
+        data, _ = dump_run_schema.dump(run)
 
-        dump_run_schema = RunSchema()
-        data, errors = dump_run_schema.dump(run)
+        db.session.add(run)
+        db.session.commit()
 
         return jsonify(data)
 
