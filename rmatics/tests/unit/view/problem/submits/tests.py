@@ -2,14 +2,12 @@ import datetime
 import io
 import json
 from io import BytesIO
-
 from unittest.mock import patch, MagicMock
 
 from bson import ObjectId
 from flask import url_for
 
 from rmatics.model.base import db, mongo
-from rmatics.model.role import RoleAssignment
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase
 from rmatics.utils.run import EjudgeStatuses
@@ -302,9 +300,9 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             'last_change_time': datetime.datetime.now().isoformat(),
         }
 
-        protocol_id = PROTOCOL_ID
+        protocol_id = str(PROTOCOL_ID)
 
-        mongo.db.protocol.insert_one({'_id': protocol_id})
+        mongo.db.protocol.insert_one({'_id': PROTOCOL_ID, 'run_id': 'OLD_ID'})
 
         request_data = {
             'run_id': self.run.ejudge_run_id,
@@ -317,7 +315,7 @@ class TestUpdateSubmissionFromEjudge(TestCase):
 
         self.assert200(resp)
 
-        data = mongo.db.protocol.find_one({'_id': self.run.id})
+        data = mongo.db.protocol.find_one({'run_id': self.run.id})
         self.assertIsNotNone(data)
 
     def test_bad_mongo_id(self):
@@ -331,12 +329,12 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             'last_change_time': datetime.datetime.now().isoformat(),
         }
 
-        protocol_id = WRONG_PROTOCOL_ID
+        protocol_id = str(WRONG_PROTOCOL_ID)
 
         request_data = {
             'run_id': self.run.ejudge_run_id,
             'contest_id': self.run.ejudge_contest_id,
-            'mongo_protocol_uuid': protocol_id,
+            'mongo_protocol_id': protocol_id,
             **run_data,
         }
 
@@ -381,8 +379,8 @@ class TestGetRunProtocol(TestCase):
         self.assert404(resp)
 
     def test_simple(self):
-        report = b'blob'
-        mongo.db.protocol.insert_one({'protocol_id': self.run.id,
+        report = 'nice_report'
+        mongo.db.protocol.insert_one({'run_id': self.run.id,
                                       'blob': report})
         resp = self.send_request()
         self.assert200(resp)
