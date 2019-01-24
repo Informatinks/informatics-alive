@@ -4,15 +4,16 @@ from bson import ObjectId
 from flask import send_file, g, request
 from flask.views import MethodView
 from marshmallow import fields, Schema, post_load
+from webargs.flaskparser import parser
 from werkzeug.exceptions import NotFound, BadRequest
 
 from rmatics.model.base import db, mongo
 from rmatics.model.run import Run
-from rmatics.view import require_auth, require_roles
 from rmatics.utils.response import jsonify
+from rmatics.view.problem.serializers.run import RunSchema
 
 
-class EjudgeRunSchema(Schema):
+class FromEjudgeRunSchema(Schema):
     run_uuid = fields.String()
     score = fields.Integer()
     status = fields.Integer()
@@ -30,26 +31,61 @@ class EjudgeRunSchema(Schema):
         return run
 
 
-class SourceApi(MethodView):
-    @require_auth
-    def get(self, run_id: int):
-
-        user_id = g.user.id
+class RunAPI(MethodView):
+    def put(self, run_id: int):
+        """ View for updating run """
+        data = request.get_json(force=True, silent=False)
 
         run = db.session.query(Run).get(run_id)
+        if run is None:
+            raise NotFound(f'Run with id #{run_id} is not found')
+
+        only_fields = ['ejudge_status', 'ejudge_test_num', 'ejudge_score']
+        load_run_schema = RunSchema(only=only_fields, context={'instance': run})
+        _, errors = load_run_schema.load(data)
+
+        if errors:
+            raise BadRequest(errors)
+
+        # Avoid excess DB queries
+        excludes = ['user', 'problem']
+        dump_run_schema = RunSchema(exclude=excludes)
+        data, _ = dump_run_schema.dump(run)
+
+        db.session.add(run)
+        db.session.commit()
+
+        return jsonify(data)
+
+
+class SourceApi(MethodView):
+
+    get_args = {
+        'is_admin': fields.Boolean(default=False, missing=False),
+        'user_id': fields.Integer(),
+    }
+
+    def get(self, run_id: int):
+        args = parser.parse(self.get_args, request)
+        is_admin = args.get('is_admin')
+        user_id = args.get('user_id')
+
+        run_q = db.session.query(Run)
+        if not is_admin:
+            run_q = run_q.filter(Run.user_id == user_id)
+
+        run = run_q.filter(Run.id == run_id).one_or_none()
 
         if run is None:
-            raise NotFound()
+            raise NotFound('Run with current id is not found')
 
-        if run.user_id != user_id:
-            # TODO: Rewrite permissions
-            # This construction raises Forbidden if roles are not allowed
-            require_roles('admin', 'teacher')(lambda *_, **__: None)()
+        source = run.source or b''
+        source = source.decode('utf_8')
 
-        source = run.source
+        language_id = run.ejudge_language_id
 
         # TODO: Придумать что-то получше для бинарных submission-ов
-        return send_file(io.BytesIO(source), attachment_filename='submission.txt')
+        return jsonify({'source': source, 'language_id': language_id})
 
 
 class ProtocolApi(MethodView):
@@ -66,7 +102,7 @@ class ProtocolApi(MethodView):
         return jsonify(protocol)
 
 
-class UpdateEjudgeRun(MethodView):
+class UpdateRunFromEjudgeAPI(MethodView):
     def post(self):
         data = request.get_json(force=True)
         ejudge_run_id = data['run_id']
@@ -74,7 +110,8 @@ class UpdateEjudgeRun(MethodView):
         mongo_protocol_id = data.get('mongo_protocol_id', None)
 
         run = db.session.query(Run) \
-            .filter_by(ejudge_run_id=ejudge_run_id, ejudge_contest_id=ejudge_contest_id) \
+            .filter_by(ejudge_run_id=ejudge_run_id,
+                       ejudge_contest_id=ejudge_contest_id) \
             .one_or_none()
 
         if not run:
@@ -83,7 +120,7 @@ class UpdateEjudgeRun(MethodView):
                     ejudge_run_id={ejudge_run_id}'
             raise BadRequest(msg)
 
-        run_schema = EjudgeRunSchema(context={'instance': run})
+        run_schema = FromEjudgeRunSchema(context={'instance': run})
         run, errors = run_schema.load(data)
         if errors:
             raise BadRequest(errors)

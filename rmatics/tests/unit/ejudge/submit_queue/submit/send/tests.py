@@ -13,7 +13,7 @@ from hamcrest import (
 
 from rmatics.model.base import db
 from rmatics.model.run import Run
-from rmatics.model.ejudge_run import EjudgeRun
+from rmatics.model.ejudge_run import EjudgeRun, EjudgeStatuses
 from rmatics.testutils import TestCase
 
 
@@ -56,7 +56,7 @@ class TestEjudge__submit_queue_submit_send(TestCase):
             create_time=datetime.datetime(2018, 3, 30, 16, 59, 0),
             ejudge_contest_id=self.problems[0].ejudge_contest_id,
             ejudge_language_id=27,
-            ejudge_status=98,  # compiling
+            ejudge_status=EjudgeStatuses.COMPILING.value,
         )
         db.session.add(run)
         db.session.flush()
@@ -135,7 +135,7 @@ class TestEjudge__submit_queue_submit_send(TestCase):
             create_time=datetime.datetime(2018, 3, 30, 16, 59, 0),
             ejudge_contest_id=self.problems[0].ejudge_contest_id,
             ejudge_language_id=27,
-            ejudge_status=98,  # compiling
+            ejudge_status=EjudgeStatuses.COMPILING.value,
         )
         db.session.add(run)
         db.session.flush()
@@ -182,7 +182,7 @@ class TestEjudge__submit_queue_submit_send(TestCase):
             create_time=datetime.datetime(2018, 3, 30, 17, 10, 11),
             ejudge_contest_id=self.problems[0].ejudge_contest_id,
             ejudge_language_id=27,
-            ejudge_status=98,  # compiling
+            ejudge_status=EjudgeStatuses.COMPILING.value,
         )
         db.session.add(run)
         db.session.flush()

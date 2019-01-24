@@ -12,6 +12,7 @@ from rmatics.model.base import db, mongo
 from rmatics.model.role import RoleAssignment
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase
+from rmatics.utils.run import EjudgeStatuses
 from rmatics.view.problem.problem import SubmitApi
 
 PROTOCOL_ID = ObjectId("507f1f77bcf86cd799439011")
@@ -86,7 +87,7 @@ class TestTrustedProblemSubmit(TestCase):
             statement_id=self.statements[0].id,
             ejudge_contest_id=self.problems[0].ejudge_contest_id,
             ejudge_language_id=1,
-            ejudge_status=98,  # compiling
+            ejudge_status=EjudgeStatuses.COMPILING.value,
             source_hash=source_hash,
         )
         db.session.add(run)
@@ -157,7 +158,7 @@ class TestProblemSubmit(TestCase):
             statement_id=self.statements[0].id,
             ejudge_contest_id=self.problems[0].ejudge_contest_id,
             ejudge_language_id=1,
-            ejudge_status=98,  # compiling
+            ejudge_status=EjudgeStatuses.COMPILING.value,
             source_hash=source_hash,
         )
         db.session.add(run)
@@ -193,7 +194,7 @@ class TestGetSubmissionSource(TestCase):
             statement_id=self.statements[0].id,
             ejudge_contest_id=self.problems[0].ejudge_contest_id,
             ejudge_language_id=1,
-            ejudge_status=98,  # compiling
+            ejudge_status=EjudgeStatuses.COMPILING.value,
             source_hash=source_hash,
         )
         db.session.add(self.run)
@@ -201,33 +202,29 @@ class TestGetSubmissionSource(TestCase):
 
         self.run.update_source(blob)
 
-    def send_request(self, run_id):
-        url = url_for('problem.run_source', run_id=run_id)
+    def send_request(self, run_id, data=None):
+        data = data or {}
+        url = url_for('problem.run_source', run_id=run_id, **data)
         response = self.client.get(url)
         return response
 
     def test_simple(self):
-        self.set_session({'user_id': self.users[0].id})
+        data = {'user_id': self.users[0].id}
 
-        resp = self.send_request(run_id=self.run.id)
+        resp = self.send_request(run_id=self.run.id, data=data)
         self.assert200(resp)
 
+    # TODO: revrite test (NFRMTCS-26)
     def test_wrong_permissions(self):
-        self.set_session({'user_id': self.users[1].id})
+        data = {'user_id': self.users[1].id}
 
-        resp = self.send_request(run_id=self.run.id)
-        self.assert403(resp)
+        resp = self.send_request(run_id=self.run.id, data=data)
+        self.assert404(resp)
 
     def test_super_permissions(self):
+        data = {'is_admin': True}
 
-        role_assignment = RoleAssignment(user_id=self.users[1].id, role=self.admin_role)
-
-        db.session.add(role_assignment)
-        db.session.commit()
-
-        self.set_session({'user_id': self.users[1].id})
-
-        resp = self.send_request(run_id=self.run.id)
+        resp = self.send_request(run_id=self.run.id, data=data)
         self.assert200(resp)
 
 
@@ -250,7 +247,7 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             statement_id=None,
             ejudge_contest_id=self.problems[0].ejudge_contest_id,
             ejudge_language_id=1,
-            ejudge_status=98,  # compiling
+            ejudge_status=EjudgeStatuses.COMPILING.value,
             source_hash=source_hash,
             ejudge_run_id=1
         )
@@ -270,8 +267,8 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             'status': 37,
             'lang_id': 2,
             'test_num': 123,
-            'create_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'last_change_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'create_time':  datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+            'last_change_time': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
         }
 
         request_data = {
@@ -301,8 +298,8 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             'status': 37,
             'lang_id': 2,
             'test_num': 123,
-            'create_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'last_change_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'create_time': datetime.datetime.now().isoformat(),
+            'last_change_time': datetime.datetime.now().isoformat(),
         }
 
         protocol_id = PROTOCOL_ID
@@ -330,8 +327,8 @@ class TestUpdateSubmissionFromEjudge(TestCase):
             'status': 37,
             'lang_id': 2,
             'test_num': 123,
-            'create_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'last_change_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'create_time': datetime.datetime.now().isoformat(),
+            'last_change_time': datetime.datetime.now().isoformat(),
         }
 
         protocol_id = WRONG_PROTOCOL_ID
@@ -367,7 +364,7 @@ class TestGetRunProtocol(TestCase):
             statement_id=None,
             ejudge_contest_id=self.problems[0].ejudge_contest_id,
             ejudge_language_id=1,
-            ejudge_status=98,  # compiling
+            ejudge_status=EjudgeStatuses.COMPILING.value,
             source_hash=source_hash,
             ejudge_run_id=1
         )

@@ -33,11 +33,11 @@ class Run(db.Model):
     problem_id = db.Column(db.Integer, db.ForeignKey('moodle.mdl_problems.id'))
     statement_id = db.Column(db.Integer, db.ForeignKey('moodle.mdl_statements.id'))
     score = db.Column(db.Integer)
-    create_time = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
     user = db.relationship('SimpleUser', backref='runs')
     problem = db.relationship('EjudgeProblem', backref=db.backref('runs', lazy='dynamic'))
     statement = db.relationship('Statement', backref='runs')
+    create_time = db.Column(db.DateTime(), default=datetime.datetime.utcnow)
 
     # Поля скопированные из ejudge.runs
     ejudge_run_id = db.Column('ej_run_id', db.Integer)
