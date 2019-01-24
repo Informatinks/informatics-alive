@@ -1,7 +1,5 @@
-import io
-
 from bson import ObjectId
-from flask import send_file, g, request
+from flask import request
 from flask.views import MethodView
 from marshmallow import fields, Schema, post_load
 from webargs.flaskparser import parser
@@ -126,9 +124,9 @@ class UpdateRunFromEjudgeAPI(MethodView):
             raise BadRequest(errors)
 
         if mongo_protocol_id:
-            result = mongo.db.protocol.find_one_and_update({'_id': ObjectId(mongo_protocol_id)},
+            result = mongo.db.protocol.update_one({'_id': ObjectId(mongo_protocol_id)},
                                                            {'$set': {'run_id': run.id}})
-            if not result['updatedExisting']:
+            if not result.modified_count:
                 raise BadRequest(f'Cannot find protocol by _id {mongo_protocol_id}')
 
         db.session.add(run)
