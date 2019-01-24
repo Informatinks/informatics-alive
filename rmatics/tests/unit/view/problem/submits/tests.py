@@ -374,13 +374,13 @@ class TestGetRunProtocol(TestCase):
         resp = self.client.get(url)
         return resp
 
-    def test_not_found(self):
+    def test_run_doesnt_have_protocol(self):
         resp = self.send_request()
         self.assert404(resp)
 
-    def test_simple(self):
-        report = 'nice_report'
+    def test_run_have_protocol(self):
+        protocol = 'nice_report'
         mongo.db.protocol.insert_one({'run_id': self.run.id,
-                                      'blob': report})
+                                      'protocol': protocol})
         resp = self.send_request()
         self.assert200(resp)
