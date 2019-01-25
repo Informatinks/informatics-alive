@@ -1,6 +1,5 @@
-import io
-
-from flask import send_file, g, request
+from bson import ObjectId
+from flask import request
 from flask.views import MethodView
 from marshmallow import fields, Schema, post_load
 from webargs.flaskparser import parser
@@ -91,15 +90,14 @@ class ProtocolApi(MethodView):
     def get(self, run_id: int):
 
         run = db.session.query(Run).get(run_id)
-        if run is None:
-            raise NotFound('Current run_id is not found')
+        if not run:
+            raise NotFound(f'run_id: {run_id} is not found')
 
         protocol = run.protocol
-        if protocol is None:
-            raise NotFound('Protocol for current run_id not found')
+        if not protocol:
+            raise NotFound(f'Protocol for run_id: {run_id} not found')
 
-        return send_file(io.BytesIO(protocol),
-                         attachment_filename='submission.txt')
+        return jsonify(protocol)
 
 
 class UpdateRunFromEjudgeAPI(MethodView):
@@ -107,16 +105,17 @@ class UpdateRunFromEjudgeAPI(MethodView):
         data = request.get_json(force=True)
         ejudge_run_id = data['run_id']
         ejudge_contest_id = data['contest_id']
-        protocol_uuid = data.get('mongo_protocol_uuid')
+        mongo_protocol_id = data.get('mongo_protocol_id', None)
 
-        run = db.session.query(Run)\
+        run = db.session.query(Run) \
             .filter_by(ejudge_run_id=ejudge_run_id,
-                       ejudge_contest_id=ejudge_contest_id)\
+                       ejudge_contest_id=ejudge_contest_id) \
             .one_or_none()
+
         if not run:
-            msg = f'Cannot find Run with ' \
-                  f'ejudge_contest_id={ejudge_contest_id}, ' \
-                  f'ejudge_run_id={ejudge_run_id}'
+            msg = f'Cannot find Run with  \
+                    ejudge_contest_id={ejudge_contest_id},  \
+                    ejudge_run_id={ejudge_run_id}'
             raise BadRequest(msg)
 
         run_schema = FromEjudgeRunSchema(context={'instance': run})
@@ -124,11 +123,11 @@ class UpdateRunFromEjudgeAPI(MethodView):
         if errors:
             raise BadRequest(errors)
 
-        if protocol_uuid:
-            result = mongo.db.protocol.update({'protocol_id': protocol_uuid},
-                                              {'protocol_id': run.id})
-            if not result['updatedExisting']:
-                raise BadRequest(f'Cannot find protocol by uuid {protocol_uuid}')
+        if mongo_protocol_id:
+            result = mongo.db.protocol.update_one({'_id': ObjectId(mongo_protocol_id)},
+                                                           {'$set': {'run_id': run.id}})
+            if not result.modified_count:
+                raise BadRequest(f'Cannot find protocol by _id {mongo_protocol_id}')
 
         db.session.add(run)
         db.session.commit()
