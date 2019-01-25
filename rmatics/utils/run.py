@@ -3,7 +3,7 @@ import gzip
 import codecs
 from enum import Enum
 
-contest_path = '/home/judges/'
+contest_path = '/home/judges/contests_var/'
 protocols_path = 'var/archive/xmlreports'
 audit_path = 'var/archive/audit'
 sources_path = 'var/archive/runs'
