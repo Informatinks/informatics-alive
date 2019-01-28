@@ -41,4 +41,4 @@ services:
       - redis
       - mongo
 
-    command: 'bash -c "sleep 10 && flask test"'
+    command: 'bash -c "sleep 10 && flask test --teamcity"'

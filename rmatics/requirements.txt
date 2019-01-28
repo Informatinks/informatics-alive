@@ -30,3 +30,4 @@ teamcity-messages
 mock
 pyhamcrest
 flask-testing
+uwsgi
