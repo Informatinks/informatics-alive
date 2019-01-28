@@ -61,18 +61,23 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 if __name__ == '__main__':
+    STARTS_WITH = 15882103
     PER_STEP_CNT = 1000
-    quantity = session.query(Run.id).count()
+    quantity = session.query(Run).filter(Run.id >= STARTS_WITH).count()
     print(f'Total run quantity: {quantity}')
     steps_count = (quantity // PER_STEP_CNT) + 1
     for step in range(steps_count):
         print(f'Step from {step * PER_STEP_CNT} to {(step + 1) * PER_STEP_CNT}')
         runs_q = session.query(Run)\
+                        .filter(Run.id >= STARTS_WITH)\
                         .order_by(Run.id)\
                         .limit(PER_STEP_CNT)\
                         .offset(step * PER_STEP_CNT)
         for run in runs_q:
             print(f'Process on run #{run.id} ({run.ejudge_contest_id}, {run.ejudge_run_id})')
+            if run.ejudge_run_id is None or run.ejudge_contest_id is None:
+                print('Run without ejudge run or contest')
+                continue
             try:
                 source = get_source(run)
             except FileNotFoundError as e:
