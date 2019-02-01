@@ -1,5 +1,6 @@
 import datetime
 import hashlib
+import logging
 from typing import Optional
 
 from flask import g
@@ -65,14 +66,10 @@ class Run(db.Model):
     @property
     def source(self) -> Optional[bytes]:
         data = mongo.db.source.find_one({'run_id': self.id})
-        if not data:
-            text = self.ejudge_run.get_sources()
-            if not text:
-                return None
-            blob = text.decode('utf-8')
-            self.update_source(blob)
-            return blob
-        blob = data.get('blob', None)
+        if data is None:
+            logging.error(f'Cannot find source for run #{self.id}')
+            return None
+        blob = data.get('blob')
         return blob
 
     @property

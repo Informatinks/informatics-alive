@@ -60,8 +60,10 @@ class Cacher:
         We use full_text_search by its field
         So its better to remove old CacheMeta
         For example by CRON u now
-
     Also #2:
+    ------
+        For invalidation we use only kwargs of cached function call
+    Also #3:
     ------
         Инвалидация работает только для kwargs со списками и
         Например, contest_ids = [1, 2, 3]; для contest_ids = {id: [3]} не сработает

@@ -37,6 +37,6 @@ class CacheMeta(db.Model):
 
     @classmethod
     def get_search_like_args(cls, args: Iterable[str]) -> List[str]:
-        """ [problem_1] -> ['%__problem_1__%']' """
+        """ [problem_1] -> ['%__problem_1__%'] """
         return list(cls._get_like_args(map(cls._get_search_arg, args)))
 
