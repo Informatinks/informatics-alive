@@ -82,6 +82,8 @@ class Cacher:
         self.can_invalidate = can_invalidate
         self.invalidate_by = invalidate_by
         self.autocommit = autocommit
+        if can_invalidate and not self.invalidate_by:
+            raise ValueError('You must specify any invalidate_by args for invalidating')
 
     def __call__(self, func):
         @functools.wraps(func)
@@ -107,7 +109,8 @@ class Cacher:
             self.store.set(key, json.dumps(func_result))
             self.store.expire(key, self.period)
 
-            self._save_cache_meta(func, key, kwargs)
+            if self.can_invalidate:
+                self._save_cache_meta(func, key, kwargs)
 
             return func_result
         return wrapped
@@ -139,7 +142,10 @@ class Cacher:
         label = func.__name__
         when_expire = datetime.datetime.utcnow() + datetime.timedelta(seconds=self.period)
 
-        invalidate_args_list = self._kwargs_to_string_list(kwargs)
+        invalidate_kwargs = self._filter_invalidate_kwargs(kwargs)
+        assert invalidate_kwargs, 'You didn\'t call func with any invalidate_by args'
+
+        invalidate_args_list = self._kwargs_to_string_list(invalidate_kwargs)
         invalidate_args = CacheMeta.get_invalidate_args(invalidate_args_list)
 
         cache_meta = CacheMeta(prefix=self.prefix,
@@ -152,10 +158,28 @@ class Cacher:
             db.session.commit()
         return cache_meta
 
-    def invalidate(self, func, **kwargs):
-        """ Invalidate all caches of func by given keys """
+    def _filter_invalidate_kwargs(self, kwargs: dict) -> dict:
+        result_set = {}
+        for arg in self.invalidate_by:
+            val = kwargs.get(arg)
+            if val is not None:
+                result_set[arg] = val
+        return result_set
 
-        strings_from_kwargs = self._kwargs_to_string_list(kwargs)
+    def invalidate(self, func, **kwargs) -> bool:
+        """ Invalidate all caches of func by given keys
+        Returns True if its possible to invalidate some caches
+        """
+
+        if not self.can_invalidate:
+            return False
+
+        invalidate_kwargs = self._filter_invalidate_kwargs(kwargs)
+
+        if not invalidate_kwargs:
+            return False
+
+        strings_from_kwargs = self._kwargs_to_string_list(invalidate_kwargs)
         like_args = CacheMeta.get_search_like_args(strings_from_kwargs)
 
         label = func.__name__
@@ -171,3 +195,5 @@ class Cacher:
 
         if self.autocommit:
             db.session.commit()
+
+        return True

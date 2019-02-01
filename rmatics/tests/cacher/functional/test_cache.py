@@ -26,7 +26,7 @@ class TestCacher(TestCase):
         redis.get = self.redis_get_mock
         redis.delete = self.redis_delete_mock
 
-        self.cacher = Cacher(redis, prefix=PREFIX)
+        self.cacher = Cacher(redis, prefix=PREFIX, invalidate_by=['a', 'problem_id'])
 
         self.to_be_cached = MagicMock(return_value=FUNC_RETURN_VALUE)
         self.to_be_cached.__name__ = FUNC_NAME
@@ -97,3 +97,24 @@ class TestCacher(TestCase):
                     CacheMeta.label == FUNC_NAME) \
             .count()
         self.assertEqual(metas, 1)
+
+    def test_invalidate_cache_not_delete_by_custom_args(self):
+        arg_not_in_invalidate_by = {'not_in_invalidate': 1}
+
+        self.redis_get_mock.return_value = ''
+        arg_set1 = {'problem_id': 1, **arg_not_in_invalidate_by}
+        arg_set2 = {'problem_id': 1, **arg_not_in_invalidate_by}
+        arg_set3 = {'problem_id': 1, **arg_not_in_invalidate_by}
+
+        self.cached_function(**arg_set1)
+        self.cached_function(**arg_set2)
+        self.cached_function(**arg_set3)
+
+        self.cacher.invalidate(self.cached_function, **arg_not_in_invalidate_by)
+        self.redis_delete_mock.assert_not_called()
+
+        metas = db.session.query(CacheMeta) \
+            .filter(CacheMeta.prefix == PREFIX,
+                    CacheMeta.label == FUNC_NAME) \
+            .count()
+        self.assertEqual(metas, 3)
