@@ -197,3 +197,66 @@ class Cacher:
             db.session.commit()
 
         return True
+
+
+class DeferredWrapper:
+    """
+    Wraps function after calling .wraps(wrapper: Callable) only
+    """
+    def __init__(self, f):
+        self.f = f
+
+    def wrap(self, wrapper: Callable):
+        self.f = wrapper(self.f)
+
+    def __call__(self, *args, **kwargs):
+        return self.f(*args, **kwargs)
+
+
+class FlaskCacher:
+    """ Wrapper for Flask and Cacher integration
+    Usage:
+    ------
+        cacher = FlaskCacher(prefix='my_cache')
+        ...
+        @cacher
+        def cache_me_pls(problem_ids=None):
+            ...
+        ...
+
+        def create_app():
+            app = Flask()
+            store = Redis(app)
+            cacher.init_app(app, store, period=30*60)
+    """
+
+    def __init__(self, *args, **kwargs):
+        self._args = args
+        self._kwargs = kwargs
+        self._app = None
+        self._instance = None
+        self._deferred_wrappers = []
+
+    def init_app(self, app, store, **kwargs):
+        self._app = app
+        self._kwargs.update(kwargs)
+        self._instance = Cacher(store, *self._args, **self._kwargs)
+
+        for wrapper in self._deferred_wrappers:
+            wrapper.wrap(self._instance)
+
+    def invalidate(self, func, **kwargs):
+        res = self._instance.invalidate(func, **kwargs)
+        if not res:
+            msg = 'Function Cacher.invalidate was called but could not invalidate cache'
+            self._app.logger.warning(msg)
+
+    def __call__(self, f: Callable):
+        # We use deferred wrapping because when decorator called
+        # We did not have self._instance: we did not call init_app yet
+        wrapper = functools.wraps(f)(DeferredWrapper(f))
+        self._deferred_wrappers.append(wrapper)
+        return wrapper
+
+    def __getattr__(self, item):
+        return getattr(self._instance, item)
