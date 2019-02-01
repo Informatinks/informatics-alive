@@ -69,7 +69,7 @@ class Cacher:
         Например, contest_ids = [1, 2, 3]; для contest_ids = {id: [3]} не сработает
     """
     def __init__(self, store,
-                 prefix='cahce',
+                 prefix='cache',
                  period=30*60,
                  can_invalidate=True,
                  invalidate_by=None,
@@ -116,22 +116,22 @@ class Cacher:
     def _simple_item_to_string(key, item):
         return f'{key}_{item}'
 
-    @staticmethod
-    def _list_item_to_string(key, value):
+    @classmethod
+    def _list_item_to_string(cls, key, value):
         acc = []
         for item in value:
-            acc.append(Cacher._simple_item_to_string(key, item))
+            acc.append(cls._simple_item_to_string(key, item))
         return acc
 
-    @staticmethod
-    def _kwargs_to_string_list(kwargs: dict) -> List[str]:
+    @classmethod
+    def _kwargs_to_string_list(cls, kwargs: dict) -> List[str]:
         """ {contest: [1, 2], group: 2} -> ['contest_1', 'contest_2', 'group_2']"""
         acc = []
         for key, value in kwargs.items():
             if isinstance(value, list):
-                acc += Cacher._list_item_to_string(key, value)
+                acc += cls._list_item_to_string(key, value)
             else:
-                acc.append(Cacher._simple_item_to_string(key, value))
+                acc.append(cls._simple_item_to_string(key, value))
         return acc
 
     def _save_cache_meta(self, func, key: str, kwargs):
@@ -160,12 +160,11 @@ class Cacher:
 
         label = func.__name__
 
-        invalid_cache_metas_q = db.session.query(CacheMeta)\
+        invalid_cache_metas = db.session.query(CacheMeta)\
             .filter(CacheMeta.prefix == self.prefix)\
             .filter(CacheMeta.label == label) \
             .filter(or_(CacheMeta.invalidate_args.like(a) for a in like_args))
 
-        invalid_cache_metas = invalid_cache_metas_q.all()
         for meta in invalid_cache_metas:
             self.store.delete(meta.key)
             db.session.delete(meta)
