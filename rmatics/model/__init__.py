@@ -34,4 +34,4 @@ from rmatics.model.user_oauth_provider import UserOAuthProvider
 
 from rmatics.model.label import Label
 from rmatics.model.resource import Resource
-
+from rmatics.model.cache_meta import CacheMeta
