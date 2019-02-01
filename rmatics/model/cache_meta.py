@@ -24,12 +24,12 @@ class CacheMeta(db.Model):
 
     @classmethod
     def get_invalidate_args(cls, data: Iterable[str]):
-        """ [problem_1, problem_2] -> '__problem_1__problem_2__' """
-        return f'__{"__".join(data)}__'[:MAX_KEY_LEN + 1]
+        """ [problem_1, problem_2] -> '|problem_1|problem_2|' """
+        return f'|{"|".join(data)}|'[:MAX_KEY_LEN + 1]
 
     @classmethod
     def _get_search_arg(cls, arg: str):
-        return f'__{arg}__'
+        return f'|{arg}|'
 
     @classmethod
     def _get_like_args(cls, args: Iterable[str]) -> Iterable[str]:
@@ -37,6 +37,6 @@ class CacheMeta(db.Model):
 
     @classmethod
     def get_search_like_args(cls, args: Iterable[str]) -> List[str]:
-        """ [problem_1] -> ['%__problem_1__%'] """
+        """ [problem_1] -> ['%|problem_1|%'] """
         return list(cls._get_like_args(map(cls._get_search_arg, args)))
 

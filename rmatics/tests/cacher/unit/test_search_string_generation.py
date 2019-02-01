@@ -8,12 +8,12 @@ class TestDBSearchString(TestCase):
     def test_get_invalidate_args(self):
         args = ['problem_1', 'problem_2']
         invalidate_args = CacheMeta.get_invalidate_args(args)
-        self.assertEqual(invalidate_args, '__problem_1__problem_2__')
+        self.assertEqual(invalidate_args, '|problem_1|problem_2|')
 
     def test_get_search_like_args(self):
         args = ['problem_1', 'problem_2']
         search_like = CacheMeta.get_search_like_args(args)
-        self.assertEqual(search_like, ['%__problem_1__%', '%__problem_2__%'])
+        self.assertEqual(search_like, ['%|problem_1|%', '%|problem_2|%'])
 
 
 class TestCacheArgsToString(TestCase):
