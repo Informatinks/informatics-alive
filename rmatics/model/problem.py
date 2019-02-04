@@ -2,6 +2,8 @@ import os
 import glob
 from zipfile import ZipFile
 
+from sqlalchemy.orm import relationship
+
 from rmatics.ejudge.serve_internal import EjudgeContestCfg
 from rmatics.model.base import db
 from rmatics.utils.decorators import deprecated
@@ -28,6 +30,7 @@ class Problem(db.Model):
     show_limits = db.Column(db.Boolean)
     output_only = db.Column(db.Boolean)
     pr_id = db.Column(db.Integer, db.ForeignKey('moodle.mdl_ejudge_problem.id'))
+    ejudge_problem = relationship('EjudgeProblem', lazy='select')
 
     def __init__(self, *args, **kwargs):
         super(Problem, self).__init__(*args, **kwargs)
