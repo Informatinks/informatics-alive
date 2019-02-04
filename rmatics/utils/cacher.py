@@ -98,13 +98,18 @@ class Cacher:
     def __call__(self, func):
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
-            key = get_cache_key(func, self.prefix, args, kwargs)
-
             # Parameter to check if caching is disabled
             # monitors.get_monitor(1, cache=False)
             to_be_cached = kwargs.pop('cache', True)
             if not to_be_cached:
                 return func(*args, **kwargs)
+
+            if self.can_invalidate:
+                # If we can invalidate we will better use invalidate_by kwargs only
+                invalidate_kwargs = self._filter_invalidate_kwargs(kwargs)
+                key = get_cache_key(func, self.prefix, (), invalidate_kwargs)
+            else:
+                key = get_cache_key(func, self.prefix, args, kwargs)
 
             try:
                 result = self.store.get(key)
@@ -120,7 +125,7 @@ class Cacher:
             self.store.expire(key, self.period)
 
             if self.can_invalidate:
-                self._save_cache_meta(func, key, kwargs)
+                self._save_cache_meta(func, key, invalidate_kwargs)
 
             return func_result
         return wrapped
@@ -147,13 +152,10 @@ class Cacher:
                 acc.append(cls._simple_item_to_string(key, value))
         return acc
 
-    def _save_cache_meta(self, func, key: str, kwargs):
+    def _save_cache_meta(self, func, key: str, invalidate_kwargs):
 
         label = func.__name__
         when_expire = datetime.datetime.utcnow() + datetime.timedelta(seconds=self.period)
-
-        invalidate_kwargs = self._filter_invalidate_kwargs(kwargs)
-        assert invalidate_kwargs, 'You didn\'t call func with any invalidate_by args'
 
         invalidate_args_list = self._kwargs_to_string_list(invalidate_kwargs)
         invalidate_args = CacheMeta.get_invalidate_args(invalidate_args_list)
