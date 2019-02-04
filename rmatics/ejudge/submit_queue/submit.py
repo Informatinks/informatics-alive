@@ -55,7 +55,7 @@ class Submit:
             log.error(f'Can\'t find run #{self.run_id}')
             return
         file = run.source
-        problem = run.problem
+        problem = run.problem  # TODO: лишний запрос
         ejudge_language_id = run.ejudge_language_id
         user_id = run.user_id
 

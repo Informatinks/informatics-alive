@@ -6,6 +6,7 @@ from werkzeug.exceptions import HTTPException
 from rmatics.model.base import db
 from rmatics.model.base import mongo
 from rmatics.model.base import redis
+from rmatics.plugins import monitor_cacher
 from rmatics.view import handle_api_exception, load_user
 from rmatics.view.bootstrap import bootstrap
 from rmatics.view.centrifugo import centrifugo_client
@@ -52,6 +53,8 @@ def create_app(config=None):
     db.init_app(app)
     mongo.init_app(app)
     redis.init_app(app)
+
+    monitor_cacher.init_app(app, redis, period=30*60, autocommit=False)
 
     # Centrifugo
     cent_url = app.config.get('CENTRIFUGO_URL')

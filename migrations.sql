@@ -42,3 +42,16 @@ LEFT JOIN (
 ON run.ej_contest_id = ejruns.contest_id
    AND run.ej_run_id = ejruns.run_id
 WHERE run.id IS NULL; -- ejudge runs where pynformatics.runs are not exists
+
+
+-- Create CacheMeta
+USE pynformatics;
+CREATE TABLE cache_meta (
+  id INTEGER PRIMARY KEY NOT NULL,
+  prefix VARCHAR(30) NOT NULL,
+  label VARCHAR (30) NOT NULL,
+  key VARCHAR (64) NOT NULL,
+  invalidate_args VARCHAR (4096) NOT NULL,
+  created TIMESTAMP,
+  when_expire TIMESTAMP
+);
