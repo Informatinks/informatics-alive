@@ -39,7 +39,7 @@ class Cacher:
                                 invalidate_args=['problem_ids', 'group_ids'])
 
         @monitor_cacher
-        def get_monitor(problem_ids: list = None, group_ids: list = None):
+        def get_monitor(problem_ids: list = None, group_ids: list = None) -> Json serializable:
             ...
 
         problem_ids = [1, 2, 3]
@@ -75,7 +75,7 @@ class Cacher:
         For invalidation we use only kwargs of cached function call
     Also #3:
     ------
-        Инвалидация работает только для kwargs со списками и
+        Инвалидация работает только для kwargs со списками и одиночными значениями
         Например, contest_ids = [1, 2, 3]; для contest_ids = {id: [3]} не сработает
     """
     def __init__(self, store,
@@ -272,6 +272,9 @@ class FlaskCacher:
 
         for wrapper in self._deferred_wrappers:
             wrapper.wrap(self._instance)
+        # We should clear DeferredWrapper's list to avoid second wrapping
+        # If someone calls init_app twice
+        self._deferred_wrappers.clear()
 
     def invalidate_any_of(self, func, **kwargs):
         res = self._instance.invalidate_any_of(func, **kwargs)
