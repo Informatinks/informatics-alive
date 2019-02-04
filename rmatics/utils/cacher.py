@@ -6,7 +6,7 @@ import pickle
 from typing import Callable, List
 
 import redis
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 from rmatics.model.base import db
 from rmatics.model.cache_meta import CacheMeta
@@ -35,24 +35,34 @@ class Cacher:
     Usage:
     ------
         store = Redis()
-        monitor_cacher = Cacher(store, can_invalidate=True, invalidate_args=['contests_id'])
+        monitor_cacher = Cacher(store, can_invalidate=True,
+                                invalidate_args=['problem_ids', 'group_ids'])
 
         @monitor_cacher
-        def get_monitor(problem_ids: list = None):
+        def get_monitor(problem_ids: list = None, group_ids: list = None):
             ...
 
         problem_ids = [1, 2, 3]
+        group_ids = [3, 4, 5]
         # Function executed; Cache updated
-        data = get_monitor(problem_ids=problem_ids)
+        data = get_monitor(problem_ids=problem_ids, group_ids=group_ids)
         # Returns cached data
         data = get_monitor(problem_ids=problem_ids)
 
         expired_contests = [1]
         # Invalidate cache for all get_monitor with expired_contests in problem_ids
-        monitor_cacher.invalidate(get_monitor,
-                                  problem_ids=expired_contests)
+        monitor_cacher.invalidate_any_of(get_monitor,
+                                         problem_ids=expired_problems)
+
+        expired_contests = [1]
+        group_id = 3
+        # Invalidate cache for all get_monitor
+        # with expired_contests in problem_ids and group_id in group_ids
+        monitor_cacher.invalidate_all_of(get_monitor,
+                                         problem_ids=expired_problems, group_ids=3)
+
         # Function executed; Cache updated
-        data = get_monitor(problem_ids=contest_ids)
+        data = get_monitor(problem_ids=contest_ids, group_ids=group_ids)
 
     Also #1:
     ------
@@ -166,28 +176,46 @@ class Cacher:
                 result_set[arg] = val
         return result_set
 
-    def invalidate(self, func, **kwargs) -> bool:
-        """ Invalidate all caches of func by given keys
-        Returns True if its possible to invalidate some caches
+    def invalidate_any_of(self, func, **kwargs) -> bool:
+        """ Invalidate all caches of func by given keys if it matches any of key
+            Returns True if its possible to invalidate some caches
         """
-
         if not self.can_invalidate:
             return False
 
-        invalidate_kwargs = self._filter_invalidate_kwargs(kwargs)
+        return self._invalidate(func, any_of=kwargs)
 
-        if not invalidate_kwargs:
+    def invalidate_all_of(self, func, **kwargs) -> bool:
+        """ Invalidate all caches of func by given keys if it matches all of keys
+            Returns True if its possible to invalidate some caches
+        """
+        if not self.can_invalidate:
             return False
 
-        strings_from_kwargs = self._kwargs_to_string_list(invalidate_kwargs)
-        like_args = CacheMeta.get_search_like_args(strings_from_kwargs)
+        return self._invalidate(func, all_of=kwargs)
+
+    def _invalidate(self, func, all_of: dict = None, any_of: dict = None) -> bool:
+        any_of = any_of or {}
+        all_of = all_of or {}
+        all_invalidate_kwargs = self._filter_invalidate_kwargs(all_of)
+        any_invalidate_kwargs = self._filter_invalidate_kwargs(any_of)
+
+        if not all_invalidate_kwargs and not any_invalidate_kwargs:
+            return False
+
+        strings_all_from_kwargs = self._kwargs_to_string_list(all_invalidate_kwargs)
+        strings_any_from_kwargs = self._kwargs_to_string_list(any_invalidate_kwargs)
+
+        all_like_args = CacheMeta.get_search_like_args(strings_all_from_kwargs)
+        any_like_args = CacheMeta.get_search_like_args(strings_any_from_kwargs)
 
         label = func.__name__
 
-        invalid_cache_metas = db.session.query(CacheMeta)\
-            .filter(CacheMeta.prefix == self.prefix)\
+        invalid_cache_metas = db.session.query(CacheMeta) \
+            .filter(CacheMeta.prefix == self.prefix) \
             .filter(CacheMeta.label == label) \
-            .filter(or_(CacheMeta.invalidate_args.like(a) for a in like_args))
+            .filter(or_(CacheMeta.invalidate_args.like(a) for a in any_like_args)) \
+            .filter(and_(CacheMeta.invalidate_args.like(a) for a in all_like_args))
 
         for meta in invalid_cache_metas:
             self.store.delete(meta.key)
@@ -195,8 +223,6 @@ class Cacher:
 
         if self.autocommit:
             db.session.commit()
-
-        return True
 
 
 class DeferredWrapper:
@@ -245,10 +271,20 @@ class FlaskCacher:
         for wrapper in self._deferred_wrappers:
             wrapper.wrap(self._instance)
 
-    def invalidate(self, func, **kwargs):
-        res = self._instance.invalidate(func, **kwargs)
+    def invalidate_any_of(self, func, **kwargs):
+        res = self._instance.invalidate_any_of(func, **kwargs)
         if not res:
-            msg = 'Function Cacher.invalidate was called but could not invalidate cache'
+            msg = f'Function Cacher.invalidate_any_of was called' \
+                   'for function {func.__name__} but could not invalidate cache' \
+                   'with current args.'
+            self._app.logger.warning(msg)
+
+    def invalidate_all_of(self, func, **kwargs):
+        res = self._instance.invalidate_all_of(func, **kwargs)
+        if not res:
+            msg = f'Function Cacher.invalidate_all_of was called' \
+                   'for function {func.__name__} but could not invalidate cache' \
+                   'with current args.'
             self._app.logger.warning(msg)
 
     def __call__(self, f: Callable):
