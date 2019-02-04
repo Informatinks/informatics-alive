@@ -15,7 +15,7 @@ class TestAPI__submit_get(TestCase):
     def setUp(self):
         super(TestAPI__submit_get, self).setUp()
 
-        self.create_problems()
+        self.create_ejudge_problems()
         self.create_users()
 
     def send_request(self, user_id=None):
@@ -27,7 +27,7 @@ class TestAPI__submit_get(TestCase):
     def test_simple(self):
         self.set_session({'user_id': self.users[0].id})
         response = self.client.post(
-            f'/problem/{self.problems[0].id}/submit_v2',
+            f'/problem/{self.ejudge_problems[0].id}/submit_v2',
             data={
                 'lang_id': 27,
                 'file': (io.BytesIO(b'some code'), 'some_file_name')
@@ -35,7 +35,7 @@ class TestAPI__submit_get(TestCase):
         )
         assert_that(response.status_code, equal_to(200))
         response = self.client.post(
-            f'/problem/{self.problems[1].id}/submit_v2',
+            f'/problem/{self.ejudge_problems[1].id}/submit_v2',
             data={
                 'lang_id': 24,
                 'file': (io.BytesIO(b'perl submit'), 'some_file_name')

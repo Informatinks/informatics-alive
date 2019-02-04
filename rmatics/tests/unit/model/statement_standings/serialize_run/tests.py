@@ -14,13 +14,13 @@ class TestModel__statement_standings_serialize_run(TestCase):
     def setUp(self):
         super(TestModel__statement_standings_serialize_run, self).setUp()
 
-        self.create_problems()
+        self.create_ejudge_problems()
 
     def test_simple(self):
         run = EjudgeRun(
             run_id=1,
-            contest_id=self.problems[1].ejudge_contest_id,
-            prob_id=self.problems[1].problem_id,
+            contest_id=self.ejudge_problems[1].ejudge_contest_id,
+            prob_id=self.ejudge_problems[1].problem_id,
             create_time=datetime.datetime(2018, 2, 24, 16, 44, 32),
             score=99,
             status=7,

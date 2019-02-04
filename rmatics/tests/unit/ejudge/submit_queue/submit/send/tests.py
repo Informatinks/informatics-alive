@@ -32,13 +32,13 @@ class TestEjudge__submit_queue_submit_send(TestCase):
         notify_user_mock.reset_mock()
 
         self.create_users()
-        self.create_problems()
+        self.create_ejudge_problems()
         self.create_statements()
 
         self.run = EjudgeRun(
             run_id=12,
             user=self.users[0],
-            problem=self.problems[0],
+            problem=self.ejudge_problems[0],
         )
         db.session.add(self.run)
         db.session.flush([self.run])
@@ -51,10 +51,10 @@ class TestEjudge__submit_queue_submit_send(TestCase):
     def test_simple(self):
         run = Run(
             user_id=self.users[0].id,
-            problem_id=self.problems[0].id,
+            problem_id=self.ejudge_problems[0].id,
             statement_id=self.statements[0].id,
             create_time=datetime.datetime(2018, 3, 30, 16, 59, 0),
-            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_contest_id=self.ejudge_problems[0].ejudge_contest_id,
             ejudge_language_id=27,
             ejudge_status=EjudgeStatuses.COMPILING.value,
         )
@@ -97,9 +97,9 @@ class TestEjudge__submit_queue_submit_send(TestCase):
 
         run = db.session.query(Run).one()
         assert_that(run.ejudge_run_id, equal_to(self.run.run_id))
-        assert_that(run.ejudge_contest_id, equal_to(self.problems[0].ejudge_contest_id))
+        assert_that(run.ejudge_contest_id, equal_to(self.ejudge_problems[0].ejudge_contest_id))
         assert_that(run.user.id, equal_to(self.users[0].id))
-        assert_that(run.problem.id, equal_to(self.problems[0].id))
+        assert_that(run.problem.id, equal_to(self.ejudge_problems[0].id))
 
         notify_user_mock.assert_called_once_with(
             1,
@@ -130,10 +130,10 @@ class TestEjudge__submit_queue_submit_send(TestCase):
         # В случае, если функция submit бросила исключение
         run = Run(
             user_id=self.users[0].id,
-            problem_id=self.problems[0].id,
+            problem_id=self.ejudge_problems[0].id,
             statement_id=self.statements[0].id,
             create_time=datetime.datetime(2018, 3, 30, 16, 59, 0),
-            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_contest_id=self.ejudge_problems[0].ejudge_contest_id,
             ejudge_language_id=27,
             ejudge_status=EjudgeStatuses.COMPILING.value,
         )
@@ -177,10 +177,10 @@ class TestEjudge__submit_queue_submit_send(TestCase):
 
         run = Run(
             user_id=self.users[0].id,
-            problem_id=self.problems[0].id,
+            problem_id=self.ejudge_problems[0].id,
             statement_id=self.statements[0].id,
             create_time=datetime.datetime(2018, 3, 30, 17, 10, 11),
-            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_contest_id=self.ejudge_problems[0].ejudge_contest_id,
             ejudge_language_id=27,
             ejudge_status=EjudgeStatuses.COMPILING.value,
         )

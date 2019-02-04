@@ -17,7 +17,7 @@ class TestModel__ejudge_run_serialize(TestCase):
     def setUp(self):
         super(TestModel__ejudge_run_serialize, self).setUp()
 
-        self.create_problems()
+        self.create_ejudge_problems()
 
         self.author = SimpleUser(
             ejudge_id=1,
@@ -35,7 +35,7 @@ class TestModel__ejudge_run_serialize(TestCase):
         self.run = EjudgeRun(
             user=self.author,
             run_id=123,
-            problem=self.problems[0],
+            problem=self.ejudge_problems[0],
         )
         db.session.add(self.run)
         db.session.flush([self.run])

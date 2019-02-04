@@ -13,7 +13,7 @@
 #     def setUp(self):
 #         super(TestAPI__notification_update_standings, self).setUp()
 
-#         self.create_problems()
+#         self.create_ejudge_problems()
 #         self.create_statements()
 #         self.create_users()
 

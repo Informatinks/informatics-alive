@@ -6,7 +6,7 @@ from rmatics.testutils import TestCase
 class TestProblem(TestCase):
     def setUp(self):
         super().setUp()
-        self.create_problems()
+        self.create_ejudge_problems()
 
     def send_request(self, problem_id, **kwargs):
         url = url_for('problem.problem', problem_id=problem_id)
@@ -14,7 +14,7 @@ class TestProblem(TestCase):
         return response
 
     def test_simple(self):
-        resp = self.send_request(self.problems[0].id)
+        resp = self.send_request(self.ejudge_problems[0].id)
 
         self.assert200(resp)
         self.assertIn('result', resp.json)

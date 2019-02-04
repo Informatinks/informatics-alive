@@ -18,7 +18,7 @@ class TestEjudge__submit_queue_submit_queue(TestCase):
         super(TestEjudge__submit_queue_submit_queue, self).setUp()
 
         self.create_users()
-        self.create_problems()
+        self.create_ejudge_problems()
 
     def test_submit_get(self):
         queue = SubmitQueue(key='some.key')

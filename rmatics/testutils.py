@@ -3,6 +3,7 @@ import unittest
 import sys
 
 from rmatics import create_app
+from rmatics.model import CourseModule
 from rmatics.model.base import db, mongo, redis
 from rmatics.model.group import (
     Group,
@@ -10,9 +11,9 @@ from rmatics.model.group import (
 )
 from rmatics.model.problem import (
     EjudgeProblem,
-)
+    Problem)
 from rmatics.model.role import Role
-from rmatics.model.statement import Statement
+from rmatics.model.statement import Statement, StatementProblem
 from rmatics.model.user import SimpleUser
 
 
@@ -61,8 +62,8 @@ class TestCase(flask_testing.TestCase):
         db.session.add_all(self.groups)
         db.session.flush(self.groups)
 
-    def create_problems(self):
-        self.problems = [
+    def create_ejudge_problems(self):
+        self.ejudge_problems = [
             EjudgeProblem.create(
                 ejudge_prid=1,
                 contest_id=1,
@@ -82,12 +83,17 @@ class TestCase(flask_testing.TestCase):
                 problem_id=1,
             )
         ]
+        db.session.add_all(self.ejudge_problems)
+        db.session.flush(self.ejudge_problems)
+
+    def create_problems(self):
+        self.problems = [
+            Problem(name='Problem1', pr_id=self.ejudge_problems[0].id),
+            Problem(name='Problem2',  pr_id=self.ejudge_problems[1].id),
+            Problem(name='Problem3',  pr_id=self.ejudge_problems[2].id),
+        ]
         db.session.add_all(self.problems)
         db.session.flush(self.problems)
-
-    def create_roles(self):
-        self.admin_role = Role(shortname='admin')
-        db.session.add_all((self.admin_role,))
 
     def create_statements(self):
         self.statements = [
@@ -96,6 +102,31 @@ class TestCase(flask_testing.TestCase):
         ]
         db.session.add_all(self.statements)
         db.session.flush(self.statements)
+
+    def create_statement_problems(self):
+        self.statement_problems = [
+            StatementProblem(problem_id=self.problems[0].id,
+                             statement_id=self.statements[0].id,
+                             rank=1),
+            StatementProblem(problem_id=self.problems[1].id,
+                             statement_id=self.statements[0].id,
+                             rank=1),
+            StatementProblem(problem_id=self.problems[2].id,
+                             statement_id=self.statements[0].id,
+                             rank=1),
+        ]
+        db.session.add_all(self.statement_problems)
+        db.session.flush(self.statement_problems)
+
+    def create_course_module(self):
+        self.course_module = CourseModule(instance_id=self.statements[0].id,
+                                          module=Statement.MODULE)
+        db.session.add(self.course_module)
+        db.session.flush()
+
+    def create_roles(self):
+        self.admin_role = Role(shortname='admin')
+        db.session.add_all((self.admin_role,))
 
     def create_users(self):
         self.users = [
@@ -108,6 +139,11 @@ class TestCase(flask_testing.TestCase):
                 firstname='Somebody',
                 lastname='Oncetoldme',
                 ejudge_id=1543,
+            ),
+            SimpleUser(
+                firstname='Anotherone',
+                lastname='Oncetoldme',
+                ejudge_id=1544,
             ),
         ]
         db.session.add_all(self.users)

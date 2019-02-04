@@ -1,7 +1,5 @@
 import os
-import codecs
 import glob
-from sqlalchemy.dialects.mysql import DOUBLE
 from zipfile import ZipFile
 
 from rmatics.ejudge.serve_internal import EjudgeContestCfg
