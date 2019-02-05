@@ -131,10 +131,12 @@ class MonitorAPIView(MethodView):
         """
         sp = StatementProblem
         statements_problems = db.session.query(sp) \
+            .join(Problem, Problem.pr_id == EjudgeProblem.id) \
             .join(EjudgeProblem, EjudgeProblem.ejudge_prid == Problem.pr_id) \
             .filter(sp.statement_id == statement.id) \
-            .options(joinedload(sp.problem)) \
-            .options(Load(Problem).load_only('id', 'name')) \
+            .options(joinedload(sp.problem)
+                     .joinedload(Problem.ejudge_problem)) \
+            .options(Load(Problem).load_only('id', 'name', 'ejudge_problem')) \
             .options(Load(EjudgeProblem).load_only('id', 'short_id'))
 
         return list(map(lambda sp: sp.problem, statements_problems))
