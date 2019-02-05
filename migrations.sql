@@ -44,13 +44,22 @@ ON run.ej_contest_id = ejruns.contest_id
 WHERE run.id IS NULL; -- ejudge runs where pynformatics.runs are not exists
 
 
+UPDATE pynformatics.runs AS pyruns
+SET pyruns.problem_id = (SELECT id
+                         FROM moodle.mdl_ejudge_problem
+                            INNER JOIN ejudge.runs as ejruns
+                                  ON moodle.mdl_ejudge_problem.problem_id = ejruns.prob_id
+                         WHERE pyruns.ej_contest_id = ejruns.contest_id
+                           AND pyruns.ej_run_id = ejruns.run_id)
+WHERE pyruns.problem_id is NULL AND FALSE;
+
 -- Create CacheMeta
 USE pynformatics;
 CREATE TABLE cache_meta (
   id INTEGER PRIMARY KEY NOT NULL,
   prefix VARCHAR(30) NOT NULL,
   label VARCHAR (30) NOT NULL,
-  key VARCHAR (64) NOT NULL,
+  'key' VARCHAR (64) NOT NULL,
   invalidate_args VARCHAR (4096) NOT NULL,
   created TIMESTAMP,
   when_expire TIMESTAMP

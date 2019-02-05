@@ -146,6 +146,8 @@ class Cacher:
         """ {contest: [1, 2], group: 2} -> ['contest_1', 'contest_2', 'group_2']"""
         acc = []
         for key, value in kwargs.items():
+            if value is None:
+                continue
             if isinstance(value, list):
                 acc += cls._list_item_to_string(key, value)
             else:
@@ -266,6 +268,7 @@ class FlaskCacher:
         self._deferred_wrappers = []
 
     def init_app(self, app, store, **kwargs):
+        # TODO: Сохранить в плагины
         self._app = app
         self._kwargs.update(kwargs)
         self._instance = Cacher(store, *self._args, **self._kwargs)

@@ -1,3 +1,5 @@
+import datetime
+
 from flask import url_for
 from mock import MagicMock
 
@@ -51,7 +53,13 @@ class TestMonitorGetApi(TestCase):
         return resp
 
     def test_simple(self):
-        resp = self.send_request(contest_id=self.contest_id, group_id=self.groups[0].id)
+        # Run-ы созданы в utcnow()
+        time_after = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+        time_before = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+
+        resp = self.send_request(contest_id=self.contest_id, group_id=self.groups[0].id,
+                                 time_after=int(time_after.timestamp()),
+                                 time_before=int(time_before.timestamp()),)
         self.assert200(resp)
 
         self.assertEqual(self.mock_cacher_get.call_count, 3)

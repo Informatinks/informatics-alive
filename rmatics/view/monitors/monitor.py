@@ -1,3 +1,4 @@
+import datetime
 from collections import namedtuple
 from typing import Iterable
 
@@ -18,7 +19,9 @@ MonitorData = namedtuple('MonitorData', ('contest_id', 'problem', 'runs'))
 
 
 @monitor_cacher
-def get_runs(problem_id: int = None, user_ids: Iterable = None):
+def get_runs(problem_id: int = None, user_ids: Iterable = None,
+             time_after: int = None, time_before: int = None):
+    """"""
     query = db.session.query(Run) \
         .join(SimpleUser, SimpleUser.id == Run.user_id)
 
@@ -27,6 +30,13 @@ def get_runs(problem_id: int = None, user_ids: Iterable = None):
 
     if user_ids is not None:
         query = query.filter(SimpleUser.id.in_(user_ids))
+
+    if time_after is not None:
+        time_after = datetime.datetime.fromtimestamp(time_after)
+        query = query.filter(Run.create_time > time_after)
+    if time_before is not None:
+        time_before = datetime.datetime.fromtimestamp(time_before)
+        query = query.filter(Run.create_time < time_before)
 
     load_only = [
         'id',
@@ -51,6 +61,8 @@ def get_runs(problem_id: int = None, user_ids: Iterable = None):
 get_args = {
     'group_id': fields.Integer(required=True),
     'contest_id': fields.List(fields.Integer(), required=True),
+    'time_before': fields.Integer(missing=None),
+    'time_after': fields.Integer(missing=None),
 }
 
 
@@ -60,6 +72,8 @@ class MonitorAPIView(MethodView):
 
         contest_ids = args['contest_id']
         group_id = args['group_id']
+        time_before = args['time_before']
+        time_after = args['time_after']
 
         users = db.session.query(SimpleUser)\
             .join(UserGroup, UserGroup.user_id == SimpleUser.id)\
@@ -74,7 +88,10 @@ class MonitorAPIView(MethodView):
         contest_problems_runs = []
         for contest_id, problems in contest_problems.items():
             for problem in problems:
-                runs = get_runs(problem_id=problem.id, user_ids=user_ids)
+                runs = get_runs(problem_id=problem.id,
+                                user_ids=user_ids,
+                                time_before=time_before,
+                                time_after=time_after)
                 monitor_data = MonitorData(contest_id, problem, runs)
                 contest_problems_runs.append(monitor_data)
 
@@ -94,7 +111,24 @@ class MonitorAPIView(MethodView):
         if course_module is None:
             return []
         statement = course_module.instance
-
+        """
+         SELECT
+            mdl_problems.id,
+            mdl_statements_problems_correlation.rank,
+            mdl_problems.name,
+            mdl_statements_problems_correlation.hidden as cur_hidden,
+            mdl_ejudge_problem.short_id,
+            mdl_problems.pr_id,
+            mdl_ejudge_problem.contest_id
+        FROM
+            mdl_problems, mdl_statements_problems_correlation, mdl_ejudge_problem
+        WHERE
+            mdl_ejudge_problem.id = mdl_problems.pr_id AND
+            mdl_statements_problems_correlation.problem_id = mdl_problems.id AND
+            mdl_statements_problems_correlation.statement_id = 20078
+        ORDER BY
+            mdl_statements_problems_correlation.rank 
+        """
         sp = StatementProblem
         statements_problems = db.session.query(sp) \
             .join(EjudgeProblem, EjudgeProblem.ejudge_prid == Problem.pr_id) \
