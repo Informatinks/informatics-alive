@@ -43,9 +43,9 @@ class TestGenerateMonitor(TestCase):
     def test_get_ejudge_problems(self):
         problems = MonitorAPIView._get_ejudge_problems(self.contest_id)
 
-        expected_pr_ids = set(map(lambda p: p.pr_id, self.problems))
+        expected_pr_ids = sorted(map(lambda p: p.pr_id, self.problems))
 
-        pr_ids = set(map(lambda p: p.pr_id, problems))
+        pr_ids = sorted(map(lambda p: p.pr_id, problems))
 
         self.assertEqual(pr_ids, expected_pr_ids)
 
