@@ -30,6 +30,6 @@ class TestAPI__statement_get(TestCase):
             equal_to({
                 'code': 404,
                 'message': 'No statement with this id',
-                'result': 'error',
+                'status': 'error',
             })
         )

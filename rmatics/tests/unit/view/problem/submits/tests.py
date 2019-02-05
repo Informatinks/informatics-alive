@@ -35,7 +35,7 @@ class TestCheckFileRestriction(TestCase):
 class TestTrustedProblemSubmit(TestCase):
     def setUp(self):
         super().setUp()
-        self.create_problems()
+        self.create_ejudge_problems()
         self.create_users()
         self.create_statements()
 
@@ -61,7 +61,7 @@ class TestTrustedProblemSubmit(TestCase):
         data = dict(
             file=(file, 'test.123', )
         )
-        resp = self.send_request(self.problems[0].id, **data)
+        resp = self.send_request(self.ejudge_problems[0].id, **data)
 
         self.assert200(resp)
         submit.serialize.assert_called_once()
@@ -80,10 +80,10 @@ class TestTrustedProblemSubmit(TestCase):
 
         run = Run(
             user_id=self.users[0].id,
-            problem=self.problems[0],
-            problem_id=self.problems[0].id,
+            problem=self.ejudge_problems[0],
+            problem_id=self.ejudge_problems[0].id,
             statement_id=self.statements[0].id,
-            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_contest_id=self.ejudge_problems[0].ejudge_contest_id,
             ejudge_language_id=1,
             ejudge_status=EjudgeStatuses.COMPILING.value,
             source_hash=source_hash,
@@ -95,7 +95,7 @@ class TestTrustedProblemSubmit(TestCase):
         data = dict(
             file=(file, 'test.123', )
         )
-        resp = self.send_request(self.problems[0].id, **data)
+        resp = self.send_request(self.ejudge_problems[0].id, **data)
 
         self.assert400(resp)
 
@@ -104,7 +104,7 @@ class TestProblemSubmit(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.create_problems()
+        self.create_ejudge_problems()
         self.create_users()
         self.create_statements()
 
@@ -132,7 +132,7 @@ class TestProblemSubmit(TestCase):
         data = dict(
             file=(file, 'test.123', )
         )
-        resp = self.send_request(self.problems[0].id, **data)
+        resp = self.send_request(self.ejudge_problems[0].id, **data)
 
         self.assert200(resp)
         submit.serialize.assert_called_once()
@@ -151,10 +151,10 @@ class TestProblemSubmit(TestCase):
 
         run = Run(
             user_id=self.users[0].id,
-            problem=self.problems[0],
-            problem_id=self.problems[0].id,
+            problem=self.ejudge_problems[0],
+            problem_id=self.ejudge_problems[0].id,
             statement_id=self.statements[0].id,
-            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_contest_id=self.ejudge_problems[0].ejudge_contest_id,
             ejudge_language_id=1,
             ejudge_status=EjudgeStatuses.COMPILING.value,
             source_hash=source_hash,
@@ -166,7 +166,7 @@ class TestProblemSubmit(TestCase):
         data = dict(
             file=(file, 'test.123', )
         )
-        resp = self.send_request(self.problems[0].id, **data)
+        resp = self.send_request(self.ejudge_problems[0].id, **data)
 
         self.assert400(resp)
 
@@ -179,7 +179,7 @@ class TestGetSubmissionSource(TestCase):
 
         self.create_users()
         self.create_statements()
-        self.create_problems()
+        self.create_ejudge_problems()
 
         blob = b'skdjvndfkjnvfk'
 
@@ -187,10 +187,10 @@ class TestGetSubmissionSource(TestCase):
 
         self.run = Run(
             user_id=self.users[0].id,
-            problem=self.problems[0],
-            problem_id=self.problems[0].id,
+            problem=self.ejudge_problems[0],
+            problem_id=self.ejudge_problems[0].id,
             statement_id=self.statements[0].id,
-            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_contest_id=self.ejudge_problems[0].ejudge_contest_id,
             ejudge_language_id=1,
             ejudge_status=EjudgeStatuses.COMPILING.value,
             source_hash=source_hash,
@@ -232,7 +232,7 @@ class TestUpdateSubmissionFromEjudge(TestCase):
 
         self.create_roles()
         self.create_users()
-        self.create_problems()
+        self.create_ejudge_problems()
 
         blob = b'skdjvndfkjnvfk'
 
@@ -240,10 +240,10 @@ class TestUpdateSubmissionFromEjudge(TestCase):
 
         self.run = Run(
             user_id=self.users[0].id,
-            problem=self.problems[0],
-            problem_id=self.problems[0].id,
+            problem=self.ejudge_problems[0],
+            problem_id=self.ejudge_problems[0].id,
             statement_id=None,
-            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_contest_id=self.ejudge_problems[0].ejudge_contest_id,
             ejudge_language_id=1,
             ejudge_status=EjudgeStatuses.COMPILING.value,
             source_hash=source_hash,
@@ -349,7 +349,7 @@ class TestGetRunProtocol(TestCase):
 
         self.create_roles()
         self.create_users()
-        self.create_problems()
+        self.create_ejudge_problems()
 
         blob = b'skdjvndfkjnvfk'
 
@@ -357,10 +357,10 @@ class TestGetRunProtocol(TestCase):
 
         self.run = Run(
             user_id=self.users[0].id,
-            problem=self.problems[0],
-            problem_id=self.problems[0].id,
+            problem=self.ejudge_problems[0],
+            problem_id=self.ejudge_problems[0].id,
             statement_id=None,
-            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_contest_id=self.ejudge_problems[0].ejudge_contest_id,
             ejudge_language_id=1,
             ejudge_status=EjudgeStatuses.COMPILING.value,
             source_hash=source_hash,

@@ -18,13 +18,13 @@ class TestView__problem_runs(TestCase):
     def setUp(self):
         super(TestView__problem_runs, self).setUp()
 
-        self.create_problems()
+        self.create_ejudge_problems()
         self.create_statements()
         self.create_users()
 
         self.user1 = self.users[0]
         self.user2 = self.users[1]
-        self.problem = self.problems[0]
+        self.problem = self.ejudge_problems[0]
 
         self.runs = [
             [
@@ -65,7 +65,7 @@ class TestView__problem_runs(TestCase):
             serialize_mock.side_effect = lambda self, *args: 'serialized'
             with self.app.test_request_context(query_string={'statement_id': self.statements[0].id}):
                 g.user = self.user1
-                response = problem_runs(self.problems[0].id)
+                response = problem_runs(self.ejudge_problems[0].id)
 
         assert_that(
             response.json.keys(),
@@ -82,7 +82,7 @@ class TestUpdateRun(TestCase):
 
         self.create_users()
         self.create_statements()
-        self.create_problems()
+        self.create_ejudge_problems()
 
         blob = b'skdjvndfkjnvfk'
 
@@ -90,10 +90,10 @@ class TestUpdateRun(TestCase):
 
         self.run = Run(
             user_id=self.users[0].id,
-            problem=self.problems[0],
-            problem_id=self.problems[0].id,
+            problem=self.ejudge_problems[0],
+            problem_id=self.ejudge_problems[0].id,
             statement_id=self.statements[0].id,
-            ejudge_contest_id=self.problems[0].ejudge_contest_id,
+            ejudge_contest_id=self.ejudge_problems[0].ejudge_contest_id,
             ejudge_language_id=1,
             ejudge_status=EjudgeStatuses.COMPILING.value,
             source_hash=source_hash,

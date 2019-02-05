@@ -12,6 +12,7 @@ from rmatics.view.bootstrap import bootstrap
 from rmatics.view.centrifugo import centrifugo_client
 from rmatics.view.course import course_blueprint
 from rmatics.view.course.statement import statement_blueprint
+from rmatics.view.monitors.route import monitor_blueprint
 from rmatics.view.problem.route import problem_blueprint
 from rmatics.view.problem.submit import submit
 from rmatics.view.protocol import protocol
@@ -75,6 +76,7 @@ def create_app(config=None):
     app.register_blueprint(statement_blueprint)
     app.register_blueprint(submit)
     app.register_blueprint(user)
+    app.register_blueprint(monitor_blueprint)
 
     app.cli.add_command(cli.test)
 

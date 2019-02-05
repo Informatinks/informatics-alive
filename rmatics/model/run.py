@@ -35,7 +35,7 @@ class Run(db.Model):
     statement_id = db.Column(db.Integer, db.ForeignKey('moodle.mdl_statements.id'))
     score = db.Column(db.Integer)
 
-    user = db.relationship('SimpleUser', backref='runs')
+    user = db.relationship('SimpleUser', backref='runs', lazy='select')
     problem = db.relationship('EjudgeProblem', backref=db.backref('runs', lazy='dynamic'))
     statement = db.relationship('Statement', backref='runs')
     create_time = db.Column(db.DateTime(), default=datetime.datetime.utcnow)

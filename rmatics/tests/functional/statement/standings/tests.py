@@ -17,7 +17,7 @@ class TestAPI__statement_standings(TestCase):
         super(TestAPI__statement_standings, self).setUp()
 
         self.create_user_groups()
-        self.create_problems()
+        self.create_ejudge_problems()
 
         self.statement = Statement()
         db.session.add(self.statement)
@@ -38,7 +38,7 @@ class TestAPI__statement_standings(TestCase):
             EjudgeRun(
                 run_id=1,
                 contest_id=1,
-                problem=self.problems[0],
+                problem=self.ejudge_problems[0],
                 user=self.users[0],
                 create_time=datetime.datetime(2018, 2, 23, 23, 3, 5),
                 score=100,
@@ -84,7 +84,7 @@ class TestAPI__statement_standings(TestCase):
             EjudgeRun(
                 run_id=1,
                 contest_id=1,
-                problem=self.problems[0],
+                problem=self.ejudge_problems[0],
                 user=self.users[0],
                 create_time=datetime.datetime(2018, 2, 23, 23, 3, 5),
                 score=100,
@@ -93,7 +93,7 @@ class TestAPI__statement_standings(TestCase):
             EjudgeRun(
                 run_id=2,
                 contest_id=1,
-                problem=self.problems[0],
+                problem=self.ejudge_problems[0],
                 user=self.users[1],
                 create_time=datetime.datetime(2018, 2, 23, 23, 3, 5),
                 score=100,

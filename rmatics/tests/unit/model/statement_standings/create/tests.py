@@ -12,7 +12,7 @@ class TestModel__statement_standings_create(TestCase):
     def setUp(self):
         super(TestModel__statement_standings_create, self).setUp()
 
-        self.create_problems()
+        self.create_ejudge_problems()
         self.create_statements()
         self.create_users()
 
@@ -33,15 +33,15 @@ class TestModel__statement_standings_create(TestCase):
         runs = [
             EjudgeRun(
                 run_id=1,
-                contest_id=self.problems[0].ejudge_contest_id,
-                prob_id=self.problems[0].problem_id,
+                contest_id=self.ejudge_problems[0].ejudge_contest_id,
+                prob_id=self.ejudge_problems[0].problem_id,
                 user_id=self.users[0].ejudge_id,
                 create_time=datetime.datetime(2018, 2, 24, 16, 36, 0)
             ),
             EjudgeRun(
                 run_id=2,
-                contest_id=self.problems[0].ejudge_contest_id,
-                prob_id=self.problems[0].problem_id,
+                contest_id=self.ejudge_problems[0].ejudge_contest_id,
+                prob_id=self.ejudge_problems[0].problem_id,
                 user_id=self.users[0].ejudge_id,
                 create_time=datetime.datetime(2018, 2, 24, 16, 36, 0)
             )

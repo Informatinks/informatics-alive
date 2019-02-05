@@ -14,14 +14,14 @@ class TestModel__run_serialize(TestCase):
     def setUp(self):
         super(TestModel__run_serialize, self).setUp()
 
-        self.create_problems()
+        self.create_ejudge_problems()
         self.create_statements()
         self.create_users()
 
     def test_simple(self):
         run = Run(
             user=self.users[0],
-            problem=self.problems[0],
+            problem=self.ejudge_problems[0],
             statement=self.statements[0],
             score=123,
             create_time=datetime.datetime(2018, 3, 24, 10, 49, 0),
@@ -40,7 +40,7 @@ class TestModel__run_serialize(TestCase):
                 'create_time': '2018-03-24 10:49:00',
                 'ejudge_contest_id': None,
                 'ejudge_run_id': None,
-                'problem_id': self.problems[0].id,
+                'problem_id': self.ejudge_problems[0].id,
                 'statement_id': self.statements[0].id,
                 'score': 123,
                 'status': 7,

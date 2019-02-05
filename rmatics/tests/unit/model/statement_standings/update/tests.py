@@ -14,7 +14,7 @@ class TestModel__statement_standings_update(TestCase):
     def setUp(self):
         super(TestModel__statement_standings_update, self).setUp()
 
-        self.create_problems()
+        self.create_ejudge_problems()
         self.create_statements()
         self.create_users()
 
@@ -23,7 +23,7 @@ class TestModel__statement_standings_update(TestCase):
         )
         self.run = EjudgeRun(
             run_id=1,
-            problem=self.problems[0],
+            problem=self.ejudge_problems[0],
             user=self.users[0],
             create_time=datetime.datetime(2018, 2, 24, 11, 47, 23),
             score=100,
@@ -33,19 +33,19 @@ class TestModel__statement_standings_update(TestCase):
         self.runs = [
             EjudgeRun(
                 run_id=2,
-                problem=self.problems[0],
+                problem=self.ejudge_problems[0],
                 user=self.users[0],
                 create_time=datetime.datetime(2018, 2, 24, 12, 0, 0)
             ),
             EjudgeRun(
                 run_id=3,
-                problem=self.problems[0],
+                problem=self.ejudge_problems[0],
                 user=self.users[0],
                 create_time=datetime.datetime(2018, 2, 24, 13, 0, 0)
             ),
             EjudgeRun(
                 run_id=4,
-                problem=self.problems[0],
+                problem=self.ejudge_problems[0],
                 user=self.users[0],
                 create_time=datetime.datetime(2018, 2, 24, 14, 0, 0)
             ),
