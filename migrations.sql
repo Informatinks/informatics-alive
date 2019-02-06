@@ -56,11 +56,11 @@ WHERE pyruns.problem_id is NULL AND FALSE;
 -- Create CacheMeta
 USE pynformatics;
 CREATE TABLE cache_meta (
-  id INTEGER PRIMARY KEY NOT NULL,
+  id SERIAL PRIMARY KEY,
   prefix VARCHAR(30) NOT NULL,
   label VARCHAR (30) NOT NULL,
-  'key' VARCHAR (64) NOT NULL,
-  invalidate_args VARCHAR (4096) NOT NULL,
+  `key` VARCHAR(64) NOT NULL,
+  invalidate_args VARCHAR(4096) NOT NULL,
   created TIMESTAMP,
   when_expire TIMESTAMP
 );

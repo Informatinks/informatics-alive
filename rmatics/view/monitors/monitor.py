@@ -6,11 +6,11 @@ from flask import request
 from marshmallow import fields
 from webargs.flaskparser import parser
 from flask.views import MethodView
-from sqlalchemy.orm import joinedload, Load
+from sqlalchemy.orm import joinedload, Load, load_only
 
 from rmatics import db, monitor_cacher
 from rmatics.model import CourseModule, StatementProblem, Problem, \
-    SimpleUser, Run, UserGroup, EjudgeProblem
+    SimpleUser, Run, UserGroup
 from rmatics.utils.response import jsonify
 from rmatics.view.monitors.serializers.monitor import ContestMonitorSchema, RunSchema
 
@@ -38,7 +38,7 @@ def get_runs(problem_id: int = None, user_ids: Iterable = None,
         time_before = datetime.datetime.fromtimestamp(time_before)
         query = query.filter(Run.create_time < time_before)
 
-    load_only = [
+    load_only_fields = [
         'id',
         'user_id',
         'create_time',
@@ -50,11 +50,12 @@ def get_runs(problem_id: int = None, user_ids: Iterable = None,
     ]
 
     runs = query.order_by(Run.id) \
-                .options(joinedload(Run.user)) \
-                .options(Load(Run).load_only(*load_only)) \
-                .all()
+                .options(joinedload(Run.user)
+                         .load_only('id', 'firstname', 'lastname')) \
+                .options(Load(Run).load_only(*load_only_fields))
+
     schema = RunSchema(many=True)
-    data = schema.dump(runs)
+    data = schema.dump(runs.all())
     return data.data
 
 
@@ -129,14 +130,12 @@ class MonitorAPIView(MethodView):
         ORDER BY
             mdl_statements_problems_correlation.rank 
         """
-        sp = StatementProblem
-        statements_problems = db.session.query(sp) \
-            .join(Problem, Problem.pr_id == EjudgeProblem.id) \
-            .join(EjudgeProblem, EjudgeProblem.ejudge_prid == Problem.pr_id) \
-            .filter(sp.statement_id == statement.id) \
-            .options(joinedload(sp.problem)
-                     .joinedload(Problem.ejudge_problem)) \
-            .options(Load(Problem).load_only('id', 'name', 'ejudge_problem')) \
-            .options(Load(EjudgeProblem).load_only('id', 'short_id'))
 
-        return list(map(lambda sp: sp.problem, statements_problems))
+        problems = db.session.query(Problem) \
+            .join(StatementProblem, StatementProblem.problem_id == Problem.id) \
+            .filter(StatementProblem.statement_id == statement.id) \
+            .options(joinedload(Problem.ejudge_problem)
+                     .load_only('id', 'short_id')) \
+            .options(load_only('id', 'name', 'pr_id'))
+
+        return problems.all()
