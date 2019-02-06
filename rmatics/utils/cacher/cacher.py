@@ -10,6 +10,7 @@ from sqlalchemy import or_, and_
 
 from rmatics.model.base import db
 from rmatics.model.cache_meta import CacheMeta
+from rmatics.utils.cacher.locker import ILocker
 
 PICKLE_ASCII_PROTO = 0
 
@@ -77,8 +78,15 @@ class Cacher:
     ------
         Инвалидация работает только для kwargs со списками и одиночными значениями
         Например, contest_ids = [1, 2, 3]; для contest_ids = {id: [3]} не сработает
+    Also #4:
+    ------
+        We can use locker to lock storage;
+        Before getting from cache we lock our code and then realise it
+        to avoid raise conditions and multiply function executing
+        lock is unique for each cache key (from get_cache_key)
     """
     def __init__(self, store,
+                 locker: ILocker,
                  prefix='cache',
                  period=30*60,
                  can_invalidate=True,
@@ -92,6 +100,7 @@ class Cacher:
         self.can_invalidate = can_invalidate
         self.invalidate_by = invalidate_by
         self.autocommit = autocommit
+        self.locker = locker
         if can_invalidate and not self.invalidate_by:
             raise ValueError('You must specify any invalidate_by args for invalidating')
 
@@ -108,6 +117,7 @@ class Cacher:
                 # If we can invalidate we will better use invalidate_by kwargs only
                 invalidate_kwargs = self._filter_invalidate_kwargs(kwargs)
                 key = get_cache_key(func, self.prefix, (), invalidate_kwargs)
+                self._save_cache_meta(func, key, invalidate_kwargs)
             else:
                 key = get_cache_key(func, self.prefix, args, kwargs)
 
@@ -119,13 +129,12 @@ class Cacher:
             if result:
                 return json.loads(result)
 
+            self.locker.lock(key)
             func_result = func(*args, **kwargs)
+            self.locker.unlock(key)
 
             self.store.set(key, json.dumps(func_result))
             self.store.expire(key, self.period)
-
-            if self.can_invalidate:
-                self._save_cache_meta(func, key, invalidate_kwargs)
 
             return func_result
         return wrapped
@@ -227,80 +236,3 @@ class Cacher:
 
         if self.autocommit:
             db.session.commit()
-
-
-class DeferredWrapper:
-    """
-    Wraps function after calling .wraps(wrapper: Callable) only
-    """
-    def __init__(self, f):
-        self.f = f
-
-    def wrap(self, wrapper: Callable):
-        self.f = wrapper(self.f)
-
-    def __call__(self, *args, **kwargs):
-        return self.f(*args, **kwargs)
-
-
-class FlaskCacher:
-    """ Wrapper for Flask and Cacher integration
-    Usage:
-    ------
-        cacher = FlaskCacher(prefix='my_cache')
-        ...
-        @cacher
-        def cache_me_pls(problem_ids=None):
-            ...
-        ...
-
-        def create_app():
-            app = Flask()
-            store = Redis(app)
-            cacher.init_app(app, store, period=30*60)
-    """
-
-    def __init__(self, *args, **kwargs):
-        self._args = args
-        self._kwargs = kwargs
-        self._app = None
-        self._instance = None
-        self._deferred_wrappers = []
-
-    def init_app(self, app, store, **kwargs):
-        # TODO: Сохранить в плагины
-        self._app = app
-        self._kwargs.update(kwargs)
-        self._instance = Cacher(store, *self._args, **self._kwargs)
-
-        for wrapper in self._deferred_wrappers:
-            wrapper.wrap(self._instance)
-        # We should clear DeferredWrapper's list to avoid second wrapping
-        # If someone calls init_app twice
-        self._deferred_wrappers.clear()
-
-    def invalidate_any_of(self, func, **kwargs):
-        res = self._instance.invalidate_any_of(func, **kwargs)
-        if not res:
-            msg = f'Function Cacher.invalidate_any_of was called' \
-                   'for function {func.__name__} but could not invalidate cache' \
-                   'with current args.'
-            self._app.logger.warning(msg)
-
-    def invalidate_all_of(self, func, **kwargs):
-        res = self._instance.invalidate_all_of(func, **kwargs)
-        if not res:
-            msg = f'Function Cacher.invalidate_all_of was called' \
-                   'for function {func.__name__} but could not invalidate cache' \
-                   'with current args.'
-            self._app.logger.warning(msg)
-
-    def __call__(self, f: Callable):
-        # We use deferred wrapping because when decorator called
-        # We did not have self._instance: we did not call init_app yet
-        wrapper = functools.wraps(f)(DeferredWrapper(f))
-        self._deferred_wrappers.append(wrapper)
-        return wrapper
-
-    def __getattr__(self, item):
-        return getattr(self._instance, item)
