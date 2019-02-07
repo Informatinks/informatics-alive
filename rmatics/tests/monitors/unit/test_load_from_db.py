@@ -1,3 +1,5 @@
+import datetime
+
 from mock import MagicMock
 
 from rmatics import db
@@ -29,8 +31,10 @@ class TestGenerateMonitor(TestCase):
 
         self.contest_id = self.course_module.id
 
-    def create_runs(self):
-        self.runs = [
+    def create_runs(self, creation_time=None):
+        if not hasattr(self, 'runs'):
+            self.runs = []
+        runs = [
             Run(problem_id=self.problems[0].id,
                 user_id=self.users[0].id),
             Run(problem_id=self.problems[0].id,
@@ -38,7 +42,15 @@ class TestGenerateMonitor(TestCase):
             Run(problem_id=self.problems[0].id,
                 user_id=self.users[2].id),
         ]
-        db.session.add_all(self.runs)
+
+        if creation_time is not None:
+            for run in runs:
+                run.create_time = creation_time
+
+        self.runs += runs
+
+        db.session.add_all(runs)
+        db.session.commit()
 
     def test_get_ejudge_problems(self):
         problems = MonitorAPIView._get_ejudge_problems(self.contest_id)
@@ -58,3 +70,44 @@ class TestGenerateMonitor(TestCase):
 
         self.mock_cacher_get.assert_called_once()
         self.mock_cacher_set.assert_called_once()
+
+    def test_get_runs_before(self):
+        time_creation = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+        time_before = time_creation - datetime.timedelta(hours=1)
+        self.create_runs(time_creation)
+
+        user_ids = [user.id for user in self.users]
+        runs = get_runs(problem_id=self.problems[0].id,
+                        user_ids=user_ids,
+                        time_before=int(time_before.timestamp()))
+
+        self.assertEqual(len(runs), 3)
+
+    def test_get_runs_after(self):
+        time_creation = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+        self.create_runs(time_creation)
+        time_after = time_creation + datetime.timedelta(hours=1)
+
+        user_ids = [user.id for user in self.users]
+        runs = get_runs(problem_id=self.problems[0].id,
+                        user_ids=user_ids,
+                        time_after=int(time_after.timestamp()))
+
+        self.assertEqual(len(runs), 3)
+
+    def test_get_runs_before_and_after(self):
+        time_creation = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+        self.create_runs(time_creation)
+        time_after = time_creation + datetime.timedelta(hours=1)
+
+        time_creation = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+        self.create_runs(time_creation)
+        time_before = time_creation - datetime.timedelta(hours=1)
+
+        user_ids = [user.id for user in self.users]
+        runs = get_runs(problem_id=self.problems[0].id,
+                        user_ids=user_ids,
+                        time_after=int(time_after.timestamp()),
+                        time_before=int(time_before.timestamp()))
+
+        self.assertEqual(len(runs), 3)
