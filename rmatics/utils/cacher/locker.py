@@ -1,17 +1,19 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from redlock import Redlock
 
 
 class ILocker(ABC):
+    @abstractmethod
     def lock(self, key, time=4000):
         pass
 
+    @abstractmethod
     def unlock(self, key):
         pass
 
 
-class FakeLocker(ABC):
+class FakeLocker(ILocker):
     def lock(self, *args, **kwargs):
         pass
 
