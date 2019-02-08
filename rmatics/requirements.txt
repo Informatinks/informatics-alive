@@ -31,3 +31,4 @@ mock
 pyhamcrest
 flask-testing
 uwsgi
+redlock-py==1.0.8

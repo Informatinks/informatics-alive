@@ -26,8 +26,12 @@ class TestCacher(TestCase):
         redis.get = self.redis_get_mock
         redis.delete = self.redis_delete_mock
 
+        locker = MagicMock()
+        self.locker_lock = locker.lock
+        self.locker_unlock = locker.unlock
+
         invalidate_by = ['a', 'problem_id', 'group_id']
-        self.cacher = Cacher(redis, prefix=PREFIX, invalidate_by=invalidate_by)
+        self.cacher = Cacher(redis, locker, prefix=PREFIX, invalidate_by=invalidate_by)
 
         self.to_be_cached = MagicMock(return_value=FUNC_RETURN_VALUE)
         self.to_be_cached.__name__ = FUNC_NAME
@@ -49,6 +53,9 @@ class TestCacher(TestCase):
                     CacheMeta.label == FUNC_NAME)\
             .count()
 
+        self.locker_lock.assert_called_once()
+        self.locker_unlock.assert_called_once()
+
         self.assertEqual(metas, 1)
 
     def test_get_from_cache(self):
@@ -58,6 +65,8 @@ class TestCacher(TestCase):
         res = self.cached_function(a=3)
 
         self.to_be_cached.assert_not_called()
+        self.locker_lock.assert_not_called()
+        self.locker_unlock.assert_not_called()
 
         self.assertEqual(res, another_func_return)
 
