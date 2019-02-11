@@ -39,7 +39,7 @@ class  Group(db.Model):
 class UserGroup(db.Model):
     __table_args__ = (
         db.UniqueConstraint('user_id', 'group_id', name='group_id'),
-        {'schema':'moodle'},
+        {'schema': 'moodle'},
     )
     __tablename__ = 'mdl_ejudge_group_users'
 

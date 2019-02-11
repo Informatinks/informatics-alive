@@ -5,9 +5,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from rmatics.model.base import db
 from rmatics.model.ejudge_run import EjudgeRun
 from rmatics.model.group import Group
-from rmatics.model.pynformatics_run import PynformaticsRun
 from rmatics.model.user import SimpleUser
-from rmatics.utils.exceptions import GroupNotFound
 from rmatics.utils.functions import (
     attrs_to_dict, 
     index_of,
@@ -137,20 +135,6 @@ class StatementStandings(StandingsMixin, db.Model):
 
         return instance
 
-    @staticmethod
-    def serialize_run(run):
-        serialized = attrs_to_dict(
-            run,
-            'run_id',
-            'contest_id',
-            'create_time',
-            'score',
-            'status'
-        )
-        serialized['create_time'] = serialized['create_time'].isoformat()
-        serialized['problem_id'] = run.problem.id
-        return serialized
-
     def update(self, run):
         user = run.user
         super(StatementStandings, self).update(user)
@@ -182,7 +166,7 @@ class StatementStandings(StandingsMixin, db.Model):
             try:
                 group = db.session.query(Group).filter_by(id=group_id).one()
             except Exception:
-                raise GroupNotFound
+                raise ValueError('Group not found')
 
             result = {
                 str(user_group.user_id): result[str(user_group.user_id)]

@@ -1,21 +1,13 @@
-import io
 import logging
-from flask import current_app, g
-from werkzeug.datastructures import FileStorage
+from flask import current_app
 
 from rmatics import centrifugo_client
 from rmatics.ejudge.ejudge_proxy import submit
 from rmatics.model.base import db
 from rmatics.model.run import Run
-from rmatics.model.user import SimpleUser
-from rmatics.model.problem import EjudgeProblem
 from rmatics.utils.functions import attrs_to_dict
 from rmatics.utils.run import EjudgeStatuses
-from rmatics.websocket import notify_user
-from rmatics.websocket.events import (
-    SUBMIT_ERROR,
-    SUBMIT_SUCCESS
-)
+
 
 
 log = logging.getLogger('submit_queue')
@@ -80,18 +72,15 @@ class Submit:
             )
         except Exception:
             log.exception('Unknown Ejudge submit error')
-            notify_user(user_id, SUBMIT_ERROR, ejudge_error_notification())
             return
 
         try:
             if ejudge_response['code'] != 0:
-                notify_user(user_id, SUBMIT_ERROR, ejudge_error_notification(ejudge_response))
                 return
 
             ejudge_run_id = ejudge_response['run_id']
         except Exception:
             log.exception('ejudge_proxy.submit returned bad value')
-            notify_user(user_id, SUBMIT_ERROR, message=ejudge_error_notification())
             return
 
         run.ejudge_run_id = ejudge_run_id
@@ -101,14 +90,6 @@ class Submit:
         db.session.commit()
 
         db.session.refresh(run)
-        notify_user(
-            user_id,
-            SUBMIT_SUCCESS,
-            {
-                'run': run.serialize(),
-                'submit_id': self.id,
-            }
-        )
 
     def encode(self):
         return {

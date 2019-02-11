@@ -4,23 +4,12 @@ from jsonschema import Draft4Validator
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm.collections import attribute_mapped_collection
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.orm.exc import NoResultFound
 
 from rmatics.model.base import db
 from rmatics.model.course_module import CourseModuleInstance
-from rmatics.model.participant import Participant
 from rmatics.utils.constants import LANG_NAME_BY_ID
-from rmatics.utils.exceptions import (
-    StatementCanOnlyStartOnce,
-    StatementFinished,
-    StatementNothingToFinish,
-    StatementNotOlympiad,
-    StatementNotVirtual,
-    StatementNotStarted,
-    StatementOnlyOneOngoing,
-    StatementPasswordIsWrong,
-    StatementSettingsValidationError,
-)
+
 from rmatics.utils.functions import attrs_to_dict
 from rmatics.utils.json_type import JsonType
 
@@ -128,7 +117,7 @@ class Statement(CourseModuleInstance, db.Model):
     def set_settings(self, settings):
         validation_error = next(self.SETTINGS_SCHEMA_VALIDATOR.iter_errors(settings), None)
         if validation_error:
-            raise StatementSettingsValidationError(validation_error.message)
+            raise ValueError(validation_error.message)
         self.settings = settings
 
         if settings.get('time_start'):
@@ -159,13 +148,13 @@ class Statement(CourseModuleInstance, db.Model):
         if self.course \
                 and self.course.require_password() \
                 and password != self.course.password:
-            raise StatementPasswordIsWrong
+            raise ValueError()
 
         if self.participants.filter(Participant.user_id == user.id).count():
-            raise StatementCanOnlyStartOnce
+            raise ValueError()
 
         if user.get_active_participant():
-            raise StatementOnlyOneOngoing
+            raise ValueError()
 
         new_participant = Participant(
             user_id=user.id,
@@ -180,7 +169,7 @@ class Statement(CourseModuleInstance, db.Model):
     def finish_participant(self, user):
         active_participant = user.get_active_participant()
         if not active_participant or active_participant.statement_id != self.id:
-            raise StatementNothingToFinish
+            raise ValueError()
 
         active_participant.duration = int(time.time() - active_participant.start)
         return active_participant
@@ -190,13 +179,13 @@ class Statement(CourseModuleInstance, db.Model):
               password=None,
               ):
         if not self.olympiad:
-            raise StatementNotOlympiad
+            raise ValueError()
 
         now = time.time()
         if now < self.time_start:
-            raise StatementNotStarted
+            raise ValueError()
         if now >= self.time_stop:
-            raise StatementFinished
+            raise ValueError()
 
         return self.start_participant(
             user=user,
@@ -206,25 +195,10 @@ class Statement(CourseModuleInstance, db.Model):
 
     def finish(self, user):
         if not self.olympiad:
-            raise StatementNotOlympiad
+            raise ValueError()
 
         return self.finish_participant(user)
 
-    def start_virtual(self, user, password=None):
-        if not self.virtual_olympiad:
-            raise StatementNotVirtual
-
-        return self.start_participant(
-            user=user,
-            duration=self.virtual_duration,
-            password=password,
-        )
-
-    def finish_virtual(self, user):
-        if not self.virtual_olympiad:
-            raise StatementNotVirtual
-
-        return self.finish_participant(user)
 
     def serialize(self, attributes=None):
         if not attributes:
