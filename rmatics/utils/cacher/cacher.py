@@ -235,3 +235,5 @@ class Cacher:
 
         if self.autocommit:
             db.session.commit()
+
+        return True

@@ -7,6 +7,7 @@ from unittest.mock import patch, MagicMock
 from bson import ObjectId
 from flask import url_for
 
+from rmatics import monitor_cacher
 from rmatics.model.base import db, mongo
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase
@@ -159,6 +160,10 @@ class TestUpdateSubmissionFromEjudge(TestCase):
         self.create_users()
         self.create_ejudge_problems()
 
+        self.monitor_invalidate_mock = MagicMock()
+
+        monitor_cacher.invalidate_all_of = self.monitor_invalidate_mock
+
         blob = b'skdjvndfkjnvfk'
 
         source_hash = Run.generate_source_hash(blob)
@@ -242,6 +247,8 @@ class TestUpdateSubmissionFromEjudge(TestCase):
 
         data = mongo.db.protocol.find_one({'run_id': self.run.id})
         self.assertIsNotNone(data)
+
+        self.monitor_invalidate_mock.assert_called_once()
 
     def test_bad_mongo_id(self):
         run_data = {
