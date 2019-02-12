@@ -1,4 +1,3 @@
-import logging
 from flask import current_app
 
 from rmatics import centrifugo_client
@@ -7,10 +6,6 @@ from rmatics.model.base import db
 from rmatics.model.run import Run
 from rmatics.utils.functions import attrs_to_dict
 from rmatics.utils.run import EjudgeStatuses
-
-
-
-log = logging.getLogger('submit_queue')
 
 
 def ejudge_error_notification(ejudge_response=None):
@@ -39,20 +34,23 @@ class Submit:
         self.ejudge_password = current_app.config.get('EJUDGE_PASSWORD')
 
     def send(self, ejudge_url=None):
+        current_app.logger.info('Trying to send run to ejudge')
 
         ejudge_url = ejudge_url or self.ejudge_url
 
-        run: Run = db.session.query(Run).get(self.run_id)
-        if not run:
-            log.error(f'Can\'t find run #{self.run_id}')
+        run: Run = db.session.query(Run) \
+            .joinedload(Run.problem) \
+            .get(self.run_id)
+        if run is None:
+            current_app.error(f'Can\'t find run #{self.run_id}')
             return
         file = run.source
-        problem = run.problem  # TODO: лишний запрос
+        problem = run.problem
         ejudge_language_id = run.ejudge_language_id
         user_id = run.user_id
 
         # `Run` now not inside the queue so we should change status
-        run.ejudge_status = EjudgeStatuses.COMPILING.value  # Compiling
+        run.ejudge_status = EjudgeStatuses.COMPILING.value
         db.session.add(run)
         db.session.commit()
 
@@ -71,7 +69,7 @@ class Submit:
                 user_id=user_id
             )
         except Exception:
-            log.exception('Unknown Ejudge submit error')
+            current_app.logger.exception('Unknown Ejudge submit error')
             return
 
         try:
@@ -80,7 +78,7 @@ class Submit:
 
             ejudge_run_id = ejudge_response['run_id']
         except Exception:
-            log.exception('ejudge_proxy.submit returned bad value')
+            current_app.logger.exception('ejudge_proxy.submit returned bad value')
             return
 
         run.ejudge_run_id = ejudge_run_id
@@ -89,7 +87,7 @@ class Submit:
         db.session.add(run)
         db.session.commit()
 
-        db.session.refresh(run)
+        current_app.logger.info('Run successfully updated')
 
     def encode(self):
         return {

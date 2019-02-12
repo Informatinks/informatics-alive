@@ -24,5 +24,6 @@ class SubmitWorker(Greenlet):
 
     def _run(self):
         with self._ctx:
+            current_app.logger.info('Worker started')
             while True:
                 self.handle_submit()
