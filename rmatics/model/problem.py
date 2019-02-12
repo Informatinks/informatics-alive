@@ -54,6 +54,18 @@ class EjudgeProblem(Problem):
     problem_id -- соответствует problem_id из ejudge
 
     short_id -- короткий id (обычно буква)
+
+    Здесь используется наследование и polymorphic_identity
+    Это значит, что можно написать
+    problem_id = Problem.id
+    query(EjudgeProblem).filter(EjudgeProblem.id == problem_id)  # вернет Problem
+    При этом неявно приджойнится Problem.pr_id == EjudgeProblem.id
+
+    Ещё это даёт нам интересные эффекты, например
+    query(EjudgeProblem).all() вернёт как EjudgeProblem, так и Problem, a
+    query(EjudgeProblem).filter(EjudgeProblem.id == 6).all() -- только Problem
+    А вот такое query(EjudgeProblem).get(6) -- вообще вернёт None, потому что join не отработает
+    Ещё в Runs у нас ссылка на обе таблицы, и это тоже работает нормально
     """
 
     __table_args__ = (

@@ -14,10 +14,8 @@ class TestAPIProblemSubmission(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.problem1 = Problem(name='Problem1')
-        self.problem2 = Problem(name='Problem2')
-
-        db.session.add_all([self.problem1, self.problem2])
+        self.create_ejudge_problems()
+        self.create_problems()
 
         self.user1 = SimpleUser(firstname='user1', lastname='user1')
         self.user2 = SimpleUser(firstname='user2', lastname='user2')
@@ -26,13 +24,13 @@ class TestAPIProblemSubmission(TestCase):
 
         db.session.flush()
 
-        self.run1 = Run(user_id=self.user1.id, problem_id=self.problem1.id,
+        self.run1 = Run(user_id=self.user1.id, problem_id=self.problems[1].id,
                         ejudge_status=1, ejudge_language_id=1)
-        self.run2 = Run(user_id=self.user1.id, problem_id=self.problem2.id,
+        self.run2 = Run(user_id=self.user1.id, problem_id=self.problems[2].id,
                         ejudge_status=1, ejudge_language_id=1)
-        self.run3 = Run(user_id=self.user2.id, problem_id=self.problem1.id,
+        self.run3 = Run(user_id=self.user2.id, problem_id=self.problems[1].id,
                         ejudge_status=2, ejudge_language_id=2)
-        self.run4 = Run(user_id=self.user2.id, problem_id=self.problem2.id,
+        self.run4 = Run(user_id=self.user2.id, problem_id=self.problems[2].id,
                         ejudge_status=2, ejudge_language_id=2)
 
         self.run4.create_time = datetime.utcnow() - timedelta(days=1)
@@ -60,7 +58,7 @@ class TestAPIProblemSubmission(TestCase):
         return response
 
     def test_simple(self):
-        resp = self.send_request(self.problem1.id)
+        resp = self.send_request(self.problems[1].id)
 
         self.assert200(resp)
 
@@ -111,7 +109,7 @@ class TestAPIProblemSubmission(TestCase):
         self.assertIsNotNone(problem['name'])
 
     def test_filter_by_user(self):
-        resp = self.send_request(self.problem1.id, user_id=self.user1.id)
+        resp = self.send_request(self.problems[1].id, user_id=self.user1.id)
 
         self.assert200(resp)
 
@@ -120,7 +118,7 @@ class TestAPIProblemSubmission(TestCase):
         self.assertEqual(len(data['data']), 1)
 
     def test_filter_by_lang(self):
-        resp = self.send_request(self.problem1.id, lang_id=self.run1.ejudge_language_id)
+        resp = self.send_request(self.problems[1].id, lang_id=self.run1.ejudge_language_id)
 
         self.assert200(resp)
 
@@ -129,7 +127,7 @@ class TestAPIProblemSubmission(TestCase):
         self.assertEqual(len(data['data']), 1)
 
     def test_filter_by_status(self):
-        resp = self.send_request(self.problem1.id, status_id=self.run1.ejudge_status)
+        resp = self.send_request(self.problems[1].id, status_id=self.run1.ejudge_status)
 
         self.assert200(resp)
 
@@ -138,7 +136,7 @@ class TestAPIProblemSubmission(TestCase):
         self.assertEqual(len(data['data']), 1)
 
     def test_filter_by_statement(self):
-        resp = self.send_request(self.problem1.id, status_id=self.run1.statement_id)
+        resp = self.send_request(self.problems[1].id, status_id=self.run1.statement_id)
 
         self.assert200(resp)
 
@@ -147,7 +145,7 @@ class TestAPIProblemSubmission(TestCase):
         self.assertEqual(len(data['data']), 2)
 
     def test_filter_by_group(self):
-        resp = self.send_request(self.problem2.id, group_id=self.group.id)
+        resp = self.send_request(self.problems[2].id, group_id=self.group.id)
         self.assert200(resp)
 
         data = resp.get_json()
@@ -158,7 +156,7 @@ class TestAPIProblemSubmission(TestCase):
 
         from_time = int((datetime.utcnow() - timedelta(hours=1)).timestamp() * 1000)
 
-        resp = self.send_request(self.problem2.id, from_timestamp=from_time)
+        resp = self.send_request(self.problems[2].id, from_timestamp=from_time)
 
         self.assert200(resp)
 
@@ -167,14 +165,14 @@ class TestAPIProblemSubmission(TestCase):
         self.assertEqual(len(data['data']), 1)
 
         # Too mush for timestamp
-        resp = self.send_request(self.problem2.id, from_timestamp=from_time * 10000)
+        resp = self.send_request(self.problems[2].id, from_timestamp=from_time * 10000)
         self.assert400(resp)
 
     def test_filter_by_to_timestamp(self):
 
         to_time = int((datetime.utcnow() - timedelta(hours=1)).timestamp() * 1000)
 
-        resp = self.send_request(self.problem2.id, to_timestamp=to_time)
+        resp = self.send_request(self.problems[2].id, to_timestamp=to_time)
 
         self.assert200(resp)
 
@@ -183,5 +181,5 @@ class TestAPIProblemSubmission(TestCase):
         self.assertEqual(len(data['data']), 1)
 
         # Too mush for timestamp
-        resp = self.send_request(self.problem2.id, to_timestamp=to_time * 10000)
+        resp = self.send_request(self.problems[2].id, to_timestamp=to_time * 10000)
         self.assert400(resp)
