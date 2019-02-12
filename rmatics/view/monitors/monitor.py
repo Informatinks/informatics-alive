@@ -138,6 +138,7 @@ class MonitorAPIView(MethodView):
             .options(Load(StatementProblem).load_only('rank'))
 
         problems = []
+        # Yes it is ugly but I think its better than rewrite query
         for problem, sp in problems_statement_problems.all():
             problem.rank = sp.rank
             problems.append(problem)
