@@ -2,20 +2,13 @@ from typing import Callable
 from sqlalchemy import and_, or_
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import Query
-from sqlalchemy.orm.exc import (
-    MultipleResultsFound,
-    NoResultFound,
-)
-
 from rmatics.model.base import db
-from rmatics.model.participant import Participant
 from rmatics.model.statement import StatementUser
 from rmatics.utils.functions import (
     attrs_to_dict,
     hash_password,
     random_password,
 )
-
 
 
 def lazy(func):
@@ -62,37 +55,6 @@ class SimpleUser(db.Model):
         lazy='dynamic',
     )
     statements = association_proxy('StatementUsers2', 'statement')
-
-    def get_active_participant(self):
-        """
-        Возвращает последний participant, если он еще не закончен
-        """
-        latest_participant = db.session.query(Participant).filter(
-            Participant.user_id == self.id
-        ).order_by(
-            Participant.id.desc()
-        ).first()
-        if latest_participant and not latest_participant.finished():
-            return latest_participant
-        return None
-
-    def serialize(self, attributes=None):
-        if not attributes:
-            attributes = (
-                'id',
-                'firstname',
-                'lastname',
-                'active_virtual',
-                'ejudge_id',
-            )
-        serialized = attrs_to_dict(self, *attributes)
-        if 'active_virtual' in attributes:  # TODO Убрать во внешний сериалайзер
-            participant = self.get_active_participant()
-            if participant:
-                serialized['active_virtual'] = participant.serialize()
-            else:
-                serialized.pop('active_virtual')
-        return serialized
 
     def reset_password(self):
         """
@@ -151,21 +113,3 @@ class PynformaticsUser(User):
     
     id = db.Column(db.Integer, db.ForeignKey('moodle.mdl_user.id'), primary_key=True)
     main_page_settings = db.Column(db.Text)
-
-#    def __repr__(self):
-#        return "<Person(%s, '%s', '%s', '%s', '%s')" % (self.id, self.username, self.firstname, self.lastname, self.email, self.city)
-
-
-# TODO: поправить SAWarning. Нужно ли наследование от User? Если да, можно убрать id
-# class EjudgeUser(User):
-#     __tablename__ = "mdl_user_ejudge"
-#     __table_args__ = {'schema':'moodle'}
-#     __mapper_args__ = {'polymorphic_identity': 'ejudgeuser'}
-#
-#     id = Column(Integer, ForeignKey('moodle.mdl_user.id'), primary_key=True)
-#     ejudge_login = Column(Unicode)
-#     ejudge_password = Column(Unicode)
-#     ejudge_id = Column(Integer)
-#     ejudge_problems_solved = Column(Integer)
-#    statement = relationship("Statement", secondary=StatementUser.__table__, backref=backref("StatementUsers1"), lazy="dynamic")
-#    statements = association_proxy("StatementUsers2", 'statement')

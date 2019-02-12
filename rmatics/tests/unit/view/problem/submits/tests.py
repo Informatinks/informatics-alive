@@ -11,7 +11,7 @@ from rmatics.model.base import db, mongo
 from rmatics.model.run import Run
 from rmatics.testutils import TestCase
 from rmatics.utils.run import EjudgeStatuses
-from rmatics.view.problem.problem import SubmitApi
+from rmatics.view.problem.problem import TrustedSubmitApi
 
 PROTOCOL_ID = ObjectId("507f1f77bcf86cd799439011")
 WRONG_PROTOCOL_ID = ObjectId("507f1f77bcf86cd799439012")
@@ -24,12 +24,12 @@ class TestCheckFileRestriction(TestCase):
     def test_file_too_large(self):
         files = io.BytesIO(bytes((ascii('f') * 64 * 1024).encode('ascii')))
         with self.assertRaises(ValueError):
-            SubmitApi.check_file_restriction(files)
+            TrustedSubmitApi.check_file_restriction(files)
 
         files = io.BytesIO(bytes((ascii('f') * 1).encode('ascii')))
 
         with self.assertRaises(ValueError):
-            SubmitApi.check_file_restriction(files)
+            TrustedSubmitApi.check_file_restriction(files)
 
 
 class TestTrustedProblemSubmit(TestCase):
@@ -100,82 +100,9 @@ class TestTrustedProblemSubmit(TestCase):
         self.assert400(resp)
 
 
-class TestProblemSubmit(TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.create_ejudge_problems()
-        self.create_users()
-        self.create_statements()
-
-        self.set_session({'user_id': self.users[0].id})
-
-    def send_request(self, problem_id, **kwargs):
-        url = url_for('problem.submit', problem_id=problem_id)
-        data = {
-            'lang_id': 1,
-            'statement_id': self.statements[0].id,
-            'user_id': self.users[0].id,
-            **kwargs
-        }
-        response = self.client.post(url, data=data, content_type='multipart/form-data')
-        return response
-
-    @patch('rmatics.view.problem.problem.Run.update_source')
-    @patch('rmatics.view.problem.problem.queue_submit')
-    def test_simple(self, mock_submit, mock_update):
-        submit = MagicMock()
-        submit.serialize.return_value = {'hhh': 'mmm'}
-        mock_submit.return_value = submit
-
-        file = BytesIO(b'skdjvndfkjnvfk')
-        data = dict(
-            file=(file, 'test.123', )
-        )
-        resp = self.send_request(self.ejudge_problems[0].id, **data)
-
-        self.assert200(resp)
-        submit.serialize.assert_called_once()
-        mock_update.assert_called_once()
-
-    @patch('rmatics.view.problem.problem.Run.update_source')
-    @patch('rmatics.view.problem.problem.queue_submit')
-    def test_duplicate(self, mock_submit, mock_update):
-        submit = MagicMock()
-        submit.serialize.return_value = {'hhh': 'mmm'}
-        mock_submit.return_value = submit
-
-        blob = b'skdjvndfkjnvfk'
-
-        source_hash = Run.generate_source_hash(blob)
-
-        run = Run(
-            user_id=self.users[0].id,
-            problem=self.ejudge_problems[0],
-            problem_id=self.ejudge_problems[0].id,
-            statement_id=self.statements[0].id,
-            ejudge_contest_id=self.ejudge_problems[0].ejudge_contest_id,
-            ejudge_language_id=1,
-            ejudge_status=EjudgeStatuses.COMPILING.value,
-            source_hash=source_hash,
-        )
-        db.session.add(run)
-        db.session.commit()
-
-        file = BytesIO(blob)
-        data = dict(
-            file=(file, 'test.123', )
-        )
-        resp = self.send_request(self.ejudge_problems[0].id, **data)
-
-        self.assert400(resp)
-
-
 class TestGetSubmissionSource(TestCase):
     def setUp(self):
         super().setUp()
-
-        self.create_roles()
 
         self.create_users()
         self.create_statements()
@@ -212,7 +139,6 @@ class TestGetSubmissionSource(TestCase):
         resp = self.send_request(run_id=self.run.id, data=data)
         self.assert200(resp)
 
-    # TODO: revrite test (NFRMTCS-26)
     def test_wrong_permissions(self):
         data = {'user_id': self.users[1].id}
 
@@ -230,7 +156,6 @@ class TestUpdateSubmissionFromEjudge(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.create_roles()
         self.create_users()
         self.create_ejudge_problems()
 
@@ -347,7 +272,6 @@ class TestGetRunProtocol(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.create_roles()
         self.create_users()
         self.create_ejudge_problems()
 

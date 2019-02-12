@@ -12,7 +12,6 @@ from rmatics.model.group import (
 from rmatics.model.problem import (
     EjudgeProblem,
     Problem)
-from rmatics.model.role import Role
 from rmatics.model.statement import Statement, StatementProblem
 from rmatics.model.user import SimpleUser
 
@@ -124,10 +123,6 @@ class TestCase(flask_testing.TestCase):
         db.session.add(self.course_module)
         db.session.flush()
 
-    def create_roles(self):
-        self.admin_role = Role(shortname='admin')
-        db.session.add_all((self.admin_role,))
-
     def create_users(self):
         self.users = [
             SimpleUser(
@@ -148,23 +143,6 @@ class TestCase(flask_testing.TestCase):
         ]
         db.session.add_all(self.users)
         db.session.flush(self.users)
-
-    def create_user_groups(self):
-        self.create_groups()
-        self.create_users()
-
-        self.user_groups = [
-            UserGroup(
-                group=self.groups[0],
-                user=self.users[0],
-            ),
-            UserGroup(
-                group=self.groups[1],
-                user=self.users[1],
-            ),
-        ]
-        db.session.add_all(self.user_groups)
-        db.session.flush(self.user_groups)
 
 
 if __name__ == '__main__':

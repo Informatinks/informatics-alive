@@ -1,14 +1,10 @@
-import datetime
 import logging
 import pickle
-from redis import WatchError
 
 from .submit import Submit
-from .worker import SubmitWorker
 from rmatics.model.base import redis
 from rmatics.utils.redis.queue import RedisQueue
-from rmatics.websocket import notify_all
-from rmatics.websocket.events import QUEUE_STATUS
+
 
 
 log = logging.getLogger('submit_queue')
@@ -43,12 +39,7 @@ class SubmitQueue(RedisQueue):
         return int(redis.get(last_get_id_key(self.key)) or '0')
 
     def notify_queue_status(self):
-        notify_all(
-            QUEUE_STATUS,
-            {
-                'last_get_id': self.get_last_get_id(),
-            }
-        )
+        pass
 
     def submit(self, run_id, user_id, ejudge_url):
         def _submit(pipe):
