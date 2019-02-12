@@ -5,9 +5,11 @@ from marshmallow import fields, Schema, post_load
 from webargs.flaskparser import parser
 from werkzeug.exceptions import NotFound, BadRequest
 
+from rmatics import monitor_cacher
 from rmatics.model.base import db, mongo
 from rmatics.model.run import Run
 from rmatics.utils.response import jsonify
+from rmatics.view.monitors.monitor import get_runs
 from rmatics.view.problem.serializers.run import RunSchema
 
 
@@ -101,6 +103,7 @@ class ProtocolApi(MethodView):
 
 
 class UpdateRunFromEjudgeAPI(MethodView):
+
     def post(self):
         data = request.get_json(force=True)
         ejudge_run_id = data['run_id']
@@ -112,24 +115,33 @@ class UpdateRunFromEjudgeAPI(MethodView):
                        ejudge_contest_id=ejudge_contest_id) \
             .one_or_none()
 
-        if not run:
+        if run is None:
             msg = f'Cannot find Run with  \
                     ejudge_contest_id={ejudge_contest_id},  \
                     ejudge_run_id={ejudge_run_id}'
             raise BadRequest(msg)
 
         run_schema = FromEjudgeRunSchema(context={'instance': run})
-        run, errors = run_schema.load(data)
+        received_run, errors = run_schema.load(data)
         if errors:
             raise BadRequest(errors)
 
         if mongo_protocol_id:
+            # If it is we should invalidate cache
+            self._invalidate_cache_by_run(run)
+
             result = mongo.db.protocol.update_one({'_id': ObjectId(mongo_protocol_id)},
-                                                           {'$set': {'run_id': run.id}})
+                                                  {'$set': {'run_id': received_run.id}})
             if not result.modified_count:
                 raise BadRequest(f'Cannot find protocol by _id {mongo_protocol_id}')
 
-        db.session.add(run)
+        db.session.add(received_run)
         db.session.commit()
 
         return jsonify({}, 200)
+
+    @classmethod
+    def _invalidate_cache_by_run(cls, run):
+        problem_id = run.problem_id
+        user_id = run.user_id
+        monitor_cacher.invalidate_all_of(get_runs, problem_id=problem_id, user_id=user_id)

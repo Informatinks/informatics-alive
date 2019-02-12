@@ -53,13 +53,13 @@ class TestGenerateMonitor(TestCase):
         db.session.commit()
 
     def test_get_ejudge_problems(self):
-        problems = MonitorAPIView._get_ejudge_problems(self.contest_id)
+        problems = MonitorAPIView._get_problems(self.contest_id)
 
-        expected_pr_ids = sorted(map(lambda p: p.pr_id, self.problems))
+        expected_ids = sorted(map(lambda p: p.id, self.problems))
 
-        pr_ids = sorted(map(lambda p: p.pr_id, problems))
+        ids = sorted(map(lambda p: p.id, problems))
 
-        self.assertEqual(pr_ids, expected_pr_ids)
+        self.assertEqual(ids, expected_ids)
 
     def test_get_runs(self):
         user_ids = [user.id for user in self.users]

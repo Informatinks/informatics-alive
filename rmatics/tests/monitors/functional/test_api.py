@@ -68,10 +68,15 @@ class TestMonitorGetApi(TestCase):
         self.assertIn('data', resp.json)
         data = resp.json['data']
 
+        self.assertEqual(len(data), 3)
+
         for contest_data in data:
             self.assertIn('problem', contest_data)
             self.assertIn('runs', contest_data)
             self.assertIn('contest_id', contest_data)
+
+        problem_data = data[0]['problem']
+        self.assertIn('rank', problem_data)
 
         runs = map(lambda d: d['runs'], data)
         runs_lens = map(len, runs)

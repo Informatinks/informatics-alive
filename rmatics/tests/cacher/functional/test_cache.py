@@ -68,6 +68,10 @@ class TestCacher(TestCase):
         self.locker_lock.assert_not_called()
         self.locker_unlock.assert_not_called()
 
+        # Cacher._save_cache_meta is not called
+        cache_metas = db.session.query(CacheMeta).count()
+        self.assertEqual(cache_metas, 0)
+
         self.assertEqual(res, another_func_return)
 
     def test_invalidate_cache_not_deleted(self):

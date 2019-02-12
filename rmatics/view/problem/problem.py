@@ -2,7 +2,6 @@ import datetime
 
 from flask import (
     current_app,
-    g,
     jsonify,
     request,
 )
@@ -59,7 +58,11 @@ class TrustedSubmitApi(MethodView):
         user_id = args.get('user_id')
         file = parser.parse_files(request, 'file', 'file')
 
-        problem = db.session.query(EjudgeProblem).get(problem_id)
+        # Здесь НЕЛЬЗЯ использовать .get(problem_id), см EjudgeProblem.__doc__
+        problem = db.session.query(EjudgeProblem) \
+            .filter_by(id=problem_id) \
+            .one_or_none()
+
         if not problem:
             raise NotFound('Problem with this id is not found')
 
@@ -78,7 +81,6 @@ class TrustedSubmitApi(MethodView):
         # TODO: разобраться, есть ли там constraint на statement_id
         run = Run(
             user_id=user_id,
-            problem=problem,
             problem_id=problem_id,
             statement_id=statement_id,
             ejudge_contest_id=problem.ejudge_contest_id,
