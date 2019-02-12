@@ -120,23 +120,22 @@ class Cacher:
             else:
                 key = get_cache_key(func, self.prefix, args, kwargs)
 
-            try:
-                result = self.store.get(key)
-            except redis.exceptions.ConnectionError:
-                return func(*args, **kwargs)
+            with self.locker.take_possession(key):
+                try:
+                    result = self.store.get(key)
+                except redis.exceptions.ConnectionError:
+                    return func(*args, **kwargs)
 
-            if result:
-                return json.loads(result)
+                if result:
+                    return json.loads(result)
 
-            self.locker.lock(key)
-            func_result = func(*args, **kwargs)
-            self.store.set(key, json.dumps(func_result))
-            self.store.expire(key, self.period)
-            self.locker.unlock(key)
+                func_result = func(*args, **kwargs)
+                self.store.set(key, json.dumps(func_result))
+                self.store.expire(key, self.period)
 
-            self._save_cache_meta(func, key, invalidate_kwargs)
+                self._save_cache_meta(func, key, invalidate_kwargs)
 
-            return func_result
+                return func_result
         return wrapped
 
     @staticmethod
