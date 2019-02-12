@@ -96,6 +96,9 @@ class MonitorAPIView(MethodView):
                 monitor_data = MonitorData(contest_id, problem, runs)
                 contest_problems_runs.append(monitor_data)
 
+        # We have to commit session because we may created cache_meta
+        db.session.commit()
+
         schema = ContestMonitorSchema(many=True)
 
         # TODO: Подумать, как лучше вернуть
