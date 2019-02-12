@@ -84,7 +84,7 @@ class MonitorAPIView(MethodView):
 
         contest_problems = {}
         for contest_id in contest_ids:
-            contest_problems[contest_id] = self._get_ejudge_problems(contest_id)
+            contest_problems[contest_id] = self._get_problems(contest_id)
 
         contest_problems_runs = []
         for contest_id, problems in contest_problems.items():
@@ -104,7 +104,7 @@ class MonitorAPIView(MethodView):
         return jsonify(response.data)
 
     @classmethod
-    def _get_ejudge_problems(cls, contest_id) -> list:
+    def _get_problems(cls, contest_id) -> list:
         """ Get all problems from is's id """
 
         cm = CourseModule
@@ -126,16 +126,20 @@ class MonitorAPIView(MethodView):
         WHERE
             mdl_ejudge_problem.id = mdl_problems.pr_id AND
             mdl_statements_problems_correlation.problem_id = mdl_problems.id AND
-            mdl_statements_problems_correlation.statement_id = 20078
+            mdl_statements_problems_correlation.statement_id = 928
         ORDER BY
             mdl_statements_problems_correlation.rank 
         """
 
-        problems = db.session.query(Problem) \
+        problems_statement_problems = db.session.query(Problem, StatementProblem) \
             .join(StatementProblem, StatementProblem.problem_id == Problem.id) \
             .filter(StatementProblem.statement_id == statement.id) \
-            .options(joinedload(Problem.ejudge_problem)
-                     .load_only('id', 'short_id')) \
-            .options(load_only('id', 'name', 'pr_id'))
+            .options(Load(Problem).load_only('id', 'name'))\
+            .options(Load(StatementProblem).load_only('rank'))
 
-        return problems.all()
+        problems = []
+        for problem, sp in problems_statement_problems.all():
+            problem.rank = sp.rank
+            problems.append(problem)
+
+        return problems
