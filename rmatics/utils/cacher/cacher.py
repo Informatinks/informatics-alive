@@ -117,7 +117,6 @@ class Cacher:
                 # If we can invalidate we will better use invalidate_by kwargs only
                 invalidate_kwargs = self._filter_invalidate_kwargs(kwargs)
                 key = get_cache_key(func, self.prefix, (), invalidate_kwargs)
-                self._save_cache_meta(func, key, invalidate_kwargs)
             else:
                 key = get_cache_key(func, self.prefix, args, kwargs)
 
@@ -134,6 +133,8 @@ class Cacher:
             self.store.set(key, json.dumps(func_result))
             self.store.expire(key, self.period)
             self.locker.unlock(key)
+
+            self._save_cache_meta(func, key, invalidate_kwargs)
 
             return func_result
         return wrapped
