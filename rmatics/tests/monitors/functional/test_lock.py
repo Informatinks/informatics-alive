@@ -26,7 +26,7 @@ class TestRedisLocker(TestCase):
         self.assertFalse(lock, 'Lock acquired by RedisLocker')
 
         lock = self.another_locker.lock(RESOURCE_KEY, LOCK_TIME_MSEC)
-        self.assertNotEqual(False, lock, 'Lock from RedisLocker realised')
+        self.assertNotEqual(False, lock, 'Lock from RedisLocker released')
 
         # Actually it is side effect so we should realise another_locker
         self.another_locker.unlock(lock)

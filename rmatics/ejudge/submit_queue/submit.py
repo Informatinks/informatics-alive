@@ -1,4 +1,5 @@
 from flask import current_app
+from sqlalchemy.orm import joinedload
 
 from rmatics import centrifugo_client
 from rmatics.ejudge.ejudge_proxy import submit
@@ -34,12 +35,12 @@ class Submit:
         self.ejudge_password = current_app.config.get('EJUDGE_PASSWORD')
 
     def send(self, ejudge_url=None):
-        current_app.logger.info('Trying to send run to ejudge')
+        current_app.logger.info(f'Trying to send run #{self.run_id} to ejudge')
 
         ejudge_url = ejudge_url or self.ejudge_url
 
         run: Run = db.session.query(Run) \
-            .joinedload(Run.problem) \
+            .options(joinedload(Run.problem)) \
             .get(self.run_id)
         if run is None:
             current_app.error(f'Can\'t find run #{self.run_id}')
