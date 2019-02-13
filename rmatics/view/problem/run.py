@@ -1,5 +1,5 @@
 from bson import ObjectId
-from flask import request
+from flask import request, current_app
 from flask.views import MethodView
 from marshmallow import fields, Schema, post_load
 from webargs.flaskparser import parser
@@ -129,6 +129,7 @@ class UpdateRunFromEjudgeAPI(MethodView):
         if mongo_protocol_id:
             # If it is we should invalidate cache
             self._invalidate_cache_by_run(run)
+            current_app.logger.info('Cache invalidated')
 
             result = mongo.db.protocol.update_one({'_id': ObjectId(mongo_protocol_id)},
                                                   {'$set': {'run_id': received_run.id}})
@@ -144,4 +145,4 @@ class UpdateRunFromEjudgeAPI(MethodView):
     def _invalidate_cache_by_run(cls, run):
         problem_id = run.problem_id
         user_id = run.user_id
-        monitor_cacher.invalidate_all_of(get_runs, problem_id=problem_id, user_id=user_id)
+        monitor_cacher.invalidate_all_of(get_runs, problem_id=problem_id, user_ids=user_id)

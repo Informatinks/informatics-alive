@@ -6,6 +6,7 @@ from rmatics import db
 from rmatics.model.cache_meta import CacheMeta
 from rmatics.testutils import TestCase
 from rmatics.utils.cacher import Cacher
+from rmatics.utils.cacher.locker import FakeLocker
 
 PREFIX = 'my_cache'
 FUNC_NAME = 'my_func_name'
@@ -26,9 +27,13 @@ class TestCacher(TestCase):
         redis.get = self.redis_get_mock
         redis.delete = self.redis_delete_mock
 
-        locker = MagicMock()
-        self.locker_lock = locker.lock
-        self.locker_unlock = locker.unlock
+        locker = FakeLocker()
+
+        self.locker_lock = MagicMock()
+        locker._lock = self.locker_lock
+
+        self.locker_unlock = MagicMock()
+        locker._unlock = self.locker_unlock
 
         invalidate_by = ['a', 'problem_id', 'group_id']
         self.cacher = Cacher(redis, locker, prefix=PREFIX, invalidate_by=invalidate_by)
@@ -65,8 +70,8 @@ class TestCacher(TestCase):
         res = self.cached_function(a=3)
 
         self.to_be_cached.assert_not_called()
-        self.locker_lock.assert_not_called()
-        self.locker_unlock.assert_not_called()
+        self.locker_lock.assert_called_once()
+        self.locker_unlock.assert_called_once()
 
         # Cacher._save_cache_meta is not called
         cache_metas = db.session.query(CacheMeta).count()
