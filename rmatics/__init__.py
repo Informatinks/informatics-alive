@@ -44,7 +44,8 @@ def create_app(config=None):
     mongo.init_app(app)
     redis.init_app(app)
 
-    monitor_cacher.init_app(app, redis, period=30*60, autocommit=False)
+    monitor_caching_time = app.config.get('MONITOR_CACHING_TIME_HOURS', 1) * 60 * 60
+    monitor_cacher.init_app(app, redis, period=monitor_caching_time, autocommit=False)
 
     # Centrifugo
     cent_url = app.config.get('CENTRIFUGO_URL')
