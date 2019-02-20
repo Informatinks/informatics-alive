@@ -1,13 +1,8 @@
-import logging
 import pickle
 
 from .submit import Submit
 from rmatics.model.base import redis
 from rmatics.utils.redis.queue import RedisQueue
-
-
-
-log = logging.getLogger('submit_queue')
 
 
 DEFAULT_SUBMIT_QUEUE = 'submit.queue'

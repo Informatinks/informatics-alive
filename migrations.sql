@@ -43,15 +43,24 @@ ON run.ej_contest_id = ejruns.contest_id
    AND run.ej_run_id = ejruns.run_id
 WHERE run.id IS NULL; -- ejudge runs where pynformatics.runs are not exists
 
+UPDATE pynformatics.runs AS pyruns
+SET pyruns.create_time = pyruns.ej_create_time
+WHERE pyruns.problem_id IS NULL;
 
 UPDATE pynformatics.runs AS pyruns
-SET pyruns.problem_id = (SELECT id
-                         FROM moodle.mdl_ejudge_problem
-                            INNER JOIN ejudge.runs as ejruns
-                                  ON moodle.mdl_ejudge_problem.problem_id = ejruns.prob_id
-                         WHERE pyruns.ej_contest_id = ejruns.contest_id
-                           AND pyruns.ej_run_id = ejruns.run_id)
-WHERE pyruns.problem_id is NULL AND FALSE;
+SET pyruns.problem_id = (
+  SELECT mproblem.id
+  FROM moodle.mdl_ejudge_problem AS ejproblem
+  LEFT JOIN ejudge.runs as ejruns -- Join лишний
+        ON ejproblem.problem_id = ejruns.prob_id
+           AND ejproblem.ejudge_contest_id = ejruns.contest_id
+  INNER JOIN moodle.mdl_problems AS mproblem
+        ON ejproblem.id = mproblem.pr_id
+  WHERE pyruns.ej_contest_id = ejruns.contest_id
+        AND pyruns.ej_run_id = ejruns.run_id
+        AND mproblem.pr_id IS NOT NULL AND mproblem.pr_id != 0 LIMIT 1
+)
+WHERE pyruns.problem_id is NULL;
 
 -- Create CacheMeta
 USE pynformatics;
@@ -63,4 +72,13 @@ CREATE TABLE cache_meta (
   invalidate_args VARCHAR(4096) NOT NULL,
   created TIMESTAMP,
   when_expire TIMESTAMP
+);
+
+-- Create monitor links
+USE pynformatics;
+CREATE TABLE monitor_link (
+  id SERIAL PRIMARY KEY,
+  author_id INTEGER NOT NULL,
+  link VARCHAR(20) NOT NULL,
+  internal_link VARCHAR(4096) NOT NULL
 );
