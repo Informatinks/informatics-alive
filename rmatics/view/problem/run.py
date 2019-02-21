@@ -2,8 +2,9 @@ from bson import ObjectId
 from flask import request, current_app
 from flask.views import MethodView
 from marshmallow import fields, Schema, post_load
+from pymongo.errors import PyMongoError, DuplicateKeyError
 from webargs.flaskparser import parser
-from werkzeug.exceptions import NotFound, BadRequest
+from werkzeug.exceptions import NotFound, BadRequest, InternalServerError
 
 from rmatics import monitor_cacher
 from rmatics.model.base import db, mongo
@@ -130,11 +131,17 @@ class UpdateRunFromEjudgeAPI(MethodView):
             # If it is we should invalidate cache
             self._invalidate_cache_by_run(run)
             current_app.logger.info('Cache invalidated')
+            try:
+                result = mongo.db.protocol.update_one({'_id': ObjectId(mongo_protocol_id)},
+                                                      {'$set': {'run_id': received_run.id}})
+                if not result.modified_count:
+                    raise BadRequest(f'Cannot find protocol by _id {mongo_protocol_id}')
+            except DuplicateKeyError:
+                current_app.logger.exception('Found duplicate key for run_id')
 
-            result = mongo.db.protocol.update_one({'_id': ObjectId(mongo_protocol_id)},
-                                                  {'$set': {'run_id': received_run.id}})
-            if not result.modified_count:
-                raise BadRequest(f'Cannot find protocol by _id {mongo_protocol_id}')
+            except PyMongoError:
+                current_app.logger.exception('Looks like mongo is shutdown')
+                raise InternalServerError(f'Looks like mongo is shutdown')
 
         db.session.add(received_run)
         db.session.commit()
