@@ -2,9 +2,9 @@ import datetime
 
 from flask import (
     current_app,
-    jsonify,
     request,
 )
+from flask import jsonify as flask_jsonify
 from werkzeug.exceptions import BadRequest, NotFound
 from flask.views import MethodView
 from rmatics.ejudge.submit_queue import (
@@ -19,6 +19,7 @@ from rmatics.model.group import UserGroup
 from rmatics.model.problem import Problem, EjudgeProblem
 from rmatics.model.run import Run
 from rmatics.model.user import SimpleUser
+from rmatics.utils.response import jsonify
 from rmatics.view.problem.serializers.run import RunSchema
 
 from rmatics.view.problem.serializers.problem import ProblemSchema
@@ -44,7 +45,7 @@ class TrustedSubmitApi(MethodView):
         file_bytes: bytes = file.read(max_size)
         if len(file_bytes) == max_size:
             raise ValueError('Submission should be less than 64Kb')
-        # TODO: 4 это прото так, что такое путой файл для ejudge?
+        # TODO: 4 это просто так, что такое пустой файл для ejudge?
         if len(file_bytes) < 4:
             raise ValueError('Submission shouldn\'t be empty')
 
@@ -116,7 +117,7 @@ class ProblemApi(MethodView):
             schema = ProblemSchema()
 
         data = schema.dump(problem)
-        return jsonify({'result': 'success', 'data': data.data})
+        return jsonify(data.data)
 
 
 get_args = {
@@ -212,4 +213,9 @@ class ProblemSubmissionsFilterApi(MethodView):
         schema = RunSchema(many=True)
         data = schema.dump(runs)
 
-        return jsonify({'result': 'success', 'data': data.data, 'metadata': metadata})
+        return flask_jsonify(
+            {
+                'result': 'success',
+                'data': data.data,
+                'metadata': metadata
+            })
