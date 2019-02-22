@@ -12,6 +12,6 @@ def handle_api_exception(api_exception):
     if not isinstance(code, int):
         code = 500
     message = getattr(api_exception, 'description', DEFAULT_MESSAGE)
-    response = jsonify(status='error', code=code, message=message)
+    response = jsonify(status='error', code=code, error=message)
     response.status_code = code
     return response
