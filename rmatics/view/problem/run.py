@@ -130,7 +130,7 @@ class UpdateRunFromEjudgeAPI(MethodView):
         if mongo_protocol_id:
             # If it is we should invalidate cache
             self._invalidate_cache_by_run(run)
-            current_app.logger.info('Cache invalidated')
+            current_app.logger.debug('Cache invalidated')
             try:
                 result = mongo.db.protocol.update_one({'_id': ObjectId(mongo_protocol_id)},
                                                       {'$set': {'run_id': received_run.id}})
