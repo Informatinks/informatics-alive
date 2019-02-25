@@ -75,10 +75,10 @@ class Submit:
 
         try:
             if ejudge_response['code'] != 0:
-                return
+                raise TypeError(f'Ejudge returned bad response: {ejudge_response["code"]}')
 
             ejudge_run_id = ejudge_response['run_id']
-        except Exception:
+        except (TypeError, KeyError, ):
             current_app.logger.exception('ejudge_proxy.submit returned bad value')
             return
 
@@ -88,7 +88,7 @@ class Submit:
         db.session.add(run)
         db.session.commit()
 
-        current_app.logger.info('Run successfully updated')
+        current_app.logger.info(f'Run #{self.run_id} successfully updated')
 
     def encode(self):
         return {

@@ -51,7 +51,7 @@ def main(params: list, times=1):
         open(os.path.join(current_dir, SUBMISSIONS[1]), 'r')
     ]
 
-    langs = [68, 27]
+    langs = [3, 27]
 
     for _ in range(times):
         for lang, fd in zip(langs, files):

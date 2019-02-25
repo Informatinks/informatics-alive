@@ -1,5 +1,7 @@
 from flask import current_app
 from gevent import Greenlet, sleep
+from sqlalchemy import exc as sa_exc
+
 from rmatics.model.base import db
 
 
@@ -14,6 +16,9 @@ class SubmitWorker(Greenlet):
         submit = self.queue.get()
         try:
             submit.send(ejudge_url=self.ejudge_url)
+        except sa_exc.OperationalError:
+            current_app.logger.exception('Something was wrong with MySQL')
+            raise
         except Exception:
             current_app.logger.exception('Submit worker caught exception and skipped submit without notifying user')
 
@@ -23,7 +28,12 @@ class SubmitWorker(Greenlet):
             db.session.rollback()
 
     def _run(self):
-        with self._ctx:
-            current_app.logger.info('Worker started')
-            while True:
-                self.handle_submit()
+        while True:
+            try:
+                with self._ctx:
+                    current_app.logger.info('Worker started')
+                    while True:
+                        self.handle_submit()
+            except sa_exc.OperationalError:
+                current_app.logger.warning('Something was wrong with MySQL; trying to restart worker')
+                sleep(1)
