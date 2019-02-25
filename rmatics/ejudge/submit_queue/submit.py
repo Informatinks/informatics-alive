@@ -75,7 +75,7 @@ class Submit:
 
         try:
             if ejudge_response['code'] != 0:
-                raise ValueError(f'Ejudge returned bad response: {ejudge_response["code"]}')
+                raise TypeError(f'Ejudge returned bad response: {ejudge_response["code"]}')
 
             ejudge_run_id = ejudge_response['run_id']
         except (TypeError, KeyError, ):
