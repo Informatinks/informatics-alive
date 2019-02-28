@@ -6,7 +6,7 @@ from flask import request
 from marshmallow import fields
 from webargs.flaskparser import parser
 from flask.views import MethodView
-from sqlalchemy.orm import joinedload, Load, load_only
+from sqlalchemy.orm import joinedload, Load
 
 from rmatics import db, monitor_cacher
 from rmatics.model import CourseModule, StatementProblem, Problem, \
@@ -42,8 +42,6 @@ def get_runs(problem_id: int = None, user_ids: Iterable = None,
         'id',
         'user_id',
         'create_time',
-        'ejudge_run_id',
-        'ejudge_contest_id',
         'ejudge_score',
         'ejudge_status',
         'ejudge_test_num'
