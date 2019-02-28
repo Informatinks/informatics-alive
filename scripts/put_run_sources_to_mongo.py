@@ -12,7 +12,7 @@ Base = declarative_base()
 mongo = MongoClient('mongodb://localhost/test')
 
 
-sources_path = 'archive/runs'
+sources_path = 'var/archive/runs'
 
 
 class Run(Base):

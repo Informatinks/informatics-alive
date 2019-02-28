@@ -13,8 +13,6 @@ class RunSchema(Schema):
     id = fields.Integer(dump_only=True)
     user = fields.Nested(UserRunSchema, dump_only=True)
     create_time = fields.DateTime()
-    ejudge_run_id = fields.Integer(dump_only=True, nullable=True)
-    ejudge_contest_id = fields.Integer(dump_only=True,)
     ejudge_score = fields.Integer(dump_only=True)
     ejudge_status = fields.Integer(dump_only=True)
     ejudge_test_num = fields.Integer(dump_only=True)
