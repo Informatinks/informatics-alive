@@ -9,9 +9,9 @@ from flask.views import MethodView
 from sqlalchemy.orm import joinedload, Load
 
 from rmatics import db, monitor_cacher
-from rmatics.model import CourseModule, StatementProblem, Problem, \
-    SimpleUser, Run, UserGroup
+from rmatics.model import SimpleUser, Run, UserGroup
 from rmatics.utils.response import jsonify
+from rmatics.view import get_problems_by_course_module
 from rmatics.view.monitors.serializers.monitor import ContestMonitorSchema, RunSchema
 
 
@@ -82,7 +82,7 @@ class MonitorAPIView(MethodView):
 
         contest_problems = {}
         for contest_id in contest_ids:
-            contest_problems[contest_id] = self._get_problems(contest_id)
+            contest_problems[contest_id] = get_problems_by_course_module(contest_id)
 
         contest_problems_runs = []
         for contest_id, problems in contest_problems.items():
@@ -103,45 +103,3 @@ class MonitorAPIView(MethodView):
         response = schema.dump(contest_problems_runs)
 
         return jsonify(response.data)
-
-    @classmethod
-    def _get_problems(cls, contest_id) -> list:
-        """ Get all problems from is's id """
-
-        cm = CourseModule
-        course_module = db.session.query(cm).filter(cm.id == contest_id).one_or_none()
-        if course_module is None:
-            return []
-        statement = course_module.instance
-        """
-         SELECT
-            mdl_problems.id,
-            mdl_statements_problems_correlation.rank,
-            mdl_problems.name,
-            mdl_statements_problems_correlation.hidden as cur_hidden,
-            mdl_ejudge_problem.short_id,
-            mdl_problems.pr_id,
-            mdl_ejudge_problem.contest_id
-        FROM
-            mdl_problems, mdl_statements_problems_correlation, mdl_ejudge_problem
-        WHERE
-            mdl_ejudge_problem.id = mdl_problems.pr_id AND
-            mdl_statements_problems_correlation.problem_id = mdl_problems.id AND
-            mdl_statements_problems_correlation.statement_id = 928
-        ORDER BY
-            mdl_statements_problems_correlation.rank 
-        """
-
-        problems_statement_problems = db.session.query(Problem, StatementProblem) \
-            .join(StatementProblem, StatementProblem.problem_id == Problem.id) \
-            .filter(StatementProblem.statement_id == statement.id) \
-            .options(Load(Problem).load_only('id', 'name'))\
-            .options(Load(StatementProblem).load_only('rank'))
-
-        problems = []
-        # Yes it is ugly but I think its better than rewrite query
-        for problem, sp in problems_statement_problems.all():
-            problem.rank = sp.rank
-            problems.append(problem)
-
-        return problems

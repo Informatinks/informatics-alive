@@ -20,6 +20,7 @@ from rmatics.model.problem import Problem, EjudgeProblem
 from rmatics.model.run import Run
 from rmatics.model.user import SimpleUser
 from rmatics.utils.response import jsonify
+from rmatics.view import get_problems_by_course_module
 from rmatics.view.problem.serializers.run import RunSchema
 
 from rmatics.view.problem.serializers.problem import ProblemSchema
@@ -152,50 +153,19 @@ class ProblemSubmissionsFilterApi(MethodView):
         'result': success | error
         'data': [Run]
         'metadata': {count: int, page_count: int}
+
+        Also:
+        --------
+        If problem_id = 0 we are trying to find problems by
+        CourseModule == statement_id
     """
     def get(self, problem_id: int):
+
         args = parser.parse(get_args, request)
-        user_id = args.get('user_id')
-        group_id = args.get('group_id')
-        lang_id = args.get('lang_id')
-        status_id = args.get('status_id')
-        statement_id = args.get('statement_id')
-        from_timestamp = args.get('from_timestamp')
-        to_timestamp = args.get('to_timestamp')
+        query = self._build_query_by_args(args, problem_id)
 
         per_page_count = args.get('count')
         page = args.get('page')
-
-        try:
-            from_timestamp = from_timestamp and from_timestamp != -1 and \
-                datetime.datetime.fromtimestamp(from_timestamp / 1_000)
-            to_timestamp = to_timestamp and to_timestamp != -1 and \
-                datetime.datetime.fromtimestamp(to_timestamp / 1_000)
-        except (OSError, OverflowError, ValueError):
-            raise BadRequest('Bad timestamp data')
-
-        query = db.session.query(Run, SimpleUser, Problem) \
-                          .join(SimpleUser, SimpleUser.id == Run.user_id) \
-                          .join(Problem, Problem.id == Run.problem_id) \
-                          .filter(Run.problem_id == problem_id) \
-                          .order_by(desc(Run.id))
-
-        if group_id:
-            query = query.join(UserGroup, UserGroup.user_id == SimpleUser.id)\
-                         .filter(UserGroup.group_id == group_id)
-        if user_id:
-            query = query.filter(Run.user_id == user_id)
-        if lang_id and lang_id > 0:
-            query = query.filter(Run.ejudge_language_id == lang_id)
-        if status_id and status_id > 0:
-            query = query.filter(Run.ejudge_status == status_id)
-        if statement_id:
-            query = query.filter(Run.statement_id == statement_id)
-        if from_timestamp:
-            query = query.filter(Run.create_time > from_timestamp)
-        if to_timestamp:
-            query = query.filter(Run.create_time < to_timestamp)
-
         result = query.paginate(page=page, per_page=per_page_count,
                                 error_out=False, max_per_page=100)
 
@@ -219,3 +189,55 @@ class ProblemSubmissionsFilterApi(MethodView):
                 'data': data.data,
                 'metadata': metadata
             })
+
+    @classmethod
+    def _build_query_by_args(cls, args, problem_id):
+        user_id = args.get('user_id')
+        group_id = args.get('group_id')
+        lang_id = args.get('lang_id')
+        status_id = args.get('status_id')
+        statement_id = args.get('statement_id')
+        from_timestamp = args.get('from_timestamp')
+        to_timestamp = args.get('to_timestamp')
+
+        if problem_id == 0 and statement_id is None:
+            raise BadRequest('Invalid statement_id with problem id = 0')
+
+        try:
+            from_timestamp = from_timestamp and from_timestamp != -1 and \
+                             datetime.datetime.fromtimestamp(from_timestamp / 1_000)
+            to_timestamp = to_timestamp and to_timestamp != -1 and \
+                           datetime.datetime.fromtimestamp(to_timestamp / 1_000)
+        except (OSError, OverflowError, ValueError):
+            raise BadRequest('Bad timestamp data')
+
+        query = db.session.query(Run, SimpleUser, Problem) \
+            .join(SimpleUser, SimpleUser.id == Run.user_id) \
+            .join(Problem, Problem.id == Run.problem_id) \
+            .order_by(desc(Run.id))
+
+        if group_id:
+            query = query.join(UserGroup, UserGroup.user_id == SimpleUser.id) \
+                .filter(UserGroup.group_id == group_id)
+        if user_id:
+            query = query.filter(Run.user_id == user_id)
+        if lang_id and lang_id > 0:
+            query = query.filter(Run.ejudge_language_id == lang_id)
+        if status_id and status_id > 0:
+            query = query.filter(Run.ejudge_status == status_id)
+        if from_timestamp:
+            query = query.filter(Run.create_time > from_timestamp)
+        if to_timestamp:
+            query = query.filter(Run.create_time < to_timestamp)
+
+        if problem_id != 0:
+            problem_id_filter_smt = Run.problem_id == problem_id
+        else:
+            # If problem_id == 0 filter by all problems from contest
+            problems = get_problems_by_course_module(statement_id)
+            problem_ids = [problem.id for problem in problems]
+            problem_id_filter_smt = Run.problem_id.in_(problem_ids)
+
+        query = query.filter(problem_id_filter_smt)
+
+        return query

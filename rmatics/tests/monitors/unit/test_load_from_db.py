@@ -6,7 +6,8 @@ from rmatics import db
 from rmatics import monitor_cacher
 from rmatics.model import Run
 from rmatics.testutils import TestCase
-from rmatics.view.monitors.monitor import MonitorAPIView, get_runs
+from rmatics.view import get_problems_by_course_module
+from rmatics.view.monitors.monitor import get_runs
 
 
 class TestGenerateMonitor(TestCase):
@@ -53,7 +54,7 @@ class TestGenerateMonitor(TestCase):
         db.session.commit()
 
     def test_get_ejudge_problems(self):
-        problems = MonitorAPIView._get_problems(self.contest_id)
+        problems = get_problems_by_course_module(self.contest_id)
 
         expected_ids = sorted(map(lambda p: p.id, self.problems))
 
