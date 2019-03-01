@@ -16,6 +16,9 @@ class TestAPIProblemSubmission(TestCase):
 
         self.create_ejudge_problems()
         self.create_problems()
+        self.create_statements()
+        self.create_statement_problems()
+        self.create_course_module()
 
         self.user1 = SimpleUser(firstname='user1', lastname='user1')
         self.user2 = SimpleUser(firstname='user2', lastname='user2')
@@ -183,3 +186,13 @@ class TestAPIProblemSubmission(TestCase):
         # Too mush for timestamp
         resp = self.send_request(self.problems[2].id, to_timestamp=to_time * 10000)
         self.assert400(resp)
+
+    def test_filter_by_contest(self):
+        resp = self.send_request(0, statement_id=self.course_module.id)
+
+        self.assert200(resp)
+
+        data = resp.get_json()
+        self.assertEqual(data['result'], 'success')
+        self.assertEqual(len(data['data']), 4)
+
