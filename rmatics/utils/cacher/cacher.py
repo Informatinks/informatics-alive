@@ -134,30 +134,6 @@ class Cacher:
             return func_result
         return wrapped
 
-    @staticmethod
-    def _simple_item_to_string(key, item):
-        return f'{key}_{item}'
-
-    @classmethod
-    def _list_item_to_string(cls, key, value):
-        acc = []
-        for item in value:
-            acc.append(cls._simple_item_to_string(key, item))
-        return acc
-
-    @classmethod
-    def _kwargs_to_string_list(cls, kwargs: dict) -> List[str]:
-        """ {contest: [1, 2], group: 2} -> ['contest_1', 'contest_2', 'group_2']"""
-        acc = []
-        for key, value in kwargs.items():
-            if value is None:
-                continue
-            if isinstance(value, list):
-                acc += cls._list_item_to_string(key, value)
-            else:
-                acc.append(cls._simple_item_to_string(key, value))
-        return acc
-
     def _filter_invalidate_kwargs(self, kwargs: dict) -> dict:
         result_set = {}
         for arg in self.allowed_kwargs:
