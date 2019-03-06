@@ -315,7 +315,7 @@ class TestGetRunProtocol(TestCase):
             'protocol_info': 'nice_protocol_info',
         }
         mongo.db.protocol.insert_one(protocol)
-        del protocol['_id'] # insert_one add _id field into inserted document
+        del protocol['_id']  # insert_one add _id field into inserted document
         resp = self.send_request()
         self.assert200(resp)
         self.assertEqual(resp.json['data'], protocol)

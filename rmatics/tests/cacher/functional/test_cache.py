@@ -6,6 +6,7 @@ from rmatics import db
 from rmatics.model.cache_meta import CacheMeta
 from rmatics.testutils import TestCase
 from rmatics.utils.cacher import Cacher
+from rmatics.utils.cacher.cahce_invalidators import MonitorCacheInvalidator
 from rmatics.utils.cacher.locker import FakeLocker
 
 PREFIX = 'my_cache'
@@ -14,6 +15,8 @@ FUNC_RETURN_VALUE = {'data': 'hi!'}
 
 
 class TestCacher(TestCase):
+    # TODO: Actually we should split this test on two
+    # TODO: (for MonitorCacheInvalidator and for Cacher)
 
     def setUp(self):
         super().setUp()
@@ -36,7 +39,13 @@ class TestCacher(TestCase):
         locker._unlock = self.locker_unlock
 
         invalidate_by = ['a', 'problem_id', 'group_id']
-        self.cacher = Cacher(redis, locker, prefix=PREFIX, invalidate_by=invalidate_by)
+
+        invalidator = MonitorCacheInvalidator(autocommit=True)
+        invalidator.invalidate_by = invalidate_by
+        invalidator.prefix = PREFIX
+        invalidator.init_app(remove_cache_func=redis.delete)
+
+        self.cacher = Cacher(redis, locker, invalidate_by, prefix='key_prefix', cache_invalidator=invalidator)
 
         self.to_be_cached = MagicMock(return_value=FUNC_RETURN_VALUE)
         self.to_be_cached.__name__ = FUNC_NAME
