@@ -82,3 +82,15 @@ CREATE TABLE monitor_link (
   link VARCHAR(20) NOT NULL,
   internal_link VARCHAR(4096) NOT NULL
 );
+
+USE pynformatics;
+CREATE TABLE monitor_cache_meta (
+  id SERIAL PRIMARY KEY,
+  prefix VARCHAR(30) NOT NULL,
+  label VARCHAR (30) NOT NULL,
+  problem_id INTEGER,
+  `key` VARCHAR(64) NOT NULL,
+  invalidate_args VARCHAR(4096) NOT NULL,
+  created TIMESTAMP,
+  when_expire TIMESTAMP
+);

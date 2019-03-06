@@ -1,4 +1,4 @@
-from rmatics.model.cache_meta import CacheMeta
+from rmatics.model.cache_meta import MonitorCacheMeta
 from rmatics.testutils import TestCase
 from rmatics.utils.cacher import Cacher
 
@@ -7,12 +7,12 @@ class TestDBSearchString(TestCase):
 
     def test_get_invalidate_args(self):
         args = ['problem_1', 'problem_2']
-        invalidate_args = CacheMeta.get_invalidate_args(args)
+        invalidate_args = MonitorCacheMeta.get_invalidate_args(args)
         self.assertEqual(invalidate_args, '|problem_1|problem_2|')
 
     def test_get_search_like_args(self):
         args = ['problem_1', 'problem_2']
-        search_like = CacheMeta.get_search_like_args(args)
+        search_like = MonitorCacheMeta.get_search_like_args(args)
         self.assertEqual(search_like, ['%|problem_1|%', '%|problem_2|%'])
 
 
