@@ -12,8 +12,6 @@ FUNC_RETURN_VALUE = {'data': 'hi!'}
 
 
 class TestCacher(TestCase):
-    # TODO: Actually we should split this test on two
-    # TODO: (for MonitorCacheInvalidator and for Cacher)
 
     def setUp(self):
         super().setUp()
