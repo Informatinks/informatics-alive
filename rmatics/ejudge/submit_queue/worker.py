@@ -10,7 +10,7 @@ class SubmitWorker(Greenlet):
         super(SubmitWorker, self).__init__()
         self.queue = queue
         self._ctx = current_app.app_context()
-        self.ejudge_url = current_app.config['EJUDGE_NEW_CLIENT_URL']
+        self.ejudge_url = None
 
     def handle_submit(self):
         submit = self.queue.get()
@@ -31,9 +31,11 @@ class SubmitWorker(Greenlet):
         while True:
             try:
                 with self._ctx:
+                    self.ejudge_url = current_app.config['EJUDGE_NEW_CLIENT_URL']
                     current_app.logger.info('Worker started')
                     while True:
                         self.handle_submit()
             except sa_exc.OperationalError:
-                current_app.logger.warning('Something was wrong with MySQL; trying to restart worker')
+                with self._ctx:
+                    current_app.logger.warning('Something was wrong with MySQL; trying to restart worker')
                 sleep(1)
