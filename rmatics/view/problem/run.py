@@ -78,7 +78,7 @@ class SourceApi(MethodView):
         run = run_q.filter(Run.id == run_id).one_or_none()
 
         if run is None:
-            raise NotFound('Run with current id is not found')
+            raise NotFound(f'Run with id #{run_id} is not found')
 
         source = run.source or b''
         source = source.decode('utf_8')
@@ -91,10 +91,10 @@ class SourceApi(MethodView):
 
 class ProtocolApi(MethodView):
     def get(self, run_id: int):
-
+        # TODO: не проверяется ни пользователь, ни админ -> любой может посмотреть протокол посылки
         run = db.session.query(Run).get(run_id)
         if not run:
-            raise NotFound(f'run_id: {run_id} is not found')
+            raise NotFound(f'Run with id #{run_id} is not found')
 
         protocol = run.protocol
         if not protocol:
