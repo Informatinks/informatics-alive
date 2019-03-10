@@ -45,11 +45,11 @@ class SubmitQueue(RedisQueue):
                 ejudge_url=ejudge_url
             )
             self.put(submit.encode(), pipe=pipe)
-            pipe.hset(
-                user_submits_key(self.key, user_id),
-                submit.id,
-                pickle.dumps(submit.encode())
-            )
+            # pipe.hset(
+            #     user_submits_key(self.key, user_id),
+            #     submit.id,
+            #     pickle.dumps(submit.encode())
+            # )
             return submit
         submit = redis.transaction(
             _submit,

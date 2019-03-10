@@ -37,7 +37,8 @@ class TestCacher(TestCase):
         self.invalidator_subscribe_mock = invalidator.subscribe
         self.invalidator_invalidate_mock = invalidator.invalidate
 
-        self.cacher = Cacher(redis, locker, invalidate_by, prefix='key_prefix', cache_invalidator=invalidator)
+        self.cacher = Cacher(redis, locker, invalidate_by, prefix='key_prefix',
+                             cache_invalidator=invalidator)
 
         self.to_be_cached = MagicMock(return_value=FUNC_RETURN_VALUE)
         self.to_be_cached.__name__ = FUNC_NAME
