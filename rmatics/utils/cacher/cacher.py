@@ -7,7 +7,7 @@ from typing import Callable, List, Optional
 
 import redis
 
-from rmatics.utils.cacher.cahce_invalidators import ICacheInvalidator
+from rmatics.utils.cacher.cache_invalidators import ICacheInvalidator
 from rmatics.utils.cacher.locker import ILocker
 
 PICKLE_ASCII_PROTO = 0

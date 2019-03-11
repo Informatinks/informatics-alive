@@ -1,5 +1,5 @@
 from rmatics.utils.cacher import FlaskCacher
-from rmatics.utils.cacher.cahce_invalidators import MonitorCacheInvalidator
+from rmatics.utils.cacher.cache_invalidators import MonitorCacheInvalidator
 
 invalidator = MonitorCacheInvalidator(autocommit=False)
 
