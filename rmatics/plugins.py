@@ -1,5 +1,8 @@
 from rmatics.utils.cacher import FlaskCacher
+from rmatics.utils.cacher.cahce_invalidators import MonitorCacheInvalidator
 
-monitor_cacher = FlaskCacher(prefix='monitor', can_invalidate=True,
-                             invalidate_by=['problem_id', 'user_ids',
-                                            'time_after', 'time_before'])
+invalidator = MonitorCacheInvalidator(autocommit=False)
+
+monitor_cacher = FlaskCacher(prefix='monitor', cache_invalidator=invalidator,
+                             allowed_kwargs=['problem_id', 'user_ids',
+                                             'time_after', 'time_before'])

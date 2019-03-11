@@ -20,4 +20,4 @@ from rmatics.model.user import SimpleUser, User, PynformaticsUser
 
 from rmatics.model.label import Label
 from rmatics.model.resource import Resource
-from rmatics.model.cache_meta import CacheMeta
+from rmatics.model.cache_meta import MonitorCacheMeta

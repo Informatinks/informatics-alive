@@ -1,7 +1,7 @@
 import datetime
 
 from rmatics import db, create_app
-from rmatics.model import CacheMeta
+from rmatics.model import MonitorCacheMeta
 
 
 # Cron every hour
@@ -11,8 +11,8 @@ def main():
     print(f'Job running at {current_time}')
     app = create_app()
     with app.app_context():
-        db.session.query(CacheMeta). \
-            filter(CacheMeta.when_expire < current_time) \
+        db.session.query(MonitorCacheMeta). \
+            filter(MonitorCacheMeta.when_expire < current_time) \
             .delete()
 
         db.session.commit()

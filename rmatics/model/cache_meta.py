@@ -7,9 +7,9 @@ from rmatics.model.base import db
 MAX_KEY_LEN = 4096
 
 
-class CacheMeta(db.Model):
+class MonitorCacheMeta(db.Model):
     __table_args__ = {'schema': 'pynformatics'}
-    __tablename__ = 'cache_meta'
+    __tablename__ = 'monitor_cache_meta'
 
     id = db.Column(db.Integer(), primary_key=True)
 
@@ -17,6 +17,7 @@ class CacheMeta(db.Model):
     label = db.Column(db.String(30), nullable=False)
     key = db.Column(db.String(64), nullable=False)
 
+    problem_id = db.Column(db.Integer, nullable=False)
     invalidate_args = db.Column(db.String(MAX_KEY_LEN))
 
     created = db.Column(db.DateTime(), default=datetime.datetime.utcnow)

@@ -3,13 +3,11 @@ import functools
 import hashlib
 import json
 import pickle
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 import redis
-from sqlalchemy import or_, and_
 
-from rmatics.model.base import db
-from rmatics.model.cache_meta import CacheMeta
+from rmatics.utils.cacher.cahce_invalidators import ICacheInvalidator
 from rmatics.utils.cacher.locker import ILocker
 
 PICKLE_ASCII_PROTO = 0
@@ -87,22 +85,20 @@ class Cacher:
     """
     def __init__(self, store,
                  locker: ILocker,
+                 allowed_kwargs: list,
+                 cache_invalidator: Optional[ICacheInvalidator] = None,
                  prefix='cache',
                  period=30*60,
-                 can_invalidate=True,
-                 invalidate_by=None,
                  autocommit=True):
         """Construct cache decorator based on the given redis connector."""
 
         self.store = store
         self.prefix = prefix
         self.period = period
-        self.can_invalidate = can_invalidate
-        self.invalidate_by = invalidate_by
+        self.cache_invalidator = cache_invalidator
         self.autocommit = autocommit
         self.locker = locker
-        if can_invalidate and not self.invalidate_by:
-            raise ValueError('You must specify any invalidate_by args for invalidating')
+        self.allowed_kwargs = allowed_kwargs
 
     def __call__(self, func):
         @functools.wraps(func)
@@ -113,12 +109,9 @@ class Cacher:
             if not to_be_cached:
                 return func(*args, **kwargs)
 
-            if self.can_invalidate:
-                # If we can invalidate we will better use invalidate_by kwargs only
-                invalidate_kwargs = self._filter_invalidate_kwargs(kwargs)
-                key = get_cache_key(func, self.prefix, (), invalidate_kwargs)
-            else:
-                key = get_cache_key(func, self.prefix, args, kwargs)
+            allowed_kwargs = self._filter_invalidate_kwargs(kwargs)
+
+            key = get_cache_key(func, self.prefix, (), allowed_kwargs)
 
             with self.locker.take_possession(key):
                 try:
@@ -133,56 +126,17 @@ class Cacher:
                 self.store.set(key, json.dumps(func_result))
                 self.store.expire(key, self.period)
 
-                self._save_cache_meta(func, key, invalidate_kwargs)
-
-                return func_result
+            if self.cache_invalidator is not None:
+                self.cache_invalidator.subscribe(func.__name__,
+                                                 self.period,
+                                                 key,
+                                                 allowed_kwargs)
+            return func_result
         return wrapped
-
-    @staticmethod
-    def _simple_item_to_string(key, item):
-        return f'{key}_{item}'
-
-    @classmethod
-    def _list_item_to_string(cls, key, value):
-        acc = []
-        for item in value:
-            acc.append(cls._simple_item_to_string(key, item))
-        return acc
-
-    @classmethod
-    def _kwargs_to_string_list(cls, kwargs: dict) -> List[str]:
-        """ {contest: [1, 2], group: 2} -> ['contest_1', 'contest_2', 'group_2']"""
-        acc = []
-        for key, value in kwargs.items():
-            if value is None:
-                continue
-            if isinstance(value, list):
-                acc += cls._list_item_to_string(key, value)
-            else:
-                acc.append(cls._simple_item_to_string(key, value))
-        return acc
-
-    def _save_cache_meta(self, func, key: str, invalidate_kwargs):
-
-        label = func.__name__
-        when_expire = datetime.datetime.utcnow() + datetime.timedelta(seconds=self.period)
-
-        invalidate_args_list = self._kwargs_to_string_list(invalidate_kwargs)
-        invalidate_args = CacheMeta.get_invalidate_args(invalidate_args_list)
-
-        cache_meta = CacheMeta(prefix=self.prefix,
-                               label=label,
-                               key=key,
-                               invalidate_args=invalidate_args,
-                               when_expire=when_expire)
-        db.session.add(cache_meta)
-        if self.autocommit:
-            db.session.commit()
-        return cache_meta
 
     def _filter_invalidate_kwargs(self, kwargs: dict) -> dict:
         result_set = {}
-        for arg in self.invalidate_by:
+        for arg in self.allowed_kwargs:
             val = kwargs.get(arg)
             if val is not None:
                 result_set[arg] = val
@@ -192,7 +146,7 @@ class Cacher:
         """ Invalidate all caches of func by given keys if it matches any of key
             Returns True if its possible to invalidate some caches
         """
-        if not self.can_invalidate:
+        if self.cache_invalidator is None:
             return False
 
         return self._invalidate(func, any_of=kwargs)
@@ -201,39 +155,11 @@ class Cacher:
         """ Invalidate all caches of func by given keys if it matches all of keys
             Returns True if its possible to invalidate some caches
         """
-        if not self.can_invalidate:
+        if self.cache_invalidator is None:
             return False
 
         return self._invalidate(func, all_of=kwargs)
 
     def _invalidate(self, func, all_of: dict = None, any_of: dict = None) -> bool:
-        any_of = any_of or {}
-        all_of = all_of or {}
-        all_invalidate_kwargs = self._filter_invalidate_kwargs(all_of)
-        any_invalidate_kwargs = self._filter_invalidate_kwargs(any_of)
-
-        if not all_invalidate_kwargs and not any_invalidate_kwargs:
-            return False
-
-        strings_all_from_kwargs = self._kwargs_to_string_list(all_invalidate_kwargs)
-        strings_any_from_kwargs = self._kwargs_to_string_list(any_invalidate_kwargs)
-
-        all_like_args = CacheMeta.get_search_like_args(strings_all_from_kwargs)
-        any_like_args = CacheMeta.get_search_like_args(strings_any_from_kwargs)
-
         label = func.__name__
-
-        invalid_cache_metas = db.session.query(CacheMeta) \
-            .filter(CacheMeta.prefix == self.prefix) \
-            .filter(CacheMeta.label == label) \
-            .filter(or_(CacheMeta.invalidate_args.like(a) for a in any_like_args)) \
-            .filter(and_(CacheMeta.invalidate_args.like(a) for a in all_like_args))
-
-        for meta in invalid_cache_metas:
-            self.store.delete(meta.key)
-            db.session.delete(meta)
-
-        if self.autocommit:
-            db.session.commit()
-
-        return True
+        return self.cache_invalidator.invalidate(label, all_of=all_of, any_of=any_of)
