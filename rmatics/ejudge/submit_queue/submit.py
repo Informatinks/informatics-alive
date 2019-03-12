@@ -1,3 +1,4 @@
+import functools
 from typing import Optional
 
 from flask import current_app
@@ -10,6 +11,9 @@ from rmatics.model.base import db
 from rmatics.model.run import Run
 from rmatics.utils.functions import attrs_to_dict
 from rmatics.utils.run import EjudgeStatuses
+
+
+ON_SQL_CONNECTION_EXCEPTION_RETRY_COUNT = 4
 
 
 def ejudge_error_notification(ejudge_response=None):
@@ -28,6 +32,20 @@ def ejudge_error_notification(ejudge_response=None):
     }
 
 
+def retry_on_sql_exception(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        last_exc = ValueError('ON_SQL_CONNECTION_EXCEPTION_RETRY_COUNT = 0')
+        for counter in range(ON_SQL_CONNECTION_EXCEPTION_RETRY_COUNT):
+            try:
+                return func(*args, **kwargs)
+            except sa_exc.OperationalError as e:
+                last_exc = e
+                current_app.logger.exception(f'SQL exception while calling run, try again {counter + 1} time')
+        raise last_exc
+    return wrapper
+
+
 class Submit:
     def __init__(self, id, user_id, run_id: int, ejudge_url: str):
         self.id = id
@@ -37,40 +55,35 @@ class Submit:
         self.ejudge_user = current_app.config.get('EJUDGE_USER')
         self.ejudge_password = current_app.config.get('EJUDGE_PASSWORD')
 
-    def _get_and_prepare_run(self) -> Optional[Run]:
+    @retry_on_sql_exception
+    def _get_run(self) -> Optional[Run]:
         run: Run = db.session.query(Run) \
             .options(joinedload(Run.problem)) \
             .get(self.run_id)
 
         return run
 
-    def _assign_new_status(self, run: Run):
-        run.ejudge_status = EjudgeStatuses.COMPILING.value
-        db.session.add(run)
-        db.session.commit()
-
-    def _add_info_from_ejudge(self, run, ejudge_run_id, ejudge_url):
+    @retry_on_sql_exception
+    def _add_info_from_ejudge(self, run, ejudge_run_id,
+                              ejudge_url, status: EjudgeStatuses):
+        run.ejudge_status = status.value
         run.ejudge_run_id = ejudge_run_id
         run.ejudge_url = ejudge_url
 
         db.session.add(run)
         db.session.commit()
 
+    @retry_on_sql_exception
+    def _remove_run(self, run: Run):
+        run.remove_source()
+        db.session.delete(run)
+
     def send(self, ejudge_url=None):
         current_app.logger.info(f'Trying to send run #{self.run_id} to ejudge')
 
         ejudge_url = ejudge_url or self.ejudge_url
 
-        last_exc = sa_exc.OperationalError
-        for counter in range(4):
-            try:
-                run = self._get_and_prepare_run()
-                break
-            except sa_exc.OperationalError as e:
-                last_exc = e
-                current_app.logger.exception(f'Exception while fetching run; try again {counter + 1} time')
-        else:
-            raise last_exc
+        run = self._get_run()
 
         if run is None:
             current_app.logger.error(f'Run #{self.run_id} is not found')
@@ -83,18 +96,6 @@ class Submit:
         user_id = run.user_id
 
         file = run.source
-
-        # `Run` now not inside the queue so we should change status
-        last_exc = sa_exc.OperationalError
-        for counter in range(4):
-            try:
-                self._assign_new_status(run)
-                break
-            except sa_exc.OperationalError as e:
-                last_exc = e
-                current_app.logger.exception(f'Exception while fetching run; try again {counter + 1} time')
-        else:
-            raise last_exc
 
         centrifugo_client.send_problem_run_updates(run.problem_id, run)
 
@@ -115,24 +116,17 @@ class Submit:
             return
 
         try:
-            if ejudge_response['code'] != 0:
-                raise TypeError(f'Ejudge returned bad response: {ejudge_response["code"]}')
-
+            code = ejudge_response['code']
+            if code != 0:
+                raise ValueError(f'Ejudge returned status code {code}')
             ejudge_run_id = ejudge_response['run_id']
-        except (TypeError, KeyError, ):
-            current_app.logger.exception('ejudge_proxy.submit returned bad value')
+        except (TypeError, KeyError, ValueError):
+            self._remove_run(run)
+            current_app.logger.exception(f'Ejudge returned bad response: returned bad value: {ejudge_response}')
             return
 
-        last_exc = sa_exc.OperationalError
-        for counter in range(4):
-            try:
-                self._add_info_from_ejudge(run, ejudge_run_id, ejudge_url)
-                break
-            except sa_exc.OperationalError as e:
-                last_exc = e
-                current_app.logger.exception(f'Exception while fetching run; try again {counter + 1} time')
-        else:
-            raise last_exc
+        self._add_info_from_ejudge(run, ejudge_run_id,
+                                   ejudge_url, EjudgeStatuses.COMPILING)
 
         current_app.logger.info(f'Run #{self.run_id} successfully updated')
 
