@@ -32,17 +32,21 @@ def ejudge_error_notification(ejudge_response=None):
     }
 
 
-def retry_on_sql_exception(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        last_exc = ValueError('ON_SQL_CONNECTION_EXCEPTION_RETRY_COUNT = 0')
-        for counter in range(ON_SQL_CONNECTION_EXCEPTION_RETRY_COUNT):
-            try:
-                return func(*args, **kwargs)
-            except sa_exc.OperationalError as e:
-                last_exc = e
-                current_app.logger.exception(f'SQL exception while calling run, try again {counter + 1} time')
-        raise last_exc
+def retry_on_exception(exception_class: Exception, times=3):
+    times += 1
+
+    def wrapper(func):
+        @functools.wraps(func)
+        def retryer(*args, **kwargs):
+            last_exc = ValueError('Parameter times should be positive')
+            for counter in range(times):
+                try:
+                    return func(*args, **kwargs)
+                except exception_class as e:
+                    last_exc = e
+            raise last_exc
+        return retryer
+
     return wrapper
 
 
@@ -55,7 +59,7 @@ class Submit:
         self.ejudge_user = current_app.config.get('EJUDGE_USER')
         self.ejudge_password = current_app.config.get('EJUDGE_PASSWORD')
 
-    @retry_on_sql_exception
+    @retry_on_exception(sa_exc.OperationalError, times=4)
     def _get_run(self) -> Optional[Run]:
         run: Run = db.session.query(Run) \
             .options(joinedload(Run.problem)) \
@@ -63,7 +67,7 @@ class Submit:
 
         return run
 
-    @retry_on_sql_exception
+    @retry_on_exception(sa_exc.OperationalError, times=4)
     def _add_info_from_ejudge(self, run, ejudge_run_id,
                               ejudge_url, status: EjudgeStatuses):
         run.ejudge_status = status.value
@@ -73,7 +77,7 @@ class Submit:
         db.session.add(run)
         db.session.commit()
 
-    @retry_on_sql_exception
+    @retry_on_exception(sa_exc.OperationalError, times=4)
     def _remove_run(self, run: Run):
         run.remove_source()
         db.session.delete(run)
