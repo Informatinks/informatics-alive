@@ -81,6 +81,7 @@ class Submit:
     def _remove_run(self, run: Run):
         run.remove_source()
         db.session.delete(run)
+        db.session.commit()
 
     def send(self, ejudge_url=None):
         current_app.logger.info(f'Trying to send run #{self.run_id} to ejudge')
