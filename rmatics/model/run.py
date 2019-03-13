@@ -65,7 +65,7 @@ class Run(db.Model):
         return blob
 
     def remove_source(self):
-        mongo.db.find_one_and_delete({'run_id': self.id})
+        mongo.db.source.find_one_and_delete({'run_id': self.id})
 
     @property
     def source(self) -> Optional[bytes]:
