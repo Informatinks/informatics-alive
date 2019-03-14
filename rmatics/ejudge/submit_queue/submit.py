@@ -13,9 +13,6 @@ from rmatics.utils.functions import attrs_to_dict
 from rmatics.utils.run import EjudgeStatuses
 
 
-ON_SQL_CONNECTION_EXCEPTION_RETRY_COUNT = 4
-
-
 def ejudge_error_notification(ejudge_response=None):
     code = None
     message = 'Ошибка отправки задачи'
