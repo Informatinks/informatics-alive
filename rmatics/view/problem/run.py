@@ -14,6 +14,9 @@ from rmatics.view.monitors.monitor import get_runs
 from rmatics.view.problem.serializers.run import RunSchema
 
 
+POSSIBLE_SOURCE_ENCODINGS = ['utf-8', 'cp1251', 'windows-1251', 'ascii', 'koi8-r']
+
+
 class FromEjudgeRunSchema(Schema):
     run_uuid = fields.String()
     score = fields.Integer()
@@ -78,23 +81,27 @@ class SourceApi(MethodView):
         run = run_q.filter(Run.id == run_id).one_or_none()
 
         if run is None:
-            raise NotFound('Run with current id is not found')
-
-        source = run.source or b''
-        source = source.decode('utf_8')
+            raise NotFound(f'Run with id #{run_id} is not found')
 
         language_id = run.ejudge_language_id
 
-        # TODO: Придумать что-то получше для бинарных submission-ов
+        source = run.source or b''
+        for encoding in POSSIBLE_SOURCE_ENCODINGS:
+            try:
+                source = source.decode(encoding)
+                break
+            except UnicodeDecodeError:
+                pass
+
         return jsonify({'source': source, 'language_id': language_id})
 
 
 class ProtocolApi(MethodView):
     def get(self, run_id: int):
-
+        # TODO: не проверяется ни пользователь, ни админ -> любой может посмотреть протокол посылки
         run = db.session.query(Run).get(run_id)
         if not run:
-            raise NotFound(f'run_id: {run_id} is not found')
+            raise NotFound(f'Run with id #{run_id} is not found')
 
         protocol = run.protocol
         if not protocol:

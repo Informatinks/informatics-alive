@@ -3,7 +3,7 @@ from mock import MagicMock
 from rmatics import db
 from rmatics.model import MonitorCacheMeta
 from rmatics.testutils import TestCase
-from rmatics.utils.cacher.cahce_invalidators import MonitorCacheInvalidator
+from rmatics.utils.cacher.cache_invalidators import MonitorCacheInvalidator
 
 PREFIX = 'my_cache'
 FUNC_NAME = 'my_func_name'

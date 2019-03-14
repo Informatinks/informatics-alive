@@ -1,5 +1,9 @@
+import functools
+from typing import Optional
+
 from flask import current_app
 from sqlalchemy.orm import joinedload
+from sqlalchemy import exc as sa_exc
 
 from rmatics import centrifugo_client
 from rmatics.ejudge.ejudge_proxy import submit
@@ -25,6 +29,24 @@ def ejudge_error_notification(ejudge_response=None):
     }
 
 
+def retry_on_exception(exception_class: Exception, times=3):
+    times += 1
+
+    def wrapper(func):
+        @functools.wraps(func)
+        def retryer(*args, **kwargs):
+            last_exc = ValueError('Parameter times should be positive')
+            for counter in range(times):
+                try:
+                    return func(*args, **kwargs)
+                except exception_class as e:
+                    last_exc = e
+            raise last_exc
+        return retryer
+
+    return wrapper
+
+
 class Submit:
     def __init__(self, id, user_id, run_id: int, ejudge_url: str):
         self.id = id
@@ -34,26 +56,48 @@ class Submit:
         self.ejudge_user = current_app.config.get('EJUDGE_USER')
         self.ejudge_password = current_app.config.get('EJUDGE_PASSWORD')
 
+    @retry_on_exception(sa_exc.OperationalError, times=4)
+    def _get_run(self) -> Optional[Run]:
+        run: Run = db.session.query(Run) \
+            .options(joinedload(Run.problem)) \
+            .get(self.run_id)
+
+        return run
+
+    @retry_on_exception(sa_exc.OperationalError, times=4)
+    def _add_info_from_ejudge(self, run, ejudge_run_id,
+                              ejudge_url, status: EjudgeStatuses):
+        run.ejudge_status = status.value
+        run.ejudge_run_id = ejudge_run_id
+        run.ejudge_url = ejudge_url
+
+        db.session.add(run)
+        db.session.commit()
+
+    @retry_on_exception(sa_exc.OperationalError, times=4)
+    def _remove_run(self, run: Run):
+        run.remove_source()
+        db.session.delete(run)
+        db.session.commit()
+
     def send(self, ejudge_url=None):
         current_app.logger.info(f'Trying to send run #{self.run_id} to ejudge')
 
         ejudge_url = ejudge_url or self.ejudge_url
 
-        run: Run = db.session.query(Run) \
-            .options(joinedload(Run.problem)) \
-            .get(self.run_id)
+        run = self._get_run()
+
         if run is None:
-            current_app.error(f'Can\'t find run #{self.run_id}')
+            current_app.logger.error(f'Run #{self.run_id} is not found')
             return
-        file = run.source
+
         problem = run.problem
+        db.session.expunge(problem)
+
         ejudge_language_id = run.ejudge_language_id
         user_id = run.user_id
 
-        # `Run` now not inside the queue so we should change status
-        run.ejudge_status = EjudgeStatuses.COMPILING.value
-        db.session.add(run)
-        db.session.commit()
+        file = run.source
 
         centrifugo_client.send_problem_run_updates(run.problem_id, run)
 
@@ -74,19 +118,17 @@ class Submit:
             return
 
         try:
-            if ejudge_response['code'] != 0:
-                raise TypeError(f'Ejudge returned bad response: {ejudge_response["code"]}')
-
+            code = ejudge_response['code']
+            if code != 0:
+                raise ValueError(f'Ejudge returned status code {code}')
             ejudge_run_id = ejudge_response['run_id']
-        except (TypeError, KeyError, ):
-            current_app.logger.exception('ejudge_proxy.submit returned bad value')
+        except (TypeError, KeyError, ValueError):
+            self._remove_run(run)
+            current_app.logger.exception(f'Ejudge returned bad response: returned bad value: {ejudge_response}')
             return
 
-        run.ejudge_run_id = ejudge_run_id
-        run.ejudge_url = ejudge_url
-
-        db.session.add(run)
-        db.session.commit()
+        self._add_info_from_ejudge(run, ejudge_run_id,
+                                   ejudge_url, EjudgeStatuses.COMPILING)
 
         current_app.logger.info(f'Run #{self.run_id} successfully updated')
 

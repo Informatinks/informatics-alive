@@ -1,6 +1,6 @@
 from rmatics.model.cache_meta import MonitorCacheMeta
 from rmatics.testutils import TestCase
-from rmatics.utils.cacher.cahce_invalidators import MonitorCacheInvalidator
+from rmatics.utils.cacher.cache_invalidators import MonitorCacheInvalidator
 
 
 class TestDBSearchString(TestCase):

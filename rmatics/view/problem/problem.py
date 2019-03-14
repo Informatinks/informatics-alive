@@ -126,7 +126,6 @@ get_args = {
     'group_id': fields.Integer(),
     'lang_id': fields.Integer(),
     'status_id': fields.Integer(),
-    'statement_id': fields.Integer(),
     'count': fields.Integer(default=10, missing=10),
     'page': fields.Integer(required=True),
     'from_timestamp': fields.Integer(),  # Может быть -1, тогда не фильтруем
@@ -196,7 +195,9 @@ class ProblemSubmissionsFilterApi(MethodView):
         group_id = args.get('group_id')
         lang_id = args.get('lang_id')
         status_id = args.get('status_id')
-        statement_id = args.get('statement_id')
+        # Волшебные костыли, если problem_id == 0,
+        # то statement_id - это CourseModule.id, а не Statement.id
+        statement_id = request.args.get('statement_id', type=int, default=None)
         from_timestamp = args.get('from_timestamp')
         to_timestamp = args.get('to_timestamp')
 
@@ -230,13 +231,16 @@ class ProblemSubmissionsFilterApi(MethodView):
         if to_timestamp:
             query = query.filter(Run.create_time < to_timestamp)
 
+        problem_id_filter_smt = None
         if problem_id != 0:
             problem_id_filter_smt = Run.problem_id == problem_id
-        else:
+        elif statement_id:
             # If problem_id == 0 filter by all problems from contest
             problems = get_problems_by_course_module(statement_id)
             problem_ids = [problem.id for problem in problems]
             problem_id_filter_smt = Run.problem_id.in_(problem_ids)
+        if problem_id_filter_smt is not None:
+            query = query.filter(problem_id_filter_smt)
 
         query = query.filter(problem_id_filter_smt)
 
