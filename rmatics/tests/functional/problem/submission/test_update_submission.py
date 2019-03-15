@@ -29,7 +29,7 @@ class TestAPIUpdateRun(TestCase):
     def test_put_not_found_run(self):
         run_id = 777555
         resp = self.send_request(run_id, {})
-        self.assert400(resp)
+        self.assert404(resp)
 
     def test_update_run(self):
         run_id = self.run.id
