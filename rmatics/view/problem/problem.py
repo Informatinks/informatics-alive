@@ -224,7 +224,7 @@ class ProblemSubmissionsFilterApi(MethodView):
             query = query.filter(Run.user_id == user_id)
         if lang_id and lang_id > 0:
             query = query.filter(Run.ejudge_language_id == lang_id)
-        if status_id and status_id > 0:
+        if status_id and status_id != -1:
             query = query.filter(Run.ejudge_status == status_id)
         if from_timestamp:
             query = query.filter(Run.create_time > from_timestamp)
