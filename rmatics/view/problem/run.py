@@ -9,6 +9,7 @@ from werkzeug.exceptions import NotFound, BadRequest, InternalServerError
 from rmatics import monitor_cacher
 from rmatics.model.base import db, mongo
 from rmatics.model.run import Run
+from rmatics.utils.cacher.helpers import invalidate_monitor_cache_by_run
 from rmatics.utils.response import jsonify
 from rmatics.view.monitors.monitor import get_runs
 from rmatics.view.problem.serializers.run import RunSchema
@@ -50,6 +51,8 @@ class RunAPI(MethodView):
 
         if errors:
             raise BadRequest(errors)
+
+        invalidate_monitor_cache_by_run(run)
 
         # Avoid excess DB queries
         excludes = ['user', 'problem']
@@ -136,7 +139,7 @@ class UpdateRunFromEjudgeAPI(MethodView):
 
         if mongo_protocol_id:
             # If it is we should invalidate cache
-            self._invalidate_cache_by_run(run)
+            invalidate_monitor_cache_by_run(run)
             current_app.logger.debug('Cache invalidated')
             try:
                 result = mongo.db.protocol.update_one({'_id': ObjectId(mongo_protocol_id)},
@@ -155,8 +158,4 @@ class UpdateRunFromEjudgeAPI(MethodView):
 
         return jsonify({}, 200)
 
-    @classmethod
-    def _invalidate_cache_by_run(cls, run):
-        problem_id = run.problem_id
-        user_id = run.user_id
-        monitor_cacher.invalidate_all_of(get_runs, problem_id=problem_id, user_ids=user_id)
+
