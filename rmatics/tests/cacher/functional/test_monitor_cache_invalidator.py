@@ -120,8 +120,8 @@ class TestMonitorCacheInvalidator(TestCase):
 
         func_kwargs = {
             'problem_id': 1,
-            'any_arg': None,
-            'any_other': None,
+            'any_arg': 'something',
+            'any_other': 'something else',
         }
         self.invalidator.invalidate(FUNC_NAME, all_of=func_kwargs)
         self.redis_delete_mock.assert_called_once()
