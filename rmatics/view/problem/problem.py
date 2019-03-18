@@ -125,7 +125,7 @@ get_args = {
     'user_id': fields.Integer(),
     'group_id': fields.Integer(),
     'lang_id': fields.Integer(),
-    'status_id': fields.Integer(),
+    'status_id': fields.Integer(missing=-1, default=-1),
     'count': fields.Integer(default=10, missing=10),
     'page': fields.Integer(required=True),
     'from_timestamp': fields.Integer(),  # Может быть -1, тогда не фильтруем
@@ -201,9 +201,6 @@ class ProblemSubmissionsFilterApi(MethodView):
         from_timestamp = args.get('from_timestamp')
         to_timestamp = args.get('to_timestamp')
 
-        if problem_id == 0 and statement_id is None:
-            raise BadRequest('Invalid statement_id with problem id = 0')
-
         try:
             from_timestamp = from_timestamp and from_timestamp != -1 and \
                              datetime.datetime.fromtimestamp(from_timestamp / 1_000)
@@ -224,7 +221,7 @@ class ProblemSubmissionsFilterApi(MethodView):
             query = query.filter(Run.user_id == user_id)
         if lang_id and lang_id > 0:
             query = query.filter(Run.ejudge_language_id == lang_id)
-        if status_id and status_id != -1:
+        if status_id != -1:
             query = query.filter(Run.ejudge_status == status_id)
         if from_timestamp:
             query = query.filter(Run.create_time > from_timestamp)
@@ -234,6 +231,8 @@ class ProblemSubmissionsFilterApi(MethodView):
         problem_id_filter_smt = None
         if problem_id != 0:
             problem_id_filter_smt = Run.problem_id == problem_id
+            if statement_id != 0:
+                query = query.filter(Run.statement_id == statement_id)
         elif statement_id:
             # If problem_id == 0 filter by all problems from contest
             problems = get_problems_by_course_module(statement_id)
@@ -241,7 +240,5 @@ class ProblemSubmissionsFilterApi(MethodView):
             problem_id_filter_smt = Run.problem_id.in_(problem_ids)
         if problem_id_filter_smt is not None:
             query = query.filter(problem_id_filter_smt)
-
-        query = query.filter(problem_id_filter_smt)
 
         return query

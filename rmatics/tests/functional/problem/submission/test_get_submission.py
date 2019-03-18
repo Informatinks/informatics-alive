@@ -29,9 +29,9 @@ class TestAPIProblemSubmission(TestCase):
         db.session.flush()
 
         self.run1 = Run(user_id=self.user1.id, problem_id=self.problems[1].id,
-                        ejudge_status=1, ejudge_language_id=1)
+                        ejudge_status=0, ejudge_language_id=1)
         self.run2 = Run(user_id=self.user1.id, problem_id=self.problems[2].id,
-                        ejudge_status=1, ejudge_language_id=1)
+                        ejudge_status=0, ejudge_language_id=1)
         self.run3 = Run(user_id=self.user2.id, problem_id=self.problems[1].id,
                         ejudge_status=2, ejudge_language_id=2)
         self.run4 = Run(user_id=self.user2.id, problem_id=self.problems[2].id,
@@ -112,7 +112,7 @@ class TestAPIProblemSubmission(TestCase):
         self.assertIn('name', problem)
         self.assertIsNotNone(problem['name'])
 
-    def test_filter_by_user(self):
+    def test_filter_by_user_in_problem(self):
         resp = self.send_request(self.problems[1].id, user_id=self.user1.id)
 
         self.assert200(resp)
@@ -131,6 +131,14 @@ class TestAPIProblemSubmission(TestCase):
         self.assertEqual(len(data['data']), 1)
 
     def test_filter_by_status(self):
+        resp = self.send_request(self.problems[1].id, status_id=self.run3.ejudge_status)
+
+        self.assert200(resp)
+
+        data = resp.get_json()
+        self.assertEqual(data['result'], 'success')
+        self.assertEqual(len(data['data']), 1)
+
         resp = self.send_request(self.problems[1].id, status_id=self.run1.ejudge_status)
 
         self.assert200(resp)
@@ -139,8 +147,16 @@ class TestAPIProblemSubmission(TestCase):
         self.assertEqual(data['result'], 'success')
         self.assertEqual(len(data['data']), 1)
 
+        resp = self.send_request(self.problems[1].id, status_id=-1)
+
+        self.assert200(resp)
+
+        data = resp.get_json()
+        self.assertEqual(data['result'], 'success')
+        self.assertEqual(len(data['data']), 2)
+
     def test_filter_by_statement(self):
-        resp = self.send_request(self.problems[1].id, status_id=self.run1.statement_id)
+        resp = self.send_request(self.problems[1].id, statement_id=self.run1.statement_id)
 
         self.assert200(resp)
 
@@ -188,8 +204,7 @@ class TestAPIProblemSubmission(TestCase):
         resp = self.send_request(self.problems[2].id, to_timestamp=to_time * 10000)
         self.assert400(resp)
 
-    @unittest.skip("Context was broken by NFRMTCS-115")
-    def test_filter_by_contest(self):
+    def test_filter_by_course_module(self):
         resp = self.send_request(0, statement_id=self.course_module.id)
 
         self.assert200(resp)
@@ -198,3 +213,23 @@ class TestAPIProblemSubmission(TestCase):
         self.assertEqual(data['result'], 'success')
         self.assertEqual(len(data['data']), 4)
 
+    def test_filter_by_user(self):
+        payload = {
+            'statement_id': 0,
+            'user_id': self.user1.id
+        }
+        resp = self.send_request(0, **payload)
+
+        self.assert200(resp)
+        data = resp.get_json()
+        self.assertEqual(data['result'], 'success')
+        self.assertEqual(len(data['data']), 2, 'If statement is 0 and problem is 0 then it is users filter')
+
+    def test_filter_by_zero_status(self):
+        resp = self.send_request(self.problems[1].id, status_id=self.run3.ejudge_status)
+
+        self.assert200(resp)
+
+        data = resp.get_json()
+        self.assertEqual(data['result'], 'success')
+        self.assertEqual(len(data['data']), 1)
