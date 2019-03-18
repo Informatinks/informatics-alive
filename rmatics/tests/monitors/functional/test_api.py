@@ -82,3 +82,10 @@ class TestMonitorGetApi(TestCase):
         runs_lens = map(len, runs)
 
         self.assertEqual(sum(runs_lens), 3)
+
+    def test_without_group(self):
+        resp = self.send_request(contest_id=self.contest_id)
+        self.assert200(resp)
+        data = resp.json['data']
+
+        self.assertEqual(len(data), 3)

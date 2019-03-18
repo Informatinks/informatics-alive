@@ -58,7 +58,7 @@ def get_runs(problem_id: int = None, user_ids: Iterable = None,
 
 
 get_args = {
-    'group_id': fields.Integer(required=True),
+    'group_id': fields.Integer(missing=None),
     'contest_id': fields.List(fields.Integer(), required=True),
     'time_before': fields.Integer(missing=None),
     'time_after': fields.Integer(missing=None),
@@ -74,11 +74,14 @@ class MonitorAPIView(MethodView):
         time_before = args['time_before']
         time_after = args['time_after']
 
-        users = db.session.query(SimpleUser)\
-            .join(UserGroup, UserGroup.user_id == SimpleUser.id)\
-            .filter(UserGroup.group_id == group_id)
+        if group_id is not None:
 
-        user_ids = [user.id for user in users]
+            users = db.session.query(SimpleUser)\
+                .join(UserGroup, UserGroup.user_id == SimpleUser.id)\
+                .filter(UserGroup.group_id == group_id)
+            user_ids = [user.id for user in users]
+        else:
+            user_ids = None
 
         contest_problems = {}
         for contest_id in contest_ids:

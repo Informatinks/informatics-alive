@@ -26,7 +26,9 @@ class MonitorCacheMeta(db.Model):
     @classmethod
     def get_invalidate_args(cls, data: Iterable[str]):
         """ [problem_1, problem_2] -> '|problem_1|problem_2|' """
-        return f'|{"|".join(data)}|'[:MAX_KEY_LEN + 1]
+        if data:
+            return f'|{"|".join(data)}|'[:MAX_KEY_LEN + 1]
+        return ''
 
     @classmethod
     def _get_search_arg(cls, arg: str):

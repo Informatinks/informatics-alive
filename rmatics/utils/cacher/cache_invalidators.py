@@ -34,10 +34,11 @@ class MonitorCacheInvalidator(ICacheInvalidator):
         self.remove_cache_func = remove_cache_func
 
     def subscribe(self, label: str, period: int, key: str, func_kwargs: dict, **kwargs):
+        func_kwargs = dict(func_kwargs) if func_kwargs else {}
         when_expire = datetime.datetime.utcnow() + datetime.timedelta(seconds=period)
 
+        problem_id = func_kwargs.pop('problem_id')
         invalidate_kwargs = self._filter_invalidate_kwargs(func_kwargs)
-        problem_id = func_kwargs['problem_id']
 
         invalidate_args_list = self._kwargs_to_string_list(invalidate_kwargs)
         invalidate_args = MonitorCacheMeta.get_invalidate_args(invalidate_args_list)
@@ -54,15 +55,12 @@ class MonitorCacheInvalidator(ICacheInvalidator):
         return cache_meta
 
     def invalidate(self, label: str, all_of: dict = None, any_of: dict = None) -> bool:
-        any_of = any_of or {}
-        all_of = all_of or {}
+        any_of = dict(any_of) if any_of else {}
+        all_of = dict(all_of) if all_of else {}
         # Allow problem_id arg ONLY in all_of args
-        problem_id = all_of.get('problem_id')
+        problem_id = all_of.pop('problem_id')
         all_invalidate_kwargs = self._filter_invalidate_kwargs(all_of)
         any_invalidate_kwargs = self._filter_invalidate_kwargs(any_of)
-
-        if not all_invalidate_kwargs and not any_invalidate_kwargs:
-            return False
 
         strings_all_from_kwargs = self._kwargs_to_string_list(all_invalidate_kwargs)
         strings_any_from_kwargs = self._kwargs_to_string_list(any_invalidate_kwargs)
@@ -73,11 +71,17 @@ class MonitorCacheInvalidator(ICacheInvalidator):
         invalid_cache_metas_q = db.session.query(MonitorCacheMeta) \
             .filter(MonitorCacheMeta.prefix == self.prefix) \
             .filter(MonitorCacheMeta.label == label) \
-            .filter(or_(MonitorCacheMeta.invalidate_args.like(a) for a in any_like_args)) \
-            .filter(and_(MonitorCacheMeta.invalidate_args.like(a) for a in all_like_args))
+            .filter(
+                    or_(
+                        and_(
+                            or_(MonitorCacheMeta.invalidate_args.like(a) for a in any_like_args),
+                            and_(MonitorCacheMeta.invalidate_args.like(a) for a in all_like_args)),
+                        MonitorCacheMeta.invalidate_args == ''
+                    )
+            )
 
         if problem_id is not None:
-            invalid_cache_metas_q.filter(MonitorCacheMeta.problem_id == problem_id)
+            invalid_cache_metas_q = invalid_cache_metas_q.filter(MonitorCacheMeta.problem_id == problem_id)
 
         for meta in invalid_cache_metas_q:
             self.remove_cache_func(meta.key)
