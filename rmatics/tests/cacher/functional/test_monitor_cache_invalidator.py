@@ -106,3 +106,22 @@ class TestMonitorCacheInvalidator(TestCase):
         self.assertEqual(metas_cnt, 1, 'Key Problem is different')
 
         self.redis_delete_mock.assert_not_called()
+
+    def test_cache_invalidated_with_missing_group(self):
+        func_kwargs = {
+            'problem_id': 1,
+            'any_arg': None,
+            'any_other': None,
+        }
+        self.invalidator.subscribe(FUNC_NAME, 10, FUNC_KEY, func_kwargs)
+
+        meta = db.session.query(MonitorCacheMeta).order_by(MonitorCacheMeta.id.desc()).first()
+        self.assertEqual(meta.invalidate_args, '')
+
+        func_kwargs = {
+            'problem_id': 1,
+            'any_arg': 'something',
+            'any_other': 'something else',
+        }
+        self.invalidator.invalidate(FUNC_NAME, all_of=func_kwargs)
+        self.redis_delete_mock.assert_called_once()
