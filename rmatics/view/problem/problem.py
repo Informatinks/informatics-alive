@@ -14,13 +14,15 @@ from rmatics.ejudge.submit_queue import (
 from sqlalchemy import desc
 from webargs.flaskparser import parser
 from marshmallow import fields
+
+from rmatics.model import CourseModule
 from rmatics.model.base import db
 from rmatics.model.group import UserGroup
 from rmatics.model.problem import Problem, EjudgeProblem
 from rmatics.model.run import Run
 from rmatics.model.user import SimpleUser
 from rmatics.utils.response import jsonify
-from rmatics.view import get_problems_by_course_module
+from rmatics.view import get_problems_by_statement_id
 from rmatics.view.problem.serializers.run import RunSchema
 
 from rmatics.view.problem.serializers.problem import ProblemSchema
@@ -235,7 +237,12 @@ class ProblemSubmissionsFilterApi(MethodView):
                 query = query.filter(Run.statement_id == statement_id)
         elif statement_id:
             # If problem_id == 0 filter by all problems from contest
-            problems = get_problems_by_course_module(statement_id)
+            statement_id = db.session.query(CourseModule) \
+                .filter(CourseModule.id == statement_id) \
+                .one_or_none() \
+                .instance \
+                .id
+            problems = get_problems_by_statement_id(statement_id)
             problem_ids = [problem.id for problem in problems]
             problem_id_filter_smt = Run.problem_id.in_(problem_ids)
         if problem_id_filter_smt is not None:

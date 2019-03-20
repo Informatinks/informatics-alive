@@ -4,10 +4,69 @@ from mock import MagicMock
 
 from rmatics import db
 from rmatics import monitor_cacher
-from rmatics.model import Run
+from rmatics.model import Run, Monitor, CourseModule
+from rmatics.model.monitor import MonitorStatement
 from rmatics.testutils import TestCase
-from rmatics.view import get_problems_by_course_module
-from rmatics.view.monitors.monitor import get_runs
+from rmatics.view import get_problems_by_statement_id
+from rmatics.view.monitors.monitor import get_runs, MonitorAPIView
+
+
+MONITOR_GROUP_ID = 5
+
+
+class TestLoadProblemsByCourseModule(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.create_statements()
+        self.create_ejudge_problems()
+        self.create_problems()
+        self.create_statement_problems()
+        self.create_course_module_statement()
+        self.create_course_module_monitor()
+        self.create_monitor_statements()
+
+    def create_course_module_monitor(self):
+        self.monitor = Monitor(group_id=MONITOR_GROUP_ID)
+        db.session.add(self.monitor)
+        db.session.flush()
+        self.course_module_monitor = CourseModule(instance_id=self.monitor.id,
+                                                  module=Monitor.MODULE)
+        db.session.add(self.course_module_monitor)
+        db.session.commit()
+
+    def create_monitor_statements(self):
+        self.monitor_statements = [
+            MonitorStatement(
+                statement_id=statement.id,
+                monitor_id=self.monitor.id)
+            for statement in self.statements
+        ]
+        db.session.add_all(self.monitor_statements)
+        db.session.commit()
+
+    def test_get_problems_by_statement_cm(self):
+        group_id, statement_ids = MonitorAPIView._get_contests(
+                self.course_module_statement.id
+            )
+        self.assertIsNone(group_id)
+        self.assertEqual(statement_ids, [self.statements[0].id])
+
+    def test_get_problems_by_statement(self):
+        problems = get_problems_by_statement_id(self.statements[0].id)
+
+        expected_ids = sorted(map(lambda p: p.id, self.problems))
+
+        ids = sorted(map(lambda p: p.id, problems))
+
+        self.assertEqual(ids, expected_ids)
+
+    def test_get_monitor_statements(self):
+        group_id, statement_ids = MonitorAPIView._get_contests(
+                self.course_module_monitor.id
+        )
+        expected_ids = {s.id for s in self.statements}
+        self.assertEqual(group_id, MONITOR_GROUP_ID)
+        self.assertEqual(expected_ids, set(statement_ids))
 
 
 class TestGenerateMonitor(TestCase):
@@ -25,12 +84,12 @@ class TestGenerateMonitor(TestCase):
         self.create_ejudge_problems()
         self.create_problems()
         self.create_statement_problems()
-        self.create_course_module()
+        self.create_course_module_statement()
         self.create_runs()
 
         db.session.commit()
 
-        self.contest_id = self.course_module.id
+        self.contest_id = self.course_module_statement.id
 
     def create_runs(self, creation_time=None):
         if not hasattr(self, 'runs'):
@@ -52,15 +111,6 @@ class TestGenerateMonitor(TestCase):
 
         db.session.add_all(runs)
         db.session.commit()
-
-    def test_get_ejudge_problems(self):
-        problems = get_problems_by_course_module(self.contest_id)
-
-        expected_ids = sorted(map(lambda p: p.id, self.problems))
-
-        ids = sorted(map(lambda p: p.id, problems))
-
-        self.assertEqual(ids, expected_ids)
 
     def test_get_runs(self):
         user_ids = [user.id for user in self.users]

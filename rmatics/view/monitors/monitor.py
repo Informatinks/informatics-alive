@@ -1,6 +1,6 @@
 import datetime
-from collections import namedtuple
-from typing import Iterable
+from collections import namedtuple, OrderedDict
+from typing import Iterable, Tuple, Optional
 
 from flask import request
 from marshmallow import fields
@@ -9,9 +9,10 @@ from flask.views import MethodView
 from sqlalchemy.orm import joinedload, Load
 
 from rmatics import db, monitor_cacher
-from rmatics.model import SimpleUser, Run, UserGroup
+from rmatics.model import SimpleUser, Run, UserGroup, CourseModule, Statement, Monitor
+from rmatics.model.monitor import MonitorStatement
 from rmatics.utils.response import jsonify
-from rmatics.view import get_problems_by_course_module
+from rmatics.view import get_problems_by_statement_id
 from rmatics.view.monitors.serializers.monitor import ContestMonitorSchema, RunSchema
 
 
@@ -69,13 +70,18 @@ class MonitorAPIView(MethodView):
     def get(self):
         args = parser.parse(get_args, request)
 
-        contest_ids = args['contest_id']
+        course_module_ids = args['contest_id']
         group_id = args['group_id']
         time_before = args['time_before']
         time_after = args['time_after']
 
-        if group_id is not None:
+        contest_ids = []
+        for cm_id in course_module_ids:
+            monitor_group_id, statement_ids = self._get_contests(cm_id)
+            contest_ids += statement_ids
+            group_id = group_id or monitor_group_id
 
+        if group_id:
             users = db.session.query(SimpleUser)\
                 .join(UserGroup, UserGroup.user_id == SimpleUser.id)\
                 .filter(UserGroup.group_id == group_id)
@@ -83,9 +89,9 @@ class MonitorAPIView(MethodView):
         else:
             user_ids = None
 
-        contest_problems = {}
+        contest_problems = OrderedDict()
         for contest_id in contest_ids:
-            contest_problems[contest_id] = get_problems_by_course_module(contest_id)
+            contest_problems[contest_id] = get_problems_by_statement_id(contest_id)
 
         contest_problems_runs = []
         for contest_id, problems in contest_problems.items():
@@ -106,3 +112,31 @@ class MonitorAPIView(MethodView):
         db.session.commit()
 
         return jsonify(response.data)
+
+    @classmethod
+    def _get_contests(cls, course_module_id: int) -> Tuple[Optional[int], list]:
+        """
+        Returns
+        -------
+        if cm is Monitor:
+            Monitor.group_id, [statement_id]
+        if cm was Statement:
+             None, [statement_id]
+        """
+        cm = CourseModule
+        course_module = db.session.query(cm).filter(cm.id == course_module_id).one_or_none()
+        if course_module is None:
+            return None, []
+        course_module_instance = course_module.instance
+
+        if isinstance(course_module_instance, Statement):
+            return None, [course_module_instance.id]
+
+        elif isinstance(course_module_instance, Monitor):
+            statement_ids = db.session.query(MonitorStatement.statement_id) \
+                .filter(MonitorStatement.monitor_id == course_module_instance.id) \
+                .all()
+            statement_ids = [s[0] for s in statement_ids]
+            return course_module_instance.group_id, statement_ids
+
+        return None, []
