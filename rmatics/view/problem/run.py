@@ -100,10 +100,24 @@ class SourceApi(MethodView):
 
 
 class ProtocolApi(MethodView):
+
+    get_args = {
+        'is_admin': fields.Boolean(default=False, missing=False),
+        'user_id': fields.Integer(),
+    }
+
     def get(self, run_id: int):
-        # TODO: не проверяется ни пользователь, ни админ -> любой может посмотреть протокол посылки
-        run = db.session.query(Run).get(run_id)
-        if not run:
+        args = parser.parse(self.get_args, request)
+        is_admin = args.get('is_admin')
+        user_id = args.get('user_id')
+
+        run_q = db.session.query(Run)
+        if not is_admin:
+            run_q = run_q.filter(Run.user_id == user_id)
+
+        run = run_q.filter(Run.id == run_id).one_or_none()
+
+        if run is None:
             raise NotFound(f'Run with id #{run_id} is not found')
 
         protocol = run.protocol
