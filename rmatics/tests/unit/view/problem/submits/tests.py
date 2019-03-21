@@ -351,7 +351,6 @@ class TestGetRunProtocol(TestCase):
         self.assertEqual(resp.json['data'], source)
 
     def test_student_doesnt_have_own_protocol(self):
-        self.insert_protocol_to_mongo(self.run2.id)
         data = {'is_admin': False, 'user_id': self.run1.user_id}
 
         resp = self.send_request(run_id=self.run1.id, data=data)
