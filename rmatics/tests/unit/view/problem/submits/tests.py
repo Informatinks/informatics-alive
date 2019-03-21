@@ -286,36 +286,79 @@ class TestGetRunProtocol(TestCase):
 
         source_hash = Run.generate_source_hash(blob)
 
-        self.run = Run(
+        self.run1 = Run(
             user_id=self.users[0].id,
             problem=self.ejudge_problems[0],
             problem_id=self.ejudge_problems[0].id,
             statement_id=None,
             ejudge_contest_id=self.ejudge_problems[0].ejudge_contest_id,
             ejudge_language_id=1,
-            ejudge_status=EjudgeStatuses.COMPILING.value,
+            ejudge_status=EjudgeStatuses.OK.value,
             source_hash=source_hash,
             ejudge_run_id=1
         )
-        db.session.add(self.run)
+        self.run2 = Run(
+            user_id=self.users[1].id,
+            problem=self.ejudge_problems[1],
+            problem_id=self.ejudge_problems[1].id,
+            statement_id=None,
+            ejudge_contest_id=self.ejudge_problems[1].ejudge_contest_id,
+            ejudge_language_id=1,
+            ejudge_status=EjudgeStatuses.OK.value,
+            source_hash=source_hash,
+            ejudge_run_id=2
+        )
+
+        db.session.add(self.run1)
         db.session.commit()
 
-    def send_request(self):
-        url = url_for('problem.run_protocol', run_id=self.run.id)
-        resp = self.client.get(url)
-        return resp
+    def send_request(self, run_id, data=None):
+        data = data or {}
+        url = url_for('problem.run_protocol', run_id=run_id, **data)
+        response = self.client.get(url)
+        return response
 
-    def test_run_doesnt_have_protocol(self):
-        resp = self.send_request()
-        self.assert404(resp)
-
-    def test_run_have_protocol(self):
+    def insert_protocol_to_mongo(self, run_id):
         protocol = {
-            'run_id': self.run.id,
-            'protocol_info': 'nice_protocol_info',
+            'run_id': run_id,
+            'protocol': f'nice protocol about {run_id}',
         }
         mongo.db.protocol.insert_one(protocol)
         del protocol['_id']  # insert_one add _id field into inserted document
-        resp = self.send_request()
+        return protocol
+
+    def test_super_permissions_and_protocol_exist(self):
+        source = self.insert_protocol_to_mongo(self.run1.id)
+        data = {'is_admin': True}
+
+        resp = self.send_request(run_id=self.run1.id, data=data)
         self.assert200(resp)
-        self.assertEqual(resp.json['data'], protocol)
+        self.assertEqual(resp.json['data'], source)
+
+    def test_super_permissions_and_protocol_doesnt_exist(self):
+        self.insert_protocol_to_mongo(self.run2.id)
+        data = {'is_admin': True}
+
+        resp = self.send_request(run_id=self.run1.id, data=data)
+        self.assert404(resp)
+
+    def test_student_have_own_protocol(self):
+        source = self.insert_protocol_to_mongo(self.run1.id)
+        data = {'is_admin': False, 'user_id': self.run1.user_id}
+
+        resp = self.send_request(run_id=self.run1.id, data=data)
+        self.assert200(resp)
+        self.assertEqual(resp.json['data'], source)
+
+    def test_student_doesnt_have_own_protocol(self):
+        data = {'is_admin': False, 'user_id': self.run1.user_id}
+
+        resp = self.send_request(run_id=self.run1.id, data=data)
+        self.assert404(resp)
+
+    def test_student_try_lookup_not_own_protocol(self):
+        self.insert_protocol_to_mongo(self.run2.id)
+        data = {'is_admin': False, 'user_id': self.run1.user_id}
+
+        resp = self.send_request(run_id=self.run2.id, data=data)
+        self.assert404(resp)
