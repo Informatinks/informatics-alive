@@ -4,8 +4,8 @@ from mock import MagicMock
 
 from rmatics import db
 from rmatics import monitor_cacher
-from rmatics.model import Run, Monitor, CourseModule
-from rmatics.model.monitor import MonitorStatement
+from rmatics.model import Run, MonitorCourseModule, CourseModule
+from rmatics.model.monitor import MonitorStatement, Monitor
 from rmatics.testutils import TestCase
 from rmatics.view import get_problems_by_statement_id
 from rmatics.view.monitors.monitor import get_runs, MonitorAPIView
@@ -26,11 +26,14 @@ class TestLoadProblemsByCourseModule(TestCase):
         self.create_monitor_statements()
 
     def create_course_module_monitor(self):
-        self.monitor = Monitor(group_id=MONITOR_GROUP_ID)
+        self.monitor = Monitor()
         db.session.add(self.monitor)
         db.session.flush()
+        self.monitor_cm = MonitorCourseModule(group_id=MONITOR_GROUP_ID, monitor_id=self.monitor.id)
+        db.session.add(self.monitor_cm)
+        db.session.flush()
         self.course_module_monitor = CourseModule(instance_id=self.monitor.id,
-                                                  module=Monitor.MODULE)
+                                                  module=MonitorCourseModule.MODULE)
         db.session.add(self.course_module_monitor)
         db.session.commit()
 
@@ -38,7 +41,7 @@ class TestLoadProblemsByCourseModule(TestCase):
         self.monitor_statements = [
             MonitorStatement(
                 statement_id=statement.id,
-                monitor_id=self.monitor.id)
+                monitor_id=self.monitor_cm.id)
             for statement in self.statements
         ]
         db.session.add_all(self.monitor_statements)

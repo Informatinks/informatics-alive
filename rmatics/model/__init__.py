@@ -6,7 +6,7 @@ from rmatics.model.ejudge_contest import EjudgeContest
 from rmatics.model.ejudge_run import EjudgeRun
 from rmatics.model.group import Group, UserGroup
 from rmatics.model.ideal_solution import Ideal
-from rmatics.model.monitor import Monitor
+from rmatics.model.monitor import MonitorCourseModule, Monitor
 from rmatics.model.problem import (
     EjudgeProblem,
     Problem,

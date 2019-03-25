@@ -4,8 +4,8 @@ from flask import url_for
 from mock import MagicMock
 
 from rmatics import db, monitor_cacher
-from rmatics.model import Run, UserGroup, Monitor, CourseModule
-from rmatics.model.monitor import MonitorStatement
+from rmatics.model import Run, UserGroup, MonitorCourseModule, CourseModule
+from rmatics.model.monitor import MonitorStatement, Monitor
 from rmatics.testutils import TestCase
 
 
@@ -41,11 +41,14 @@ class TestMonitorGetApi(TestCase):
         self.create_monitor_statements()
 
     def create_course_module_monitor(self):
-        self.monitor = Monitor(group_id=self.groups[0].id)
+        self.monitor = Monitor()
         db.session.add(self.monitor)
         db.session.flush()
+        self.monitor_cm = MonitorCourseModule(group_id=self.groups[0].id, monitor_id=self.monitor.id)
+        db.session.add(self.monitor_cm)
+        db.session.flush()
         self.course_module_monitor = CourseModule(instance_id=self.monitor.id,
-                                                  module=Monitor.MODULE)
+                                                  module=MonitorCourseModule.MODULE)
         db.session.add(self.course_module_monitor)
         db.session.commit()
 
@@ -53,7 +56,7 @@ class TestMonitorGetApi(TestCase):
         self.monitor_statements = [
             MonitorStatement(
                 statement_id=statement.id,
-                monitor_id=self.monitor.id)
+                monitor_id=self.monitor_cm.id)
             for statement in self.statements
         ]
         db.session.add_all(self.monitor_statements)

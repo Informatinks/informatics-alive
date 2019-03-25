@@ -9,8 +9,8 @@ from flask.views import MethodView
 from sqlalchemy.orm import joinedload, Load
 
 from rmatics import db, monitor_cacher
-from rmatics.model import SimpleUser, Run, UserGroup, CourseModule, Statement, Monitor
-from rmatics.model.monitor import MonitorStatement
+from rmatics.model import SimpleUser, Run, UserGroup, CourseModule, Statement, MonitorCourseModule
+from rmatics.model.monitor import MonitorStatement, Monitor
 from rmatics.utils.response import jsonify
 from rmatics.view import get_problems_by_statement_id
 from rmatics.view.monitors.serializers.monitor import ContestMonitorSchema, RunSchema
@@ -132,9 +132,12 @@ class MonitorAPIView(MethodView):
         if isinstance(course_module_instance, Statement):
             return None, [course_module_instance.id]
 
-        elif isinstance(course_module_instance, Monitor):
+        elif isinstance(course_module_instance, MonitorCourseModule):
             statement_ids = db.session.query(MonitorStatement.statement_id) \
-                .filter(MonitorStatement.monitor_id == course_module_instance.id) \
+                .join(Monitor, Monitor.id == MonitorStatement.monitor_id) \
+                .join(MonitorCourseModule, MonitorCourseModule.monitor_id == Monitor.id) \
+                .filter(MonitorCourseModule.id == course_module_instance.id) \
+                .order_by(MonitorStatement.sort) \
                 .all()
             statement_ids = [s[0] for s in statement_ids]
             return course_module_instance.group_id, statement_ids
