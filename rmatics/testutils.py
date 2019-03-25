@@ -117,10 +117,10 @@ class TestCase(flask_testing.TestCase):
         db.session.add_all(self.statement_problems)
         db.session.flush(self.statement_problems)
 
-    def create_course_module(self):
-        self.course_module = CourseModule(instance_id=self.statements[0].id,
-                                          module=Statement.MODULE)
-        db.session.add(self.course_module)
+    def create_course_module_statement(self):
+        self.course_module_statement = CourseModule(instance_id=self.statements[0].id,
+                                                    module=Statement.MODULE)
+        db.session.add(self.course_module_statement)
         db.session.flush()
 
     def create_users(self):

@@ -4,7 +4,8 @@ from flask import url_for
 from mock import MagicMock
 
 from rmatics import db, monitor_cacher
-from rmatics.model import Run, UserGroup
+from rmatics.model import Run, UserGroup, MonitorCourseModule, CourseModule
+from rmatics.model.monitor import MonitorStatement, Monitor
 from rmatics.testutils import TestCase
 
 
@@ -29,12 +30,37 @@ class TestMonitorGetApi(TestCase):
         self.create_ejudge_problems()
         self.create_problems()
         self.create_statement_problems()
-        self.create_course_module()
+        self.create_course_module_statement()
         self.create_runs()
 
         db.session.commit()
 
-        self.contest_id = self.course_module.id
+        self.course_module_statement_id = self.course_module_statement.id
+
+        self.create_course_module_monitor()
+        self.create_monitor_statements()
+
+    def create_course_module_monitor(self):
+        self.monitor = Monitor()
+        db.session.add(self.monitor)
+        db.session.flush()
+        self.monitor_cm = MonitorCourseModule(group_id=self.groups[0].id, monitor_id=self.monitor.id)
+        db.session.add(self.monitor_cm)
+        db.session.flush()
+        self.course_module_monitor = CourseModule(instance_id=self.monitor.id,
+                                                  module=MonitorCourseModule.MODULE)
+        db.session.add(self.course_module_monitor)
+        db.session.commit()
+
+    def create_monitor_statements(self):
+        self.monitor_statements = [
+            MonitorStatement(
+                statement_id=statement.id,
+                monitor_id=self.monitor_cm.id)
+            for statement in self.statements
+        ]
+        db.session.add_all(self.monitor_statements)
+        db.session.commit()
 
     def create_runs(self):
         self.runs = [
@@ -57,9 +83,9 @@ class TestMonitorGetApi(TestCase):
         time_after = datetime.datetime.utcnow() - datetime.timedelta(days=1)
         time_before = datetime.datetime.utcnow() + datetime.timedelta(days=1)
 
-        resp = self.send_request(contest_id=self.contest_id, group_id=self.groups[0].id,
+        resp = self.send_request(contest_id=self.course_module_statement_id, group_id=self.groups[0].id,
                                  time_after=int(time_after.timestamp()),
-                                 time_before=int(time_before.timestamp()),)
+                                 time_before=int(time_before.timestamp()), )
         self.assert200(resp)
 
         self.assertEqual(self.mock_cacher_get.call_count, 3)
@@ -84,8 +110,17 @@ class TestMonitorGetApi(TestCase):
         self.assertEqual(sum(runs_lens), 3)
 
     def test_without_group(self):
-        resp = self.send_request(contest_id=self.contest_id)
+        resp = self.send_request(contest_id=self.course_module_statement_id)
         self.assert200(resp)
         data = resp.json['data']
 
         self.assertEqual(len(data), 3)
+
+    def test_with_course_module_monitor(self):
+        resp = self.send_request(contest_id=self.course_module_monitor.id)
+        self.assert200(resp)
+        data = resp.json['data']
+        runs = map(lambda d: d['runs'], data)
+        runs_lens = map(len, runs)
+        self.assertEqual(sum(runs_lens), 3)
+
