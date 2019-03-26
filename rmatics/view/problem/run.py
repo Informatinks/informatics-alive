@@ -6,12 +6,12 @@ from pymongo.errors import PyMongoError, DuplicateKeyError
 from webargs.flaskparser import parser
 from werkzeug.exceptions import NotFound, BadRequest, InternalServerError
 
-from rmatics import monitor_cacher
+from rmatics.ejudge.submit_queue import queue_submit
 from rmatics.model.base import db, mongo
+from rmatics.model.rejudge import Rejudge
 from rmatics.model.run import Run
 from rmatics.utils.cacher.helpers import invalidate_monitor_cache_by_run
 from rmatics.utils.response import jsonify
-from rmatics.view.monitors.monitor import get_runs
 from rmatics.view.problem.serializers.run import RunSchema
 
 
@@ -63,6 +63,25 @@ class RunAPI(MethodView):
         db.session.commit()
 
         return jsonify(data)
+
+    def post(self, run_id: int):
+        """ View for rejudge run"""
+        run = db.session.query(Run).get(run_id)
+        if run is None:
+            raise NotFound(f'Run with id #{run_id} is not found')
+
+        rejudge = Rejudge(run_id=run.id,
+                          ejudge_contest_id=run.ejudge_contest_id,
+                          ejudge_url=run.ejudge_url)
+        db.session.add(rejudge)
+        db.session.flush([rejudge])
+
+        run.move_protocol_to_rejudge_collection(rejudge.id)
+
+        _ = queue_submit(run.id, run.user_id, run.ejudge_url)
+        db.session.commit()
+
+        return jsonify({})
 
 
 class SourceApi(MethodView):
@@ -157,5 +176,3 @@ class UpdateRunFromEjudgeAPI(MethodView):
         db.session.commit()
 
         return jsonify({}, 200)
-
-

@@ -25,3 +25,6 @@ problem_blueprint.add_url_rule('/run/<int:run_id>/protocol', methods=('GET', ),
 
 problem_blueprint.add_url_rule('/run/action/update_from_ejudge', methods=('POST', ),
                                view_func=UpdateRunFromEjudgeAPI.as_view('update_from_ejudge'))
+
+problem_blueprint.add_url_rule('/run/<int:run_id>/action/rejudge', methods=('POST', ),
+                               view_func=RunAPI.as_view('rejudge_run'))

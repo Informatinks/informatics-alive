@@ -67,6 +67,14 @@ class Run(db.Model):
     def remove_source(self):
         mongo.db.source.find_one_and_delete({'run_id': self.id})
 
+    def move_protocol_to_rejudge_collection(self, rejudge_id: int):
+        protocol = mongo.db.protocol.find_one({'run_id': self.id})
+        if protocol:
+            del protocol['_id']
+            protocol['rejudge_id'] = rejudge_id
+            mongo.db.rejudge.insert_one(protocol)
+            mongo.db.protocol.find_one_and_delete({'run_id': self.id})
+
     @property
     def source(self) -> Optional[bytes]:
         data = mongo.db.source.find_one({'run_id': self.id})
