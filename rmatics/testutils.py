@@ -23,7 +23,7 @@ class TestCase(flask_testing.TestCase):
     }
 
     def create_app(self):
-        app = create_app(config=self.CONFIG)
+        app = create_app(config='rmatics.config.TestConfig')
         return app
 
     def setUp(self):
@@ -88,8 +88,8 @@ class TestCase(flask_testing.TestCase):
     def create_problems(self):
         self.problems = [
             Problem(name='Problem1', pr_id=self.ejudge_problems[0].id),
-            Problem(name='Problem2',  pr_id=self.ejudge_problems[1].id),
-            Problem(name='Problem3',  pr_id=self.ejudge_problems[2].id),
+            Problem(name='Problem2', pr_id=self.ejudge_problems[1].id),
+            Problem(name='Problem3', pr_id=self.ejudge_problems[2].id),
         ]
         db.session.add_all(self.problems)
         db.session.flush(self.problems)
@@ -158,4 +158,3 @@ if __name__ == '__main__':
 
     result = unittest.TextTestRunner(verbosity=2).run(tests).wasSuccessful()
     sys.exit(not result)
-

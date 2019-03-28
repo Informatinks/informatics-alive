@@ -3,19 +3,18 @@ from logging.config import dictConfig
 from flask import Flask
 from werkzeug.exceptions import HTTPException
 
+from rmatics import cli
 from rmatics.model.base import db
 from rmatics.model.base import mongo
 from rmatics.model.base import redis
 from rmatics.plugins import monitor_cacher, invalidator
-from rmatics.view import handle_api_exception
 from rmatics.utils.centrifugo import centrifugo_client
+from rmatics.view import handle_api_exception
 from rmatics.view.monitors.route import monitor_blueprint
 from rmatics.view.problem.route import problem_blueprint
-from rmatics import cli
 
 
 def create_app(config=None):
-
     dictConfig({
         'version': 1,
         'formatters': {'default': {
@@ -33,12 +32,9 @@ def create_app(config=None):
     })
 
     app = Flask(__name__)
-
-    app.config.from_pyfile('settings.cfg', silent=True)
-    app.config.from_envvar('RMATICS_SETTINGS', silent=True)
-    if config:
-        app.config.update(config)
+    app.config.from_object(config)
     app.url_map.strict_slashes = False
+    app.logger.info(f'Running with {config} module')
 
     db.init_app(app)
     mongo.init_app(app)
@@ -48,6 +44,7 @@ def create_app(config=None):
     monitor_cacher.init_app(app, redis, period=monitor_caching_time, autocommit=False)
 
     invalidator.init_app(remove_cache_func=redis.delete)
+
     # Centrifugo
     cent_url = app.config.get('CENTRIFUGO_URL')
     cent_api_key = app.config.get('CENTRIFUGO_API_KEY')
