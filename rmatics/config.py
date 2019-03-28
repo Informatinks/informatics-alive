@@ -26,7 +26,6 @@ class BaseConfig:
     URL_ENCODER_ALPHABET = os.getenv('URL_ENCODER_ALPHABET', 'abcdefg')
 
     MONGO_URI = os.getenv('MONGO_URI', 'mongodb://user:pass@localhost/test')
-    MONGO_CONNECT = bool_(os.getenv('MONGO_CONNECT', False))
 
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI',
                                         'mysql+pymysql://root:@localhost:3306/')
