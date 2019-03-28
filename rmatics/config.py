@@ -9,7 +9,7 @@ def bool_(v: str = None) -> bool:
     """
     if type(v) is bool:
         return v
-    if v is None or type(v) is not str:
+    if isinstance(v, str) is False:
         return False
     return v.lower() in ('yes', 'true', 't', '1')
 
