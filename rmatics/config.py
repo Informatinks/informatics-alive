@@ -1,5 +1,27 @@
 import os
 
+# avialable cofig modules
+DEV_CONFIG_MODULE = 'rmatics.config.DevConfig'
+TEST_CONFIG_MODULE = 'rmatics.config.TestConfig'
+PROD_CONFIG_MODULE = 'rmatics.config.ProdConfig'
+
+# env-config mapping
+CONFIG_ENV_MODULES = {
+    'development': DEV_CONFIG_MODULE,
+    'testing': TEST_CONFIG_MODULE,
+    'production': PROD_CONFIG_MODULE,
+}
+
+
+def get_config_from_env() -> str:
+    """Determine appropriate config class based on provided env var
+
+    :return: path to config module
+    """
+    ENV = os.getenv('FLASK_ENV', 'development')
+    # failback to dev, if `FLASK_ENV` has invalid value
+    return CONFIG_ENV_MODULES.get(ENV, DEV_CONFIG_MODULE)
+
 
 def bool_(v: str = None) -> bool:
     """Cast bool string representation into actual Bool type
@@ -57,3 +79,6 @@ class TestConfig(BaseConfig):
 
 class ProdConfig(BaseConfig):
     SQLALCHEMY_ECHO = False
+
+
+CONFIG_MODULE = get_config_from_env()

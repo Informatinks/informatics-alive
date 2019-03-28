@@ -1,5 +1,6 @@
 import click
 from gevent import monkey
+
 monkey.patch_all()
 
 from gevent.pool import Group
@@ -9,12 +10,13 @@ from rmatics.ejudge.submit_queue.queue import SubmitQueue
 from rmatics.ejudge.submit_queue.worker import SubmitWorker
 
 from rmatics import create_app
+from rmatics.config import CONFIG_MODULE
 
 
 @application.cli.command()
 @click.option('--workers', default=2)
 def main(workers):
-    create_app()
+    create_app(config=CONFIG_MODULE)
     queue = SubmitQueue()
     worker_group = Group()
     for _ in range(workers):
