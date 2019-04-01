@@ -94,13 +94,13 @@ class TrustedSubmitApi(MethodView):
         )
 
         db.session.add(run)
-        db.session.commit()
-        db.session.refresh(run)
+        db.session.flush()
 
         run.update_source(text)
 
         ejudge_url = current_app.config['EJUDGE_NEW_CLIENT_URL']
         submit = queue_submit(run.id, user_id, ejudge_url)
+        db.session.commit()
 
         return jsonify({
             'last_get_id': get_last_get_id(),
@@ -215,12 +215,17 @@ class ProblemSubmissionsFilterApi(MethodView):
             .join(SimpleUser, SimpleUser.id == Run.user_id) \
             .join(Problem, Problem.id == Run.problem_id) \
             .order_by(desc(Run.id))
-
-        if group_id:
-            query = query.join(UserGroup, UserGroup.user_id == SimpleUser.id) \
-                .filter(UserGroup.group_id == group_id)
         if user_id:
             query = query.filter(Run.user_id == user_id)
+
+        if group_id:
+            user_subquery = db.session.query(SimpleUser.id.label('user_ids')) \
+                .join(UserGroup, UserGroup.user_id == SimpleUser.id) \
+                .filter(UserGroup.group_id == group_id) \
+                .subquery('user_subquery')
+
+            query = query.filter(SimpleUser.id == user_subquery.c.user_ids)
+
         if lang_id and lang_id > 0:
             query = query.filter(Run.ejudge_language_id == lang_id)
         if status_id != -1:
