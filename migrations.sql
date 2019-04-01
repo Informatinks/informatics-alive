@@ -94,3 +94,12 @@ CREATE TABLE monitor_cache_meta (
   created TIMESTAMP,
   when_expire TIMESTAMP
 );
+
+
+USE pynformatics;
+CREATE TABLE rejudge (
+  id SERIAL PRIMARY KEY,
+  run_id  INTEGER,
+  ejudge_contest_id INTEGER,
+  ejudge_url VARCHAR(50) NOT NULL
+)
