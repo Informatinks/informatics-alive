@@ -5,6 +5,7 @@ from flask import (
     request,
 )
 from flask import jsonify as flask_jsonify
+from sqlalchemy.orm import Load
 from werkzeug.exceptions import BadRequest, NotFound
 from flask.views import MethodView
 from rmatics.ejudge.submit_queue import (
@@ -164,6 +165,8 @@ class ProblemSubmissionsFilterApi(MethodView):
 
         args = parser.parse(get_args, request)
         query = self._build_query_by_args(args, problem_id)
+        query = query.options(Load(Problem).load_only('id', 'name'),
+                              Load(SimpleUser).load_only('id', 'firstname', 'lastname'))
 
         per_page_count = args.get('count')
         page = args.get('page')
