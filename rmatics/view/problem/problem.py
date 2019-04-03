@@ -98,14 +98,14 @@ class TrustedSubmitApi(MethodView):
         db.session.flush()
 
         run.update_source(text)
+        run_id = run.id
 
         ejudge_url = current_app.config['EJUDGE_NEW_CLIENT_URL']
-        submit = queue_submit(run.id, user_id, ejudge_url)
+        _ = queue_submit(run.id, user_id, ejudge_url)
         db.session.commit()
 
         return jsonify({
-            'last_get_id': get_last_get_id(),
-            'submit': submit.serialize()
+            'run_id': run_id
         })
 
 
