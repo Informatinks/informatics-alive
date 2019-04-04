@@ -241,7 +241,7 @@ class ProblemSubmissionsFilterApi(MethodView):
         problem_id_filter_smt = None
         if problem_id != 0:
             problem_id_filter_smt = Run.problem_id == problem_id
-            if statement_id != 0:
+            if statement_id:
                 query = query.filter(Run.statement_id == statement_id)
         elif statement_id:
             # If problem_id == 0 filter by all problems from contest
