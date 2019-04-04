@@ -74,6 +74,7 @@ class RunAPI(MethodView):
         # And we shouldn't really rejudge the solution
         if run.ejudge_url is None:
             run.ejudge_url = current_app.config['EJUDGE_NEW_CLIENT_URL']
+            db.session.add(run)
         else:
             rejudge = Rejudge(run_id=run.id,
                               ejudge_contest_id=run.ejudge_contest_id,
