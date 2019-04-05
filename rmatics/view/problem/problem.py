@@ -98,14 +98,14 @@ class TrustedSubmitApi(MethodView):
         db.session.flush()
 
         run.update_source(text)
+        run_id = run.id
 
         ejudge_url = current_app.config['EJUDGE_NEW_CLIENT_URL']
-        submit = queue_submit(run.id, user_id, ejudge_url)
+        queue_submit(run_id, user_id, ejudge_url)
         db.session.commit()
 
         return jsonify({
-            'last_get_id': get_last_get_id(),
-            'submit': submit.serialize()
+            'run_id': run_id
         })
 
 
@@ -241,7 +241,7 @@ class ProblemSubmissionsFilterApi(MethodView):
         problem_id_filter_smt = None
         if problem_id != 0:
             problem_id_filter_smt = Run.problem_id == problem_id
-            if statement_id != 0:
+            if statement_id:
                 query = query.filter(Run.statement_id == statement_id)
         elif statement_id:
             # If problem_id == 0 filter by all problems from contest

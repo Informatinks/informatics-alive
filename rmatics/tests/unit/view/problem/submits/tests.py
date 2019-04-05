@@ -55,7 +55,6 @@ class TestTrustedProblemSubmit(TestCase):
     @patch('rmatics.view.problem.problem.queue_submit')
     def test_simple(self, mock_submit, mock_update):
         submit = MagicMock()
-        submit.serialize.return_value = {'hhh': 'mmm'}
         mock_submit.return_value = submit
 
         file = BytesIO(b'skdjvndfkjnvfk')
@@ -65,7 +64,6 @@ class TestTrustedProblemSubmit(TestCase):
         resp = self.send_request(self.ejudge_problems[0].id, **data)
 
         self.assert200(resp)
-        submit.serialize.assert_called_once()
         mock_update.assert_called_once()
 
     @patch('rmatics.view.problem.problem.Run.update_source')

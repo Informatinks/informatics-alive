@@ -70,15 +70,21 @@ class RunAPI(MethodView):
         if run is None:
             raise NotFound(f'Run with id #{run_id} is not found')
 
-        rejudge = Rejudge(run_id=run.id,
-                          ejudge_contest_id=run.ejudge_contest_id,
-                          ejudge_url=run.ejudge_url)
-        db.session.add(rejudge)
-        db.session.flush([rejudge])
+        # If ejudge_url is None submission failed by error inside workers
+        # And we shouldn't really rejudge the solution
+        if run.ejudge_url is None:
+            run.ejudge_url = current_app.config['EJUDGE_NEW_CLIENT_URL']
+            db.session.add(run)
+        else:
+            rejudge = Rejudge(run_id=run.id,
+                              ejudge_contest_id=run.ejudge_contest_id,
+                              ejudge_url=run.ejudge_url)
+            db.session.add(rejudge)
+            db.session.flush([rejudge])
 
-        run.move_protocol_to_rejudge_collection(rejudge.id)
+            run.move_protocol_to_rejudge_collection(rejudge.id)
 
-        _ = queue_submit(run.id, run.user_id, run.ejudge_url)
+        queue_submit(run.id, run.user_id, run.ejudge_url)
         db.session.commit()
 
         return jsonify({})

@@ -1,7 +1,6 @@
 import mock
 from flask import url_for
 from mock import patch, MagicMock
-from werkzeug.exceptions import NotFound
 
 from rmatics import db, mongo
 from rmatics.model import Run
@@ -53,11 +52,6 @@ class TestRejudgeAPI(TestCase):
         self.create_problems()
         self.create_users()
 
-        self.run = Run(user_id=self.users[0].id, problem_id=self.problems[1].id,
-                       ejudge_status=1, ejudge_language_id=1, ejudge_contest_id=1)
-        db.session.add(self.run)
-        db.session.commit()
-
     def send_request(self, run_id):
         url = url_for('problem.rejudge_run', run_id=run_id)
         resp = self.client.post(url)
@@ -65,19 +59,25 @@ class TestRejudgeAPI(TestCase):
 
     @mock.patch('rmatics.view.problem.run.queue_submit')
     def test_simple(self, queue_submit_mock):
-        protocol = {'my_protocol': 'data', 'run_id': self.run.id}
+        run = Run(user_id=self.users[0].id, problem_id=self.problems[1].id,
+                  ejudge_status=1, ejudge_language_id=1, ejudge_contest_id=1,
+                  ejudge_url='ej_url')
+        db.session.add(run)
+        db.session.commit()
+
+        protocol = {'my_protocol': 'data', 'run_id': run.id}
         mongo.db.protocol.insert_one(protocol)
         del protocol['_id']
 
-        resp = self.send_request(self.run.id)
+        resp = self.send_request(run.id)
 
         self.assert200(resp)
 
         queue_submit_mock.assert_called_once()
 
         rejudge = db.session.query(Rejudge) \
-            .filter(Rejudge.run_id == self.run.id) \
-            .filter(Rejudge.ejudge_contest_id == self.run.ejudge_contest_id) \
+            .filter(Rejudge.run_id == run.id) \
+            .filter(Rejudge.ejudge_contest_id == run.ejudge_contest_id) \
             .one()
 
         old_protocol = mongo.db.rejudge.find_one({'rejudge_id': rejudge.id})
@@ -85,3 +85,28 @@ class TestRejudgeAPI(TestCase):
         del old_protocol['_id']
         del old_protocol['rejudge_id']
         self.assertEqual(old_protocol, protocol)
+
+    @mock.patch('rmatics.view.problem.run.queue_submit')
+    def test_rejudge_failed_run(self, queue_submit_mock):
+        run = Run(user_id=self.users[0].id, problem_id=self.problems[1].id,
+                  ejudge_status=1, ejudge_language_id=1, ejudge_contest_id=1,
+                  ejudge_url=None)
+        db.session.add(run)
+        db.session.commit()
+
+        protocol = {'my_protocol': 'data', 'run_id': run.id}
+        mongo.db.protocol.insert_one(protocol)
+        del protocol['_id']
+
+        resp = self.send_request(run.id)
+
+        self.assert200(resp)
+
+        queue_submit_mock.assert_called_once()
+
+        rejudge = db.session.query(Rejudge) \
+            .filter(Rejudge.run_id == run.id) \
+            .filter(Rejudge.ejudge_contest_id == run.ejudge_contest_id) \
+            .one_or_none()
+
+        self.assertIsNone(rejudge)
