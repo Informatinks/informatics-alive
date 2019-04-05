@@ -62,14 +62,14 @@ class TestRejudgeAPI(TestCase):
         run = Run(user_id=self.users[0].id, problem_id=self.problems[1].id,
                   ejudge_status=1, ejudge_language_id=1, ejudge_contest_id=1,
                   ejudge_url='ej_url')
-        db.session.add(self.run)
+        db.session.add(run)
         db.session.commit()
 
         protocol = {'my_protocol': 'data', 'run_id': run.id}
         mongo.db.protocol.insert_one(protocol)
         del protocol['_id']
 
-        resp = self.send_request(self.run.id)
+        resp = self.send_request(run.id)
 
         self.assert200(resp)
 
@@ -91,7 +91,7 @@ class TestRejudgeAPI(TestCase):
         run = Run(user_id=self.users[0].id, problem_id=self.problems[1].id,
                   ejudge_status=1, ejudge_language_id=1, ejudge_contest_id=1,
                   ejudge_url=None)
-        db.session.add(self.run)
+        db.session.add(run)
         db.session.commit()
 
         protocol = {'my_protocol': 'data', 'run_id': run.id}
