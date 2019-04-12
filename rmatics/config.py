@@ -48,13 +48,16 @@ class BaseConfig:
     URL_ENCODER_ALPHABET = os.getenv('URL_ENCODER_ALPHABET', 'abcdefg')
 
     MONGO_URI = os.getenv('MONGO_URI', 'mongodb://user:pass@localhost/test')
+    MONGO_SERVER_SELECTION_TIMEOUT_MS = 1000
+    MONGO_SOCKET_TIMEOUT_MS = 1000
+    MONGO_CONNECT_TIMEOUT_MS = 1000
 
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI',
                                         'mysql+pymysql://root:@localhost:3306/')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ECHO = True
+    SQLALCHEMY_ECHO = False
     SQLALCHEMY_POOL_SIZE = 10
-    SQLALCHEMY_POOL_RECYCLE = 3600
+    SQLALCHEMY_POOL_RECYCLE = 90
 
     REDIS_URL = os.getenv('REDIS_URL', 'redis://@localhost:6379/0')
 
@@ -74,7 +77,7 @@ class DevConfig(BaseConfig):
 class TestConfig(BaseConfig):
     DEBUG = True
     TESTING = True
-    SQLALCHEMY_ECHO = False
+    SQLALCHEMY_ECHO = True
 
 
 class ProdConfig(BaseConfig):
