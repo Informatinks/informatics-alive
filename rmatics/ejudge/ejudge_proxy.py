@@ -26,7 +26,7 @@ def report_error(code, login_data, submit_data, file, filename, user_id, addon =
     log.close()
 
 
-def submit(run_file, contest_id, prob_id, lang_id, login, password, filename, url, user_id):
+def submit(run_file, contest_id, prob_id, lang_id, login, password, filename, url):
     login_data = {
         'contest_id' : contest_id,
         'role' : '0',
@@ -41,7 +41,6 @@ def submit(run_file, contest_id, prob_id, lang_id, login, password, filename, ur
     if (res):
         SID = res.group(1)
     else:
-        report_error(None, login_data, c.text, run_file, filename, user_id)
         return {
             'code': None,
             'message': DEFAULT_ERROR_STR
@@ -81,55 +80,8 @@ def submit(run_file, contest_id, prob_id, lang_id, login, password, filename, ur
             'message': STATUS_REPR[-code]
         }
     else:
-        report_error(code, login_data, submit_data, run_file, filename, user_id, c.text)
         return {
             'code': None,
             'message': DEFAULT_ERROR_STR + " (" + str(code) + ")",
         }
-
-
-def rejudge(contest_id, run_id, status_id, login, password, url):
-    login_data = {
-        'contest_id' : contest_id,
-        'role' : '6',
-        'login' : login,
-        'password' : password,
-        'locale_id' : '1',
-    }
-
-    c = requests.post(url, data = login_data, allow_redirects = True)
-
-#    return c.text
-
-    res = re.search("SID='([^']*)';", c.text)
-
-    if (res):
-        SID = res.group(1)
-    else:
-        return "login error " + c.text
-
-    cookies = c.cookies
-
-    submit_data = {
-        'SID' : SID,
-        'run_id' : run_id,
-        'status' : status_id,
-        'action_68' : 'action_68'
-    }
-
-    c = requests.post(url, data = submit_data, cookies = cookies, allow_redirects=True)
-
-    if "method=\"post\"" in c.text:
-        return "ok"
-
-    ret_code = re.search('code\'\s\:\s(\d*)', c.text)
-
-    if (ret_code):
-        code = int(ret_code.group(1))
-        if code in STATUS_REPR:
-            return STATUS_REPR[code]
-        else:
-            return "error" + str(code)
-    else:
-        return "change error"
 

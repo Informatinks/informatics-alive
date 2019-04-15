@@ -36,20 +36,14 @@ class SubmitQueue(RedisQueue):
     def notify_queue_status(self):
         pass
 
-    def submit(self, run_id, user_id, ejudge_url):
+    def submit(self, run_id, ejudge_url):
         def _submit(pipe):
             submit = Submit(
                 id=pipe.incr(last_put_id_key(self.key)),
-                user_id=user_id,
                 run_id=run_id,
                 ejudge_url=ejudge_url
             )
             self.put(submit.encode(), pipe=pipe)
-            # pipe.hset(
-            #     user_submits_key(self.key, user_id),
-            #     submit.id,
-            #     pickle.dumps(submit.encode())
-            # )
             return submit
         submit = redis.transaction(
             _submit,
