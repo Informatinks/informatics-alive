@@ -1,6 +1,6 @@
-import os
-import gzip
 import codecs
+import gzip
+import os
 from enum import Enum
 
 contest_path = '/home/judges_var/'
@@ -32,6 +32,7 @@ class EjudgeStatuses(Enum):
     SKIPPED = 18
     RUNNING = 96
     COMPILING = 98
+    RMATICS_SUBMIT_ERROR = 520
 
 
 def read_file_unknown_encoding(file_name, size=255):
@@ -74,8 +75,9 @@ def lazy(func):
     used a lot, but also often never used, as it gives us speed in both
     situations.
     """
+
     def cached(self, *args):
-        name = "_"+func.__name__
+        name = "_" + func.__name__
         try:
             return getattr(self, name)
         except AttributeError as e:
@@ -84,6 +86,7 @@ def lazy(func):
         value = func(self, *args)
         setattr(self, name, value)
         return value
+
     return cached
 
 
@@ -204,3 +207,17 @@ def to32(num):
         return str(num)
     else:
         return chr(ord('A') + num - 10)
+
+
+def generate_protocol(ejudge_run_id: int, ejudge_respone: str) -> dict:
+    """Generate protocol for invalid submission, which can be insterted to mongo and served to client
+
+    :return: Protocol for invalid submition
+    """
+    return {
+        "tests": {},
+        "compiler_output": ejudge_respone,
+        "audit": None,
+        "run_id": ejudge_run_id,
+        # "audit": "Date: 2007/09/15 23:40:43\nFrom: ejudge (uid 1)\nIp: 85.140.147.48\nCommand: submit\nStatus: ok\nRun-id: 0\n\nDate: 2007/09/15 23:41:07\nFrom: SYSTEM\nStatus: Judging complete\n  Profiling information:\n  Request start time:                2007/09/15 23:40:43.892147\n  Request completion time:           2007/09/15 23:41:07.928785\n  Total testing duration:            24.037\n  Waiting in compile queue duration: 0.372\n  Compilation duration:              0.207\n  Waiting in serve queue duration:   0.458\n  Waiting in run queue duration:     20.076\n  Testing duration:                  1.961\n  Post-processing duration:          0.000\n  Waiting in serve queue duration:   0.962\n\n",
+    }

@@ -3,7 +3,7 @@ import unittest
 import sys
 
 from rmatics import create_app
-from rmatics.model import CourseModule
+from rmatics.model import CourseModule, Run
 from rmatics.model.base import db, mongo, redis
 from rmatics.model.group import (
     Group,
@@ -143,6 +143,17 @@ class TestCase(flask_testing.TestCase):
         ]
         db.session.add_all(self.users)
         db.session.flush(self.users)
+
+    def create_runs(self):
+        self.runs = [
+            Run(problem_id=self.ejudge_problems[0].id,
+                user_id=self.users[0].id),
+            Run(problem_id=self.ejudge_problems[0].id,
+                user_id=self.users[1].id),
+            Run(problem_id=self.ejudge_problems[0].id,
+                user_id=self.users[2].id),
+        ]
+        db.session.add_all(self.runs)
 
 
 if __name__ == '__main__':
