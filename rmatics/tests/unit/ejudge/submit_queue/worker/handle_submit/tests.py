@@ -66,8 +66,8 @@ class TestEjudge__submit_queue_submit_worker_handle_submit(TestCase):
             assert run.ejudge_status == EjudgeStatuses.RMATICS_SUBMIT_ERROR.value
 
     @mock.patch('rmatics.ejudge.submit_queue.submit.db.session.expunge')
-    def test_invalid_submit_preserves_mongo_protocol(self, session_expunge):
-        with mock.patch('rmatics.ejudge.submit_queue.submit.submit') as submit_method:
+    @mock.patch('rmatics.ejudge.submit_queue.submit.submit')
+    def test_invalid_submit_preserves_mongo_protocol(self, submit_method, session_expunge):
             submit_method.return_value = EJUDGE_RESPONSE
             run = self.runs[0]
 

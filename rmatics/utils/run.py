@@ -114,16 +114,16 @@ def get_protocol_from_file(filename):
 
 def get_string_status(s):
     return {
-        "OK" : "OK",
-        "WA" : "Неправильный ответ",
-        "ML" : "Превышение лимита памяти",
-        "SE" : "Security error",
-        "CF" : "Ошибка проверки,<br/>обратитесь к администраторам",
-        "PE" : "Неправильный формат вывода",
-        "RT" : "Ошибка во время выполнения программы",
-        "TL" : "Превышено максимальное время работы",
-        "WT" : "Превышено максимальное общее время работы",
-        "SK" : "Пропущено"
+        "OK": "OK",
+        "WA": "Неправильный ответ",
+        "ML": "Превышение лимита памяти",
+        "SE": "Security error",
+        "CF": "Ошибка проверки,<br/>обратитесь к администраторам",
+        "PE": "Неправильный формат вывода",
+        "RT": "Ошибка во время выполнения программы",
+        "TL": "Превышено максимальное время работы",
+        "WT": "Превышено максимальное общее время работы",
+        "SK": "Пропущено"
     }[s]
 
 
@@ -207,17 +207,3 @@ def to32(num):
         return str(num)
     else:
         return chr(ord('A') + num - 10)
-
-
-def generate_protocol(ejudge_run_id: int, ejudge_respone: str) -> dict:
-    """Generate protocol for invalid submission, which can be insterted to mongo and served to client
-
-    :return: Protocol for invalid submition
-    """
-    return {
-        "tests": {},
-        "compiler_output": ejudge_respone,
-        "audit": None,
-        "run_id": ejudge_run_id,
-        # "audit": "Date: 2007/09/15 23:40:43\nFrom: ejudge (uid 1)\nIp: 85.140.147.48\nCommand: submit\nStatus: ok\nRun-id: 0\n\nDate: 2007/09/15 23:41:07\nFrom: SYSTEM\nStatus: Judging complete\n  Profiling information:\n  Request start time:                2007/09/15 23:40:43.892147\n  Request completion time:           2007/09/15 23:41:07.928785\n  Total testing duration:            24.037\n  Waiting in compile queue duration: 0.372\n  Compilation duration:              0.207\n  Waiting in serve queue duration:   0.458\n  Waiting in run queue duration:     20.076\n  Testing duration:                  1.961\n  Post-processing duration:          0.000\n  Waiting in serve queue duration:   0.962\n\n",
-    }
