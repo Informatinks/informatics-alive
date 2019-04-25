@@ -84,7 +84,7 @@ class RunAPI(MethodView):
 
             run.move_protocol_to_rejudge_collection(rejudge.id)
 
-        queue_submit(run.id, run.user_id, run.ejudge_url)
+        queue_submit(run.id, run.ejudge_url)
         db.session.commit()
 
         return jsonify({})

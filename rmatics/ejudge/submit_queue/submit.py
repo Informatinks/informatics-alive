@@ -48,9 +48,8 @@ def retry_on_exception(exception_class: Exception, times=3):
 
 
 class Submit:
-    def __init__(self, id, user_id, run_id: int, ejudge_url: str):
+    def __init__(self, id, run_id: int, ejudge_url: str):
         self.id = id
-        self.user_id = user_id
         self.run_id = run_id
         self.ejudge_url = ejudge_url
         self.ejudge_user = current_app.config.get('EJUDGE_USER')
@@ -95,7 +94,6 @@ class Submit:
         db.session.expunge(problem)
 
         ejudge_language_id = run.ejudge_language_id
-        user_id = run.user_id
 
         file = run.source
 
@@ -111,7 +109,6 @@ class Submit:
                 password=self.ejudge_password,
                 filename='common_filename',
                 url=ejudge_url,
-                user_id=user_id
             )
         except Exception:
             current_app.logger.exception('Unknown Ejudge submit error')
@@ -137,7 +134,6 @@ class Submit:
             'id': self.id,
             'run_id': self.run_id,
             'ejudge_url': self.ejudge_url,
-            'user_id': self.user_id,
         }
 
     @staticmethod
@@ -145,8 +141,7 @@ class Submit:
         return Submit(
             id=encoded['id'],
             run_id=encoded['run_id'],
-            ejudge_url=encoded['ejudge_url'],
-            user_id=encoded['user_id'],
+            ejudge_url=encoded['ejudge_url']
         )
 
     def serialize(self, attributes=None):
