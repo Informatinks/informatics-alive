@@ -45,44 +45,44 @@ class TestEjudge__submit_queue_submit_worker_handle_submit(TestCase):
         self.submit_mock.send.assert_called_once()
 
     @mock.patch('rmatics.ejudge.submit_queue.submit.db.session.expunge')
-    def test_invalid_submit_sets_error_status(self, session_expunge):
-        with mock.patch('rmatics.ejudge.submit_queue.submit.submit') as submit_method:
-            submit_method.return_value = EJUDGE_RESPONSE
-            run = self.runs[0]
+    @mock.patch('rmatics.ejudge.submit_queue.submit.submit')
+    def test_invalid_submit_sets_error_status(self, submit_method, session_expunge):
+        submit_method.return_value = EJUDGE_RESPONSE
+        run = self.runs[0]
 
-            # load associated problems into session
-            db.session.add(run)
-            db.session.commit()
+        # load associated problems into session
+        db.session.add(run)
+        db.session.commit()
 
-            submit = Submit(id=None, user_id=USER_ID, run_id=run.id, ejudge_url=EJUDGE_URL)
-            submit._get_run = mock.MagicMock()
-            submit._get_run.return_value = run
+        submit = Submit(id=None, user_id=USER_ID, run_id=run.id, ejudge_url=EJUDGE_URL)
+        submit._get_run = mock.MagicMock()
+        submit._get_run.return_value = run
 
-            submit.send()
+        submit.send()
 
-            submit_method.assert_called_once()
+        submit_method.assert_called_once()
 
-            db.session.refresh(run)
-            assert run.ejudge_status == EjudgeStatuses.RMATICS_SUBMIT_ERROR.value
+        db.session.refresh(run)
+        assert run.ejudge_status == EjudgeStatuses.RMATICS_SUBMIT_ERROR.value
 
     @mock.patch('rmatics.ejudge.submit_queue.submit.db.session.expunge')
-    def test_invalid_submit_preserves_mongo_protocol(self, session_expunge):
-        with mock.patch('rmatics.ejudge.submit_queue.submit.submit') as submit_method:
-            submit_method.return_value = EJUDGE_RESPONSE
-            run = self.runs[0]
+    @mock.patch('rmatics.ejudge.submit_queue.submit.submit')
+    def test_invalid_submit_preserves_mongo_protocol(self, submit_method, session_expunge):
+        submit_method.return_value = EJUDGE_RESPONSE
+        run = self.runs[0]
 
-            # load associated problems into session
-            db.session.add(run)
-            db.session.commit()
+        # load associated problems into session
+        db.session.add(run)
+        db.session.commit()
 
-            submit = Submit(id=None, user_id=USER_ID, run_id=run.id, ejudge_url=EJUDGE_URL)
-            submit._get_run = mock.MagicMock()
-            submit._get_run.return_value = run
+        submit = Submit(id=None, user_id=USER_ID, run_id=run.id, ejudge_url=EJUDGE_URL)
+        submit._get_run = mock.MagicMock()
+        submit._get_run.return_value = run
 
-            submit.send()
+        submit.send()
 
-            submit_method.assert_called_once()
+        submit_method.assert_called_once()
 
-            db.session.refresh(run)
-            assert run.protocol['run_id'] == run.id
-            assert run.protocol['compiler_output'] == EJUDGE_RESPONSE_MESSAGE
+        db.session.refresh(run)
+        assert run.protocol['run_id'] == run.id
+        assert run.protocol['compiler_output'] == EJUDGE_RESPONSE_MESSAGE
