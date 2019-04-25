@@ -1,6 +1,6 @@
-import os
-import gzip
 import codecs
+import gzip
+import os
 from enum import Enum
 
 contest_path = '/home/judges_var/'
@@ -32,6 +32,7 @@ class EjudgeStatuses(Enum):
     SKIPPED = 18
     RUNNING = 96
     COMPILING = 98
+    RMATICS_SUBMIT_ERROR = 520
 
 
 def read_file_unknown_encoding(file_name, size=255):
@@ -74,8 +75,9 @@ def lazy(func):
     used a lot, but also often never used, as it gives us speed in both
     situations.
     """
+
     def cached(self, *args):
-        name = "_"+func.__name__
+        name = "_" + func.__name__
         try:
             return getattr(self, name)
         except AttributeError as e:
@@ -84,6 +86,7 @@ def lazy(func):
         value = func(self, *args)
         setattr(self, name, value)
         return value
+
     return cached
 
 
@@ -111,16 +114,16 @@ def get_protocol_from_file(filename):
 
 def get_string_status(s):
     return {
-        "OK" : "OK",
-        "WA" : "Неправильный ответ",
-        "ML" : "Превышение лимита памяти",
-        "SE" : "Security error",
-        "CF" : "Ошибка проверки,<br/>обратитесь к администраторам",
-        "PE" : "Неправильный формат вывода",
-        "RT" : "Ошибка во время выполнения программы",
-        "TL" : "Превышено максимальное время работы",
-        "WT" : "Превышено максимальное общее время работы",
-        "SK" : "Пропущено"
+        "OK": "OK",
+        "WA": "Неправильный ответ",
+        "ML": "Превышение лимита памяти",
+        "SE": "Security error",
+        "CF": "Ошибка проверки,<br/>обратитесь к администраторам",
+        "PE": "Неправильный формат вывода",
+        "RT": "Ошибка во время выполнения программы",
+        "TL": "Превышено максимальное время работы",
+        "WT": "Превышено максимальное общее время работы",
+        "SK": "Пропущено"
     }[s]
 
 

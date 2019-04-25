@@ -2,8 +2,8 @@ import functools
 from typing import Optional
 
 from flask import current_app
-from sqlalchemy.orm import joinedload
 from sqlalchemy import exc as sa_exc
+from sqlalchemy.orm import joinedload
 
 from rmatics import centrifugo_client
 from rmatics.ejudge.ejudge_proxy import submit
@@ -11,22 +11,6 @@ from rmatics.model.base import db
 from rmatics.model.run import Run
 from rmatics.utils.functions import attrs_to_dict
 from rmatics.utils.run import EjudgeStatuses
-
-
-def ejudge_error_notification(ejudge_response=None):
-    code = None
-    message = 'Ошибка отправки задачи'
-    try:
-        code = ejudge_response['code']
-        message = ejudge_response['message']
-    except Exception:
-        pass
-    return {
-        'ejudge_error': {
-            'code': code,
-            'message': message,
-        }
-    }
 
 
 def retry_on_exception(exception_class: Exception, times=3):
@@ -42,6 +26,7 @@ def retry_on_exception(exception_class: Exception, times=3):
                 except exception_class as e:
                     last_exc = e
             raise last_exc
+
         return retryer
 
     return wrapper
@@ -78,6 +63,18 @@ class Submit:
         run.remove_source()
         db.session.delete(run)
         db.session.commit()
+
+    def build_submit_error_protocol(self, ejudge_respone: str) -> dict:
+        """Generate protocol for invalid submission, which can be inserted to mongo and served to client
+
+        :return: Protocol for invalid submition
+        """
+        return {
+            'tests': {},
+            'compiler_output': ejudge_respone,
+            'audit': None,
+            'run_id': self.run_id
+        }
 
     def send(self, ejudge_url=None):
         current_app.logger.info(f'Trying to send run #{self.run_id} to ejudge')
@@ -118,16 +115,17 @@ class Submit:
             code = ejudge_response['code']
             if code != 0:
                 raise ValueError(f'Ejudge returned status code {code}')
-            ejudge_run_id = ejudge_response['run_id']
+            ejudge_run_id = ejudge_response.get('run_id')
+            current_app.logger.info(f'Run #{self.run_id} successfully updated')
         except (TypeError, KeyError, ValueError):
-            self._remove_run(run)
-            current_app.logger.exception(f'Ejudge returned bad response: returned bad value: {ejudge_response}')
-            return
+            # If Ejudge can't process submit, set generic error code for run
+            self._add_info_from_ejudge(run, None, ejudge_url, EjudgeStatuses.RMATICS_SUBMIT_ERROR)
 
-        self._add_info_from_ejudge(run, ejudge_run_id,
-                                   ejudge_url, EjudgeStatuses.COMPILING)
+            # Proxy actual ejudge output to generic template protocol for client
+            ejudge_compiler_output = ejudge_response.get('message', 'Ошибка отправки посылки')
+            run.protocol = self.build_submit_error_protocol(ejudge_compiler_output)
 
-        current_app.logger.info(f'Run #{self.run_id} successfully updated')
+            current_app.logger.error(f'Ejudge retunred error for submit #{self.run_id}')
 
     def encode(self):
         return {

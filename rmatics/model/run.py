@@ -9,7 +9,6 @@ from rmatics.model.base import db, mongo
 from rmatics.utils.decorators import deprecated
 from rmatics.utils.functions import attrs_to_dict
 
-
 EJUDGE_COLUMNS = [
     'run_id',
     'contest_id',
@@ -87,6 +86,10 @@ class Run(db.Model):
     @property
     def protocol(self) -> Optional[dict]:
         return mongo.db.protocol.find_one({'run_id': self.id}, {'_id': False})
+
+    @protocol.setter
+    def protocol(self, protocol_source: dict):
+        mongo.db.protocol.update({'run_id': self.id}, protocol_source, upsert=True)
 
     @staticmethod
     def generate_source_hash(blob: bytes) -> str:
