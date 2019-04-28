@@ -13,10 +13,11 @@ from rmatics.model import SimpleUser, Run, UserGroup, CourseModule, Statement, M
 from rmatics.model.monitor import MonitorStatement, Monitor
 from rmatics.utils.response import jsonify
 from rmatics.view import get_problems_by_statement_id
-from rmatics.view.monitors.serializers.monitor import ContestMonitorSchema, RunSchema
+from rmatics.view.monitors.serializers.monitor import ContestBasedMonitorSchema, \
+    RunSchema, ProblemBasedMonitorSchema
 
-
-MonitorData = namedtuple('MonitorData', ('contest_id', 'problem', 'runs'))
+ContestBasedMonitorData = namedtuple('ContestBasedMonitorData', ('contest_id', 'problem', 'runs'))
+ProblemBasedMonitorData = namedtuple('ProblemBasedMonitorData', ('problem_id', 'runs'))
 
 
 @monitor_cacher
@@ -58,7 +59,7 @@ def get_runs(problem_id: int = None, user_ids: Iterable = None,
     return data.data
 
 
-get_args = {
+contest_based_get_args = {
     'group_id': fields.Integer(missing=None),
     'contest_id': fields.List(fields.Integer(), required=True),
     'time_before': fields.Integer(missing=None),
@@ -66,9 +67,9 @@ get_args = {
 }
 
 
-class MonitorAPIView(MethodView):
+class ContestBasedMonitorAPIView(MethodView):
     def get(self):
-        args = parser.parse(get_args, request)
+        args = parser.parse(contest_based_get_args, request)
 
         course_module_ids = args['contest_id']
         group_id = args['group_id']
@@ -100,12 +101,11 @@ class MonitorAPIView(MethodView):
                                 user_ids=user_ids,
                                 time_before=time_before,
                                 time_after=time_after)
-                monitor_data = MonitorData(contest_id, problem, runs)
+                monitor_data = ContestBasedMonitorData(contest_id, problem, runs)
                 contest_problems_runs.append(monitor_data)
 
-        schema = ContestMonitorSchema(many=True)
+        schema = ContestBasedMonitorSchema(many=True)
 
-        # TODO: Подумать, как лучше вернуть
         response = schema.dump(contest_problems_runs)
 
         # We have to commit session because we may created cache_meta
@@ -143,3 +143,39 @@ class MonitorAPIView(MethodView):
             return course_module_instance.group_id, statement_ids
 
         return None, []
+
+
+problem_based_get_args = {
+    'user_id': fields.List(fields.Integer(), missing=None),
+    'problem_id': fields.List(fields.Integer(), required=True),
+    'time_before': fields.Integer(missing=None),
+    'time_after': fields.Integer(missing=None),
+}
+
+
+class ProblemBasedMonitorAPIView(MethodView):
+    """ This view if for splitting Monitors and moodle db
+        We would like avoid Contests and MonitorStatements and Groups here
+    """
+    def get(self):
+        args = parser.parse(problem_based_get_args, request)
+        user_ids = args['user_id']
+        problem_ids = args['problem_id']
+        time_before = args['time_before']
+        time_after = args['time_after']
+
+        problem_runs = []
+        for problem_id in problem_ids:
+            runs = get_runs(problem_id=problem_id,
+                            user_ids=user_ids,
+                            time_before=time_before,
+                            time_after=time_after)
+            problem_runs.append(ProblemBasedMonitorData(problem_id, runs))
+
+        schema = ProblemBasedMonitorSchema(many=True)
+        problem_runs = schema.dump(problem_runs)
+
+        # We have to commit session because we may created cache_meta
+        db.session.commit()
+
+        return jsonify(problem_runs.data)

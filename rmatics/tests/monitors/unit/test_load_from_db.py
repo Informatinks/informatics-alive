@@ -8,7 +8,7 @@ from rmatics.model import Run, MonitorCourseModule, CourseModule
 from rmatics.model.monitor import MonitorStatement, Monitor
 from rmatics.testutils import TestCase
 from rmatics.view import get_problems_by_statement_id
-from rmatics.view.monitors.monitor import get_runs, MonitorAPIView
+from rmatics.view.monitors.monitor import get_runs, ContestBasedMonitorAPIView
 
 
 MONITOR_GROUP_ID = 5
@@ -48,7 +48,7 @@ class TestLoadProblemsByCourseModule(TestCase):
         db.session.commit()
 
     def test_get_problems_by_statement_cm(self):
-        group_id, statement_ids = MonitorAPIView._get_contests(
+        group_id, statement_ids = ContestBasedMonitorAPIView._get_contests(
                 self.course_module_statement.id
             )
         self.assertIsNone(group_id)
@@ -64,7 +64,7 @@ class TestLoadProblemsByCourseModule(TestCase):
         self.assertEqual(ids, expected_ids)
 
     def test_get_monitor_statements(self):
-        group_id, statement_ids = MonitorAPIView._get_contests(
+        group_id, statement_ids = ContestBasedMonitorAPIView._get_contests(
                 self.course_module_monitor.id
         )
         expected_ids = {s.id for s in self.statements}
