@@ -33,9 +33,6 @@ class SubmitQueue(RedisQueue):
     def get_last_get_id(self):
         return int(redis.get(last_get_id_key(self.key)) or '0')
 
-    def notify_queue_status(self):
-        pass
-
     def submit(self, run_id, ejudge_url):
         def _submit(pipe):
             submit = Submit(
@@ -69,18 +66,4 @@ class SubmitQueue(RedisQueue):
             value_from_callable=True,
         )
 
-        redis.hdel(user_submits_key(self.key, submit.user_id), submit.id)
-        self.notify_queue_status()
         return submit
-
-    def peek_all_submits(self):
-        return [
-            Submit.decode(pickle.loads(encoded))
-            for encoded in redis.lrange(self.key, 0, -1)
-        ]
-
-    def peek_user_submits(self, user_id):
-        return [
-            Submit.decode(pickle.loads(encoded))
-            for encoded in redis.hgetall(user_submits_key(self.key, user_id)).values()
-        ]
