@@ -4,17 +4,19 @@ from typing import Iterable, Tuple, Optional
 
 from flask import request
 from marshmallow import fields
+from sqlalchemy import select
 from webargs.flaskparser import parser
 from flask.views import MethodView
-from sqlalchemy.orm import joinedload, Load
 
 from rmatics import db, monitor_cacher
-from rmatics.model import SimpleUser, Run, UserGroup, CourseModule, Statement, MonitorCourseModule
+from rmatics.model import SimpleUser, UserGroup, CourseModule, Statement, MonitorCourseModule
 from rmatics.model.monitor import MonitorStatement, Monitor
+from rmatics.model.run import LightWeightRun
+from rmatics.model.user import LightWeightUser
 from rmatics.utils.response import jsonify
 from rmatics.view import get_problems_by_statement_id
 from rmatics.view.monitors.serializers.monitor import ContestBasedMonitorSchema, \
-    RunSchema, ProblemBasedMonitorSchema
+    ProblemBasedMonitorSchema
 
 ContestBasedMonitorData = namedtuple('ContestBasedMonitorData', ('contest_id', 'problem', 'runs'))
 ProblemBasedMonitorData = namedtuple('ProblemBasedMonitorData', ('problem_id', 'runs'))
@@ -23,40 +25,46 @@ ProblemBasedMonitorData = namedtuple('ProblemBasedMonitorData', ('problem_id', '
 @monitor_cacher
 def get_runs(problem_id: int = None, user_ids: Iterable = None,
              time_after: int = None, time_before: int = None):
-    """"""
-    query = db.session.query(Run) \
-        .join(SimpleUser, SimpleUser.id == Run.user_id)
+    """ We are using SQLAlchemy Сore to speedup multiply object fetching and serializing """
+
+    query = select([LightWeightRun, LightWeightUser]) \
+        .select_from(LightWeightRun.join(LightWeightUser, LightWeightRun.c.user_id == LightWeightUser.c.id))
 
     if problem_id is not None:
-        query = query.filter(Run.problem_id == problem_id)
+        query = query.where(LightWeightRun.c.problem_id == problem_id)
 
     if user_ids is not None:
-        query = query.filter(SimpleUser.id.in_(user_ids))
+        query = query.where(LightWeightRun.c.user_id.in_(user_ids))
 
     if time_after is not None:
         time_after = datetime.datetime.fromtimestamp(time_after)
-        query = query.filter(Run.create_time > time_after)
+        query = query.where(LightWeightRun.c.create_time > time_after)
     if time_before is not None:
         time_before = datetime.datetime.fromtimestamp(time_before)
-        query = query.filter(Run.create_time < time_before)
+        query = query.where(LightWeightRun.c.create_time < time_before)
 
-    load_only_fields = [
-        'id',
-        'user_id',
-        'create_time',
-        'ejudge_score',
-        'ejudge_status',
-        'ejudge_test_num'
-    ]
+    query = query.order_by(LightWeightRun.c.id)
 
-    runs = query.order_by(Run.id) \
-                .options(joinedload(Run.user)
-                         .load_only('id', 'firstname', 'lastname')) \
-                .options(Load(Run).load_only(*load_only_fields))
+    conn = db.engine.connect()
+    result = conn.execute(query)
 
-    schema = RunSchema(many=True)
-    data = schema.dump(runs.all())
-    return data.data
+    data = [
+        {
+            'id': run[0],
+            'user': {
+                'id': run[7],
+                'firstname': run[8],
+                'lastname': run[9]
+            },
+            'problem_id': run[2],
+            'create_time': run[3].astimezone().strftime('%Y-%m-%dT%H:%M:%S%z'),
+            'ejudge_score': run[4],
+            'ejudge_status': run[5],
+            'ejudge_test_num': run[6],
+        }
+        for run in result]
+
+    return data
 
 
 contest_based_get_args = {
