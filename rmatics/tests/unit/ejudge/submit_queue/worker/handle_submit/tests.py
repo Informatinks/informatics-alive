@@ -54,7 +54,7 @@ class TestEjudge__submit_queue_submit_worker_handle_submit(TestCase):
         db.session.add(run)
         db.session.commit()
 
-        submit = Submit(id=None, user_id=USER_ID, run_id=run.id, ejudge_url=EJUDGE_URL)
+        submit = Submit(id=None, run_id=run.id, ejudge_url=EJUDGE_URL)
         submit._get_run = mock.MagicMock()
         submit._get_run.return_value = run
 
@@ -75,7 +75,7 @@ class TestEjudge__submit_queue_submit_worker_handle_submit(TestCase):
         db.session.add(run)
         db.session.commit()
 
-        submit = Submit(id=None, user_id=USER_ID, run_id=run.id, ejudge_url=EJUDGE_URL)
+        submit = Submit(id=None, run_id=run.id, ejudge_url=EJUDGE_URL)
         submit._get_run = mock.MagicMock()
         submit._get_run.return_value = run
 

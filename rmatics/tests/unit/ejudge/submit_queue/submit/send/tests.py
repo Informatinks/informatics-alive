@@ -19,8 +19,7 @@ from rmatics.testutils import TestCase
 
 if 'rmatics.ejudge.submit_queue.submit' in sys.modules:
     del sys.modules['rmatics.ejudge.submit_queue.submit']
-with mock.patch('rmatics.ejudge.ejudge_proxy.submit') as ejudge_submit_mock, \
-        mock.patch('rmatics.websocket.notify_user') as notify_user_mock:
+with mock.patch('rmatics.ejudge.ejudge_proxy.submit') as ejudge_submit_mock:
     from rmatics.ejudge.submit_queue.submit import Submit
 
 
@@ -29,7 +28,6 @@ class TestEjudge__submit_queue_submit_send(TestCase):
         super(TestEjudge__submit_queue_submit_send, self).setUp()
 
         ejudge_submit_mock.reset_mock()
-        notify_user_mock.reset_mock()
 
         self.create_users()
         self.create_ejudge_problems()
@@ -69,7 +67,6 @@ class TestEjudge__submit_queue_submit_send(TestCase):
 
         submit = Submit(
             id=1,
-            user_id=self.users[0].id,
             run_id=run.id,
             ejudge_url='ejudge_url',
         )
@@ -92,7 +89,6 @@ class TestEjudge__submit_queue_submit_send(TestCase):
             password=current_app.config['EJUDGE_PASSWORD'],
             filename='common_filename',
             url='ejudge_url',
-            user_id=1,
         )
 
         run = db.session.query(Run).one()
@@ -100,31 +96,6 @@ class TestEjudge__submit_queue_submit_send(TestCase):
         assert_that(run.ejudge_contest_id, equal_to(self.ejudge_problems[0].ejudge_contest_id))
         assert_that(run.user.id, equal_to(self.users[0].id))
         assert_that(run.problem.id, equal_to(self.ejudge_problems[0].id))
-
-        notify_user_mock.assert_called_once_with(
-            1,
-            'SUBMIT_SUCCESS',
-            {
-               'run': {
-                    'id': 1,
-                    'create_time': '2018-03-30 16:59:00',
-                    'ejudge_run_id': 12,
-                    'ejudge_contest_id': 1,
-                    'language_id': 27,
-                    'problem_id': 1,
-                    'statement_id': 1,
-                    'score': None,
-                    'status': 98,
-                    'user': {
-                        'id': 1,
-                        'firstname': 'Maxim',
-                        'lastname': 'Grishkin',
-                        'ejudge_id': 179,
-                    },
-                },
-                'submit_id': 1,
-            }
-        )
 
     def test_handles_submit_exception(self):
         # В случае, если функция submit бросила исключение
@@ -148,7 +119,6 @@ class TestEjudge__submit_queue_submit_send(TestCase):
 
         submit = Submit(
             id=1,
-            user_id=self.users[0].id,
             run_id=run.id,
             ejudge_url='ejudge_url',
         )
@@ -159,16 +129,6 @@ class TestEjudge__submit_queue_submit_send(TestCase):
             is_not(raises(anything())),
         )
 
-        notify_user_mock.assert_called_once_with(
-            self.users[0].id,
-            'SUBMIT_ERROR',
-            {
-                'ejudge_error': {
-                    'code': None,
-                    'message': 'Ошибка отправки задачи'
-                }
-            }
-        )
 
         ejudge_submit_mock.side_effect = None
 
@@ -195,7 +155,6 @@ class TestEjudge__submit_queue_submit_send(TestCase):
 
         submit = Submit(
             id=1,
-            user_id=self.users[0].id,
             run_id=run.id,
             ejudge_url='ejudge_url',
         )
@@ -208,17 +167,6 @@ class TestEjudge__submit_queue_submit_send(TestCase):
         assert_that(
             calling(submit.send),
             is_not(raises(anything())),
-        )
-
-        notify_user_mock.assert_called_once_with(
-            self.users[0].id,
-            'SUBMIT_ERROR',
-            {
-                'ejudge_error': {
-                    'code': 123,
-                    'message': 'some message'
-                }
-            }
         )
 
         ejudge_submit_mock.side_effect = None

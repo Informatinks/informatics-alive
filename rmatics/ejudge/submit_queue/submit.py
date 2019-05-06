@@ -116,6 +116,7 @@ class Submit:
             if code != 0:
                 raise ValueError(f'Ejudge returned status code {code}')
             ejudge_run_id = ejudge_response.get('run_id')
+            self._add_info_from_ejudge(run, ejudge_run_id, ejudge_url, EjudgeStatuses(run.status))
             current_app.logger.info(f'Run #{self.run_id} successfully updated')
         except (TypeError, KeyError, ValueError):
             # If Ejudge can't process submit, set generic error code for run

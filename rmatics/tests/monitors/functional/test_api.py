@@ -1,5 +1,6 @@
 import datetime
 
+import mock
 from flask import url_for
 from mock import MagicMock
 
@@ -9,7 +10,7 @@ from rmatics.model.monitor import MonitorStatement, Monitor
 from rmatics.testutils import TestCase
 
 
-class TestMonitorGetApi(TestCase):
+class TestContestBasedMonitorGetApi(TestCase):
     def setUp(self):
         super().setUp()
 
@@ -124,3 +125,45 @@ class TestMonitorGetApi(TestCase):
         runs_lens = map(len, runs)
         self.assertEqual(sum(runs_lens), 3)
 
+
+class TestProblemBasedMonitorGetApi(TestCase):
+    def setUp(self):
+        super().setUp()
+
+    def send_request(self, **data):
+        url = url_for('monitor.problem_monitor', **data)
+        resp = self.client.get(url)
+        return resp
+
+    def test_simple(self):
+        runs_data = {'abc': 'def'}
+        problem_ids = [1, 2, 3]
+        user_ids = [4, 5, 6]
+        time_before = 12345
+        time_after = 7890
+        data = {
+            'user_id': user_ids,
+            'problem_id': problem_ids,
+            'time_before': time_before,
+            'time_after': time_after,
+        }
+        with mock.patch('rmatics.view.monitors.monitor.get_runs') as mock_get_runs:
+            mock_get_runs.return_value = runs_data
+            resp = self.send_request(**data)
+
+        for problem_id in problem_ids:
+            mock_get_runs.assert_any_call(problem_id=problem_id,
+                                          user_ids=user_ids,
+                                          time_before=time_before,
+                                          time_after=time_after)
+        self.assert200(resp)
+        response = resp.json.get('data')
+
+        expected_runs_data = [
+            {
+                'problem_id': i,
+                'runs': [runs_data]
+            }
+            for i in problem_ids]
+
+        self.assertEqual(response, expected_runs_data)

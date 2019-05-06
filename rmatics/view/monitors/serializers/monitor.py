@@ -18,7 +18,12 @@ class RunSchema(Schema):
     ejudge_test_num = fields.Integer(dump_only=True)
 
 
-class ContestMonitorSchema(Schema):
+class ContestBasedMonitorSchema(Schema):
     contest_id = fields.Integer(dump_only=True)
     problem = fields.Nested(ProblemSchema, dump_only=True)
+    runs = fields.List(fields.Dict(), dump_only=True)
+
+
+class ProblemBasedMonitorSchema(Schema):
+    problem_id = fields.Integer(dump_only=True)
     runs = fields.List(fields.Dict(), dump_only=True)
