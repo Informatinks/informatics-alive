@@ -1,11 +1,12 @@
 from typing import Callable
-from sqlalchemy import and_, or_
+
+from sqlalchemy import and_, or_, MetaData, Table
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import Query
+
 from rmatics.model.base import db
 from rmatics.model.statement import StatementUser
 from rmatics.utils.functions import (
-    attrs_to_dict,
     hash_password,
     random_password,
 )
@@ -113,3 +114,13 @@ class PynformaticsUser(User):
     
     id = db.Column(db.Integer, db.ForeignKey('moodle.mdl_user.id'), primary_key=True)
     main_page_settings = db.Column(db.Text)
+
+
+# SQLAlchemy Core table to avoiding class instance creation
+LightWeightUser = Table(
+    'mdl_user', MetaData(),
+    db.Column('id', db.Integer, primary_key=True),
+    db.Column('firstname', db.Unicode(100)),
+    db.Column('lastname', db.Unicode(100)),
+    schema='moodle'
+)

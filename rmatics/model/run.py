@@ -4,6 +4,7 @@ import logging
 from typing import Optional
 
 from flask import g
+from sqlalchemy import MetaData, Table
 
 from rmatics.model.base import db, mongo
 from rmatics.utils.decorators import deprecated
@@ -148,3 +149,17 @@ class Run(db.Model):
             serialized['user'] = self.user.serialize()
 
         return serialized
+
+
+# SQLAlchemy Core table to avoiding class instance creation
+LightWeightRun = Table(
+    'runs', MetaData(),
+    db.Column('id', db.Integer, primary_key=True),
+    db.Column('user_id', None, db.ForeignKey('moodle.mdl_user.id')),
+    db.Column('problem_id', db.Integer),
+    db.Column('create_time', db.DateTime),
+    db.Column('ej_score', db.Integer),
+    db.Column('ej_status', db.Integer),
+    db.Column('ej_test_num', db.Integer),
+    schema='pynformatics'
+)

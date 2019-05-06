@@ -1,6 +1,7 @@
 import datetime
 
 from mock import MagicMock
+from sqlalchemy import MetaData
 
 from rmatics import db
 from rmatics import monitor_cacher
@@ -117,13 +118,23 @@ class TestGenerateMonitor(TestCase):
 
     def test_get_runs(self):
         user_ids = [user.id for user in self.users]
-        runs = get_runs(problem_id=self.problems[0].id,
-                        user_ids=user_ids)
-
-        self.assertEqual(len(runs), 3)
+        serialized_runs = get_runs(problem_id=self.problems[0].id,
+                                   user_ids=user_ids)
 
         self.mock_cacher_get.assert_called_once()
         self.mock_cacher_set.assert_called_once()
+
+        self.assertEqual(len(serialized_runs), 3)
+
+        serialized_run = serialized_runs[0]
+        self.assertIn('user', serialized_run)
+
+        run = self.runs[0]
+        user = serialized_run['user']
+        self.assertEqual(user.get('id'), run.user.id)
+        self.assertEqual(user.get('firstname'), run.user.firstname)
+        self.assertEqual(user.get('lastname'), run.user.lastname)
+
 
     def test_get_runs_before(self):
         time_creation = datetime.datetime.utcnow() + datetime.timedelta(days=1)
