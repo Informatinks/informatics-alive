@@ -19,7 +19,6 @@ POSSIBLE_SOURCE_ENCODINGS = ['utf-8', 'cp1251', 'windows-1251', 'ascii', 'koi8-r
 
 
 class FromEjudgeRunSchema(Schema):
-    run_uuid = fields.String()
     score = fields.Integer()
     status = fields.Integer()
     lang_id = fields.Integer()

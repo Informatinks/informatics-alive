@@ -166,6 +166,7 @@ class ProblemBasedMonitorAPIView(MethodView):
         We would like avoid Contests and MonitorStatements and Groups here
     """
     def get(self):
+        # TODO: Приделать контекст посылки (NFRMTCS-192)
         args = parser.parse(problem_based_get_args, request)
         user_ids = args['user_id']
         problem_ids = args['problem_id']
