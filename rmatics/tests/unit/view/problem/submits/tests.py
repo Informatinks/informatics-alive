@@ -188,7 +188,6 @@ class TestUpdateSubmissionFromEjudge(TestCase):
 
     def test_simple(self):
         run_data = {
-            'run_uuid': 'uuid',
             'score': 15,
             'status': 37,
             'lang_id': 2,
