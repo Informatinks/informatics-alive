@@ -10,7 +10,7 @@ def __should_stop(self):
 
 
 def patched_PeriodicExecutor_run(self):
-    """ This function will replace pymongo.periodic_executor.PeriodicExecutor.
+    """ This function will replace pymongo.periodic_executor.PeriodicExecutor._run
         We have to do that because we have many deadlocks on original function.
         Unfortunately we lose some functionality like dynamic topology updating.
         Original source:

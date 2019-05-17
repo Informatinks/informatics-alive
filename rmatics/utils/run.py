@@ -32,6 +32,7 @@ class EjudgeStatuses(Enum):
     SKIPPED = 18
     RUNNING = 96
     COMPILING = 98
+    IN_QUEUE = 377
     RMATICS_SUBMIT_ERROR = 520
 
 
