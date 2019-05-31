@@ -14,22 +14,11 @@ from rmatics.view.monitors.route import monitor_blueprint
 from rmatics.view.problem.route import problem_blueprint
 
 
-def create_app(config=None):
-    dictConfig({
-        'version': 1,
-        'formatters': {'default': {
-            'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
-        }},
-        'handlers': {'stdout': {
-            'class': 'logging.StreamHandler',
-            'stream': 'ext://flask.logging.wsgi_errors_stream',
-            'formatter': 'default'
-        }},
-        'root': {
-            'level': 'INFO',
-            'handlers': ['stdout']
-        }
-    })
+def create_app(config=None, config_logger=True):
+    # Optional logger setup to prevent overriding
+    # non-wsgi applications loggers
+    if config_logger is True:
+        init_logger()
 
     app = Flask(__name__)
     app.config.from_object(config)
@@ -58,6 +47,24 @@ def create_app(config=None):
     app.cli.add_command(cli.test)
 
     return app
+
+
+def init_logger():
+    dictConfig({
+        'version': 1,
+        'formatters': {'default': {
+            'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+        }},
+        'handlers': {'stdout': {
+            'class': 'logging.StreamHandler',
+            'stream': 'ext://flask.logging.wsgi_errors_stream',
+            'formatter': 'default'
+        }},
+        'root': {
+            'level': 'INFO',
+            'handlers': ['stdout']
+        }
+    })
 
 
 if __name__ == "__main__":
