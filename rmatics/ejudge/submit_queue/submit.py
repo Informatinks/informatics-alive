@@ -13,7 +13,7 @@ from rmatics.utils.functions import attrs_to_dict
 from rmatics.utils.run import EjudgeStatuses
 
 
-def retry_on_exception(exception_class: Exception, times=3):
+def retry_on_exception(exception_class: Exception, times=5):
     times += 1
 
     def wrapper(func):

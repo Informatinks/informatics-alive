@@ -77,7 +77,7 @@ class RunAPI(MethodView):
         else:
             rejudge = Rejudge(run_id=run.id,
                               ejudge_contest_id=run.ejudge_contest_id,
-                              ejudge_url=run.ejudge_url)
+                              ejudge_url=run.ejudge_url or 'rmatics_failed_submission')
             db.session.add(rejudge)
             db.session.flush([rejudge])
 

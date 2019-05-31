@@ -66,4 +66,4 @@ if __name__ == '__main__':
         params = ['send_submit', 'get_table']
     else:
         params = [arg]
-    main(params, 1)
+    main(params, 2000)
