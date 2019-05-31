@@ -16,7 +16,7 @@ from rmatics.config import CONFIG_MODULE
 @application.cli.command()
 @click.option('--workers', default=2)
 def main(workers):
-    create_app(config=CONFIG_MODULE)
+    create_app(config=CONFIG_MODULE, config_logger=False)
     queue = SubmitQueue()
     worker_group = Group()
     for _ in range(workers):
