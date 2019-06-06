@@ -27,7 +27,7 @@ def send_submit():
         'lang_id': LANG,
         'user_id': USER_ID,
     }
-    url = 'http://localhost:12346/problem/trusted/{}/submit_v2'.format(PROBLEM_ID)
+    url = f'{RMATICS_SERVICE_URL}problem/trusted/{PROBLEM_ID}/submit_v2'
     try:
         resp = requests.post(url, files={'file': file}, data=data)
     except (requests.ConnectionError, requests.ConnectTimeout):
