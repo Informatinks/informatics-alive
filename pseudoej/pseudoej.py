@@ -10,6 +10,8 @@ from sqlalchemy import (
 from sqlalchemy_aio import ASYNCIO_STRATEGY
 
 SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI', 'mysql+pymysql://root:@localhost:3306/')
+LISTENER_SERVICE_URI = os.getenv('LISTENER_SERVICE_URI', 'http://localhost:7777/')
+
 engine = create_engine(SQLALCHEMY_DATABASE_URI, strategy=ASYNCIO_STRATEGY, echo=True)
 
 metadata = MetaData()
@@ -53,7 +55,7 @@ async def send_status_to_listener(run_id, contest_id, status_id):
     loop = asyncio.get_event_loop()
     args = {'run_id': run_id, 'contest_id': contest_id, 'status': status_id}
     args = '&'.join(f'{k}={v}' for k, v in args.items())
-    future1 = loop.run_in_executor(None, requests.get, f'http://localhost:7777/notify/?{args}')
+    future1 = loop.run_in_executor(None, requests.get, f'{LISTENER_SERVICE_URI}?{args}')
 
     resp = await future1
     print(resp)
