@@ -9,6 +9,7 @@ from pymongo import MongoClient
 
 BOT_AUTH_TOKEN = os.getenv('BOT_AUTH_TOKEN')
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
+RMATICS_SERVICE_URL = os.getenv('RMATICS_SERVICE_URL', 'http://localhost:12346/')
 
 app = Celery('tasks', broker=CELERY_BROKER_URL)
 bot = telegram.Bot(BOT_AUTH_TOKEN)
@@ -56,7 +57,7 @@ def get_submission_status():
         'page': 1,
     }
     args = '&'.join([f'{k}={v}' for k, v in args.items()])
-    url = f'http://localhost:12346//problem/{PROBLEM_ID}/submissions/?{args}'
+    url = f'{RMATICS_SERVICE_URL}problem/{PROBLEM_ID}/submissions/?{args}'
     try:
         resp = requests.get(url)
     except (requests.ConnectionError, requests.ConnectTimeout):
