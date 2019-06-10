@@ -98,12 +98,14 @@ class TrustedSubmitApi(MethodView):
         db.session.flush()
 
         run.update_source(text)
-        run_id = run.id
 
+        run_id = run.id
         ejudge_url = current_app.config['EJUDGE_NEW_CLIENT_URL']
-        queue_submit(run_id, ejudge_url)
+
+        # Коммит должен быть до отправки в очередь иначе это гонка
         db.session.commit()
 
+        queue_submit(run_id, ejudge_url)
         return jsonify({
             'run_id': run_id
         })
