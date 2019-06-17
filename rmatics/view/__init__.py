@@ -49,7 +49,7 @@ def get_problems_by_statement_id(statement_id: int, filter_hidden=True) -> list:
         .options(Load(StatementProblem).load_only('rank'))
 
     if filter_hidden:
-        problems_statement_problems.filter(StatementProblem.hidden != 1)
+        problems_statement_problems = problems_statement_problems.filter(StatementProblem.hidden != 1)
 
     problems = []
     # Yes it is ugly but I think its better than rewrite query
