@@ -187,7 +187,7 @@ class ProblemSubmissionsFilterApi(MethodView):
         for problem in problems_result:
             problems[problem.id] = problem
 
-        for run, user, problem in result.items:
+        for run, user in result.items:
             run.user = user
             run.problem = problems[run.problem_id]
             runs.append(run)
