@@ -167,8 +167,7 @@ class ProblemSubmissionsFilterApi(MethodView):
 
         args = parser.parse(get_args, request)
         query = self._build_query_by_args(args, problem_id)
-        query = query.options(Load(Problem).load_only('id', 'name'),
-                              Load(SimpleUser).load_only('id', 'firstname', 'lastname'))
+        query = query.options(Load(SimpleUser).load_only('id', 'firstname', 'lastname'))
 
         per_page_count = args.get('count')
         page = args.get('page')
@@ -176,9 +175,21 @@ class ProblemSubmissionsFilterApi(MethodView):
                                 error_out=False, max_per_page=100)
 
         runs = []
-        for run, user, problem in result.items:
+
+        problem_ids = set()
+
+        for run, user in result.items:
+            problem_ids.add(run.problem_id)
+
+        problems_result = db.session.query(Problem).filter(Problem.id.in_(problem_ids)).options(Load(Problem).load_only('id', 'name'))
+        problems = dict()
+
+        for problem in problems_result:
+            problems[problem.id] = problem
+
+        for run, user in result.items:
             run.user = user
-            run.problem = problem
+            run.problem = problems[run.problem_id]
             runs.append(run)
 
         metadata = {
@@ -216,9 +227,8 @@ class ProblemSubmissionsFilterApi(MethodView):
         except (OSError, OverflowError, ValueError):
             raise BadRequest('Bad timestamp data')
 
-        query = db.session.query(Run, SimpleUser, Problem) \
+        query = db.session.query(Run, SimpleUser) \
             .join(SimpleUser, SimpleUser.id == Run.user_id) \
-            .join(Problem, Problem.id == Run.problem_id) \
             .order_by(desc(Run.id))
         if user_id:
             query = query.filter(Run.user_id == user_id)
